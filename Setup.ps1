@@ -62,7 +62,7 @@ $psModules = @(
     "CompletionPredictor"
     "PSScriptAnalyzer"
     "ps-arch-wsl"
-#    "ps-color-scripts"
+    "ps-color-scripts"
 )
 
 # Set working directory
