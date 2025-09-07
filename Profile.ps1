@@ -26,6 +26,7 @@ Set-Alias -Name up -Value Update-Profile
 Set-Alias -Name us -Value Update-Software
 Set-Alias -Name vi -Value nvim
 Set-Alias -Name vim -Value nvim
+Set-Alias -Name vid -Value neovide
 Set-Alias -Name which -Value Show-Command
 
 

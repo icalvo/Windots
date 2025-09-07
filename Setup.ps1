@@ -42,6 +42,7 @@ $wingetDeps = @(
     "sst.opencode"
     "starship.starship"
     "task.task"
+    "JanDeDobbeleer.OhMyPosh"
 )
 $chocoDeps = @(
     "altsnap"
@@ -61,12 +62,15 @@ $chocoDeps = @(
 
 # PS Modules
 $psModules = @(
+    "posh-git"
     "CompletionPredictor"
     "PSScriptAnalyzer"
     "ps-arch-wsl"
     "ps-color-scripts"
 )
-
+$dotnetTools = @(
+    "dotnet-suggest"
+)
 # Set working directory
 Set-Location $PSScriptRoot
 [Environment]::CurrentDirectory = $PSScriptRoot
@@ -82,7 +86,7 @@ foreach ($wingetDep in $wingetDeps) {
 # Path Refresh
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-$installedChocoDeps = (choco search --local --limit-output --id-only).Split("`n")
+$installedChocoDeps = (choco list --local --limit-output --id-only).Split("`n")
 foreach ($chocoDep in $chocoDeps) {
     if ($installedChocoDeps -notcontains $chocoDep) {
         choco install $chocoDep -y
@@ -96,6 +100,11 @@ foreach ($psModule in $psModules) {
     }
 }
 
+# Install dotnet tools
+foreach ($dotnetTool in $dotnetTools) {
+    dotnet tool install $dotnetTool -g
+}
+
 # Delete OOTB Nvim Shortcuts (including QT)
 if (Test-Path "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Neovim\") {
     Remove-Item "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Neovim\" -Recurse -Force
@@ -104,9 +113,6 @@ if (Test-Path "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Pro
 # Persist Environment Variables
 [System.Environment]::SetEnvironmentVariable('WEZTERM_CONFIG_FILE', "$PSScriptRoot\wezterm\wezterm.lua", [System.EnvironmentVariableTarget]::User)
 
-$currentGitEmail = (git config --global user.email)
-$currentGitName = (git config --global user.name)
-
 # Create Symbolic Links
 Write-Host "Creating Symbolic Links..."
 foreach ($symlink in $symlinks.GetEnumerator()) {
@@ -114,13 +120,30 @@ foreach ($symlink in $symlinks.GetEnumerator()) {
     New-Item -ItemType SymbolicLink -Path $symlink.Key -Target (Resolve-Path $symlink.Value) -Force | Out-Null
 }
 
-git config --global --unset user.email | Out-Null
-git config --global --unset user.name | Out-Null
-git config --global user.email $currentGitEmail | Out-Null
-git config --global user.name $currentGitName | Out-Null
+# $currentGitEmail = (git config --global user.email)
+# $currentGitName = (git config --global user.name)
+# git config --global --unset user.email | Out-Null
+# git config --global --unset user.name | Out-Null
+# git config --global user.email $currentGitEmail | Out-Null
+# git config --global user.name $currentGitName | Out-Null
 
 # Install bat themes
 bat cache --clear
 bat cache --build
 
 .\altsnap\createTask.ps1 | Out-Null
+
+# Create Startup links
+$strTargetPath = "$HOME\AutoHotKey\Ignacio.ahk"
+$strLinkFile = "$HOME\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\Ignacio.lnk"
+if (-not (Test-Path $strLinkFile)) {
+    Remove-Item -Force -ErrorAction SilentlyContinue $strLinkFile
+    $shell = New-Object -ComObject WScript.Shell
+    $Shortcut = $shell.CreateShortcut($strLinkFile)
+    $Shortcut.TargetPath = $strTargetPath
+    $Shortcut.WorkingDirectory = "$HOME\AutoHotKey\"
+    # Set the window style (3=Maximized 7=Minimized 4=Normal)
+    $shortcut.WindowStyle = 4
+    $Shortcut.Save()
+    Invoke-Item $strLinkFile
+}
