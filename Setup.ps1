@@ -13,6 +13,7 @@
 # Linked Files (Destination => Source)
 $symlinks = @{
     $PROFILE.CurrentUserAllHosts                                                                    = ".\Profile.ps1"
+    "$HOME\AutoHotKey"                                                                              = ".\AutoHotKey"
     "$HOME\AppData\Local\nvim"                                                                      = ".\nvim"
     "$HOME\AppData\Local\fastfetch"                                                                 = ".\fastfetch"
     "$HOME\AppData\Local\k9s"                                                                       = ".\k9s"
@@ -26,6 +27,7 @@ $symlinks = @{
 
 # Winget & choco dependencies
 $wingetDeps = @(
+    "autohotkey.autohotkey"
     "chocolatey.chocolatey"
     "eza-community.eza"
     "ezwinports.make"
