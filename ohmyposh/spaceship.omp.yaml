@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+
+upgrade:
+    source: cdn
+    interval: 168h
+    auto: false
+    notice: false
+blocks:
+    - type: prompt
+      alignment: left
+      segments:
+          - template: "{{ .UserName }} "
+            foreground: lightYellow
+            type: session
+            style: plain
+          - properties:
+                style: folder
+            template: "<#ffffff>in</> {{ .Path }} "
+            foreground: cyan
+            type: path
+            style: plain
+          - properties:
+                branch_icon: " <#ff94df><b> </b></>"
+            template: "<#ffffff>on</> {{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} "
+            foreground: "#ff94df"
+            type: git
+            style: plain
+    - type: prompt
+      alignment: left
+      segments:
+          - template: "{{.Env.SOFTWARE_UPDATE_AVAILABLE}}"
+            type: text
+            foregroun: white
+            style: plain
+          - template: ❯
+            foreground: lightGreen
+            type: text
+            style: plain
+      newline: true
+version: 3
+final_space: true

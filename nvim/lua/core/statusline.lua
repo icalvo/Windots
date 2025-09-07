@@ -281,7 +281,7 @@ end
 --- @param hl string|nil The highlight group to use
 M.clock = function(hl)
     --- @diagnostic disable-next-line: param-type-mismatch
-    return format_component(os.date("%I:%M %p"):gsub("^0", ""), hl)
+    return format_component(os.date("%H:%M"):gsub("^0", ""), hl)
 end
 
 -- Statusline components

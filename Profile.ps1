@@ -307,6 +307,7 @@ Start-ThreadJob -ScriptBlock {
         The compromise is to run the main logic of this block within a threadjob and get the output of the winget and choco commands
         via two isolated jobs. This sets the environment variable correctly and doesn't cause any lag (that I've noticed yet).
     #>
+    $ENV:SOFTWARE_UPDATE_AVAILABLE = "⌛"
     $wingetUpdatesString = Start-Job -ScriptBlock { winget list --upgrade-available | Out-String } | Wait-Job | Receive-Job
     $chocoUpdatesString = Start-Job -ScriptBlock { choco upgrade all --noop -y | Out-String } | Wait-Job | Receive-Job
     if ($wingetUpdatesString -match "upgrades available" -or $chocoUpdatesString -notmatch "can upgrade 0/") {
@@ -345,8 +346,8 @@ Import-Module -Name CompletionPredictor
 if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     fastfetch
 
-    # oh-my-posh init pwsh --config "$ENV:WindotsLocalRepo\OhMyPosh\ignaciocalvo.omp.json" | Invoke-Expression
-    oh-my-posh init pwsh --config "spaceship" | Invoke-Expression
+    oh-my-posh init pwsh --config "$ENV:WindotsLocalRepo\ohmyposh\spaceship.omp.yaml" | Invoke-Expression
+    # oh-my-posh init pwsh --config "spaceship" | Invoke-Expression
 
     # dotnet suggest shell start
     if (Get-Command "dotnet-suggest" -errorAction SilentlyContinue) {
