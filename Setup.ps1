@@ -80,7 +80,7 @@ foreach ($wingetDep in $wingetDeps) {
 # Path Refresh
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-$installedChocoDeps = (choco list --limit-output --id-only).Split("`n")
+$installedChocoDeps = (choco search --local --limit-output --id-only).Split("`n")
 foreach ($chocoDep in $chocoDeps) {
     if ($installedChocoDeps -notcontains $chocoDep) {
         choco install $chocoDep -y
