@@ -56,6 +56,7 @@ $chocoDeps = @(
     "ripgrep"
     "sqlite"
     "wezterm"
+    "windirstat"
     "zig"
     "zoxide"
 )
