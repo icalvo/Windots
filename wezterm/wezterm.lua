@@ -1,7 +1,7 @@
 -- Initialize Configuration
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
-local opacity = 1
+local opacity = 0.85
 local transparent_bg = "rgba(22, 24, 26, " .. opacity .. ")"
 
 --- Get the current operating system
@@ -28,7 +28,7 @@ config.font = wezterm.font_with_fallback({
     },
     emoji_font,
 })
-config.font_size = 10
+config.font_size = 12
 
 -- Color Configuration
 config.colors = require("cyberdream")
@@ -39,10 +39,9 @@ config.initial_rows = 45
 config.initial_cols = 180
 config.window_decorations = "RESIZE"
 config.window_background_opacity = opacity
-config.window_background_image = (os.getenv("WEZTERM_CONFIG_FILE") or ""):gsub("wezterm.lua", "bg-blurred.png")
+-- config.window_background_image = (os.getenv("WEZTERM_CONFIG_FILE") or ""):gsub("wezterm.lua", "bg-blurred.png")
 config.window_close_confirmation = "NeverPrompt"
-config.win32_system_backdrop = "Acrylic"
-
+config.win32_system_backdrop = "Disable"
 -- Performance Settings
 config.max_fps = 144
 config.animation_fps = 60
