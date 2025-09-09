@@ -1,7 +1,7 @@
 -- Initialize Configuration
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
-local opacity = 0.85
+local opacity = 0.9
 local transparent_bg = "rgba(22, 24, 26, " .. opacity .. ")"
 
 --- Get the current operating system
@@ -28,7 +28,7 @@ config.font = wezterm.font_with_fallback({
     },
     emoji_font,
 })
-config.font_size = 12
+config.font_size = 14
 
 -- Color Configuration
 config.colors = require("cyberdream")
@@ -49,7 +49,7 @@ config.cursor_blink_rate = 250
 
 -- Tab Bar Configuration
 config.enable_tab_bar = true
-config.hide_tab_bar_if_only_one_tab = true
+config.hide_tab_bar_if_only_one_tab = false
 config.show_tab_index_in_tab_bar = false
 config.use_fancy_tab_bar = false
 config.colors.tab_bar = {
