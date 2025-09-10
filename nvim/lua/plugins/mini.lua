@@ -65,6 +65,10 @@ return {
                     width_focus = 40,
                     width_nofocus = 40,
                 },
+                mappings = {
+                    go_in = "L",
+                    go_in_plus = "l",
+                },
             })
 
             -- All config below is to render git status in mini.files
