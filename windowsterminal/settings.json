@@ -10,39 +10,33 @@
     "initialCols": 150,
     "initialPosition": ",",
     "initialRows": 38,
-    "keybindings": 
-    [
+    "keybindings": [
         {
             "id": "Terminal.CopyToClipboard",
             "keys": "ctrl+c"
-        },
-        {
-            "id": "Terminal.FindText",
-            "keys": "ctrl+shift+f"
         },
         {
             "id": "Terminal.PasteFromClipboard",
             "keys": "ctrl+v"
         },
         {
+            "id": "Terminal.FindText",
+            "keys": "ctrl+shift+f"
+        },
+        {
             "id": "Terminal.DuplicatePaneAuto",
             "keys": "alt+shift+d"
         }
     ],
-    "launchMode": "focus",
-    "newTabMenu": 
-    [
+    "newTabMenu": [
         {
             "type": "remainingProfiles"
         }
     ],
-    "profiles": 
-    {
-        "defaults": 
-        {
+    "profiles": {
+        "defaults": {
             "colorScheme": "cyberdream",
-            "font": 
-            {
+            "font": {
                 "face": "JetBrainsMono Nerd Font",
                 "size": 10.4
             },
@@ -51,8 +45,7 @@
             "scrollbarState": "hidden",
             "useAcrylic": true
         },
-        "list": 
-        [
+        "list": [
             {
                 "commandline": "%SystemRoot%\\System32\\cmd.exe",
                 "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
@@ -70,11 +63,16 @@
                 "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
                 "hidden": false,
                 "name": "Windows PowerShell"
+            },
+            {
+                "guid": "{2ece5bfe-50ed-5f3a-ab87-5cd4baafed2b}",
+                "hidden": false,
+                "name": "Git Bash",
+                "source": "Git"
             }
         ]
     },
-    "schemes": 
-    [
+    "schemes": [
         {
             "background": "#16181A",
             "black": "#16181A",
