@@ -1,7 +1,7 @@
 -- Initialize Configuration
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
-local opacity = 0.9
+local opacity = 1
 local transparent_bg = "rgba(22, 24, 26, " .. opacity .. ")"
 
 --- Get the current operating system
@@ -35,13 +35,25 @@ config.colors = require("cyberdream")
 config.force_reverse_video_cursor = true
 
 -- Window Configuration
-config.initial_rows = 45
-config.initial_cols = 180
 config.window_decorations = "RESIZE"
 config.window_background_opacity = opacity
--- config.window_background_image = (os.getenv("WEZTERM_CONFIG_FILE") or ""):gsub("wezterm.lua", "bg-blurred.png")
+config.window_background_image = (os.getenv("WEZTERM_CONFIG_FILE") or ""):gsub("wezterm.lua", "bg-blurred.png")
 config.window_close_confirmation = "NeverPrompt"
 config.win32_system_backdrop = "Disable"
+wezterm.on("gui-startup", function(cmd)
+    local screen = wezterm.gui.screens().active
+    local ratio = 0.8
+    local width, height = screen.width * ratio, screen.height * ratio
+    local tab, pane, window = wezterm.mux.spawn_window({
+        position = {
+            x = (screen.width - width) / 2,
+            y = (screen.height - height) / 2,
+            origin = "ActiveScreen",
+        },
+    })
+    -- window:gui_window():maximize()
+    window:gui_window():set_inner_size(width, height)
+end)
 -- Performance Settings
 config.max_fps = 144
 config.animation_fps = 60
@@ -84,6 +96,9 @@ wezterm.on("format-tab-title", function(tab, _, _, _, hover)
 end)
 
 -- Keybindings
+config.keys = {
+    { key = "c", mods = "CTRL|SHIFT", action = wezterm.action({ CopyTo = "ClipboardAndPrimarySelection" }) },
+}
 config.keys = {
     { key = "v", mods = "CTRL", action = wezterm.action({ PasteFrom = "Clipboard" }) },
 }
