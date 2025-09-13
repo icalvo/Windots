@@ -4,10 +4,10 @@
 CapsLock::Esc
 #!j::
 {
-    Try { 
-        WinMinimize "A" 
+    Try {
+        WinMinimize "A"
     }
 }
 #!k::WinMaximize "A"
-#!q::WinClose "A"
+#!y::WinClose "A"
 #!r::Reload
