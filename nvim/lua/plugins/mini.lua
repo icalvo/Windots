@@ -46,19 +46,6 @@ return {
     {
         "echasnovski/mini.files",
         dependencies = { "echasnovski/mini.icons" },
-        keys = {
-            {
-                "<leader>ee",
-                function()
-                    local path = vim.bo.buftype ~= "nofile" and vim.api.nvim_buf_get_name(0) or nil
-                    local ok = pcall(require("mini.files").open, path)
-                    if not ok then
-                        require("mini.files").open()
-                    end
-                end,
-                desc = "Open mini.files (cwd)",
-            },
-        },
         config = function()
             require("mini.files").setup({
                 windows = {

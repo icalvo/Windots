@@ -54,6 +54,15 @@ local function run_non_interactive_cmd(cmd)
     end
 end
 
+--- Open mini.files, also if the current buffer is not a file
+local function open_mini_files_safe()
+    local path = vim.bo.buftype ~= "nofile" and vim.api.nvim_buf_get_name(0) or nil
+    local ok = pcall(require("mini.files").open, path)
+    if not ok then
+        require("mini.files").open()
+    end
+end
+
 -- stylua: ignore start
 
 -- better up/down
@@ -100,7 +109,10 @@ map("n", "<leader>bd", function() snacks.bufdelete({ wipe = true }) end, { desc 
 -- lazy
 map("n", "<leader>l", ":Lazy<cr>", { desc = "Lazy" })
 
--- Snacks Picker
+-- mini.files
+map("n", "<leader>ee", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-- Snacks Picker
+
+-- pickers
 map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
 map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
 map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
@@ -110,6 +122,23 @@ map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "s
 map("n", "<leader>ft", function() snacks.picker() end, { desc = "Other pickers..." })
 map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
 map("n", "<leader>fS", function() require("pick-resession").pick() end, { desc = "Find Session" })
+map("n", "<leader>fd", function() snacks.picker.todo_comments() end, { desc = "Todo" })
+
+-- flash
+map({ "n", "x", "o" }, "s", function() require("flash").jump() end,  { desc = "Flash" })
+map({ "n", "x", "o" }, "S", function() require("flash").treesitter() end, { desc = "Flash Treesitter" })
+map({ "o", "x" }, "R", function() require("flash").treesitter_search() end, { desc = "Treesitter Search" })
+map({ "c" }, "<c-s>", function() require("flash").toggle() end, { desc = "Toggle Flash Search" })
+
+map("n", "<leader>on", "<cmd>Obsidian new_from_template Core<cr>", { desc = "New Obsidian note" })
+map("n", "<leader>oo", "<cmd>Obsidian search<cr>", { desc = "Search Obsidian notes" })
+map("n", "<leader>os", "<cmd>Obsidian quick_switch<cr>", { desc = "Quick Switch" })
+map("n", "<leader>ob", "<cmd>Obsidian backlinks<cr>", { desc = "Show location list of backlinks" })
+map("n", "<leader>of", "<cmd>Obsidian follow_link<cr>", { desc = "Follow link under cursor" })
+map("n", "<leader>ot", "<cmd>Obsidian template Core<cr>", { desc = "Apply Core Template" })
+-- Custom git sync job - manual trigger. Auto sync is available but off by default.
+-- Toggle on with <leader>to (toggle obsidian git sync)
+map("n", "<leader>og", "<cmd>ObsidianGitSync<cr>", { desc = "Sync changes to git" })
 
 -- toggle options
 utils.toggle_global_boolean("autoformat", "Autoformat"):map("<leader>ta")
