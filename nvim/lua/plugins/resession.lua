@@ -7,8 +7,8 @@ return {
             config = function()
                 require("pick-resession").setup({
                     path_icons = {
-                        { match = "C:/Users/" .. vim.g.user .. "/git/", icon = " ", highlight = "Changed" },
-                        { match = "/home/" .. vim.g.user .. "/git/", icon = " ", highlight = "Changed" },
+                        { match = "C:/Users/" .. vim.g.user .. "/Repos/", icon = " ", highlight = "Changed" },
+                        { match = "/home/" .. vim.g.user .. "/Repos/", icon = " ", highlight = "Changed" },
                         { match = "C:/Users/" .. vim.g.user .. "/", icon = " ", highlight = "Special" },
                         { match = "/home/" .. vim.g.user .. "/", icon = " ", highlight = "Special" },
                     },
@@ -26,19 +26,41 @@ return {
                 notify = false,
             },
         })
+        local function get_repo_root()
+            local name = vim.fn.getcwd()
+            local root = vim.trim(vim.fn.system("git rev-parse --show-toplevel"))
+            if vim.v.shell_error == 0 then
+                return root:gsub("/", "\\")
+            else
+                return nil
+            end
+        end
         vim.api.nvim_create_autocmd("VimEnter", {
             callback = function()
                 -- Only load the session if nvim was started with no args
-                if vim.fn.argc(-1) == 0 then
-                    -- Save these to a different directory, so our manual sessions don't get polluted
-                    resession.load(vim.fn.getcwd(), { silence_errors = true })
+                local repo_root = get_repo_root()
+                if repo_root then
+                    resession.load(repo_root, { silence_errors = true, notify = true })
+                    vim.g.resession_name = repo_root
+                    require("snacks").notifier("Loaded repo session [" .. vim.g.resession_name .. "]")
+                elseif vim.fn.argc(-1) == 0 then
+                    local sanitized_cwd = vim.fn.getcwd()
+                    resession.load(sanitized_cwd, { silence_errors = true, notify = true })
+                    vim.g.resession_name = sanitized_cwd
+                    require("snacks").notifier("Loaded dir session [" .. vim.g.resession_name .. "]")
+                else
+                    require("snacks").notifier("No session loaded")
                 end
             end,
-            nested = true,
         })
+
         vim.api.nvim_create_autocmd("VimLeavePre", {
             callback = function()
-                resession.save(vim.fn.getcwd(), { notify = true })
+                -- Save session if we opened it when starting nvim
+                if vim.g.resession_name then
+                    resession.save(vim.g.resession_name, { notify = false })
+                    require("snacks").notifier("Saved dir session [" .. vim.g.resession_name .. "]")
+                end
             end,
         })
     end,
