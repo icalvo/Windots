@@ -1,4 +1,5 @@
 return {
-    "blacklight/nvim-http",
+    "icalvo/nvim-http",
+    branch = "portable-temp-file",
     lazy = false,
 }
