@@ -130,19 +130,8 @@ map({ "n", "x", "o" }, "S", function() require("flash").treesitter() end, { desc
 map({ "o", "x" }, "R", function() require("flash").treesitter_search() end, { desc = "Treesitter Search" })
 map({ "c" }, "<c-s>", function() require("flash").toggle() end, { desc = "Toggle Flash Search" })
 
-map("n", "<leader>on", "<cmd>Obsidian new_from_template Core<cr>", { desc = "New Obsidian note" })
-map("n", "<leader>oo", "<cmd>Obsidian search<cr>", { desc = "Search Obsidian notes" })
-map("n", "<leader>os", "<cmd>Obsidian quick_switch<cr>", { desc = "Quick Switch" })
-map("n", "<leader>ob", "<cmd>Obsidian backlinks<cr>", { desc = "Show location list of backlinks" })
-map("n", "<leader>of", "<cmd>Obsidian follow_link<cr>", { desc = "Follow link under cursor" })
-map("n", "<leader>ot", "<cmd>Obsidian template Core<cr>", { desc = "Apply Core Template" })
--- Custom git sync job - manual trigger. Auto sync is available but off by default.
--- Toggle on with <leader>to (toggle obsidian git sync)
-map("n", "<leader>og", "<cmd>ObsidianGitSync<cr>", { desc = "Sync changes to git" })
-
 -- toggle options
 utils.toggle_global_boolean("autoformat", "Autoformat"):map("<leader>ta")
-utils.toggle_global_boolean("obsidian_git_sync", "Obsidian Git Sync"):map("<leader>to")
 snacks.toggle(copilot_toggle_opts):map("<leader>tc")
 snacks.toggle.option("spell", { name = "Spelling" }):map("<leader>ts")
 snacks.toggle.option("wrap", { name = "Wrap" }):map("<leader>tw")
