@@ -279,7 +279,6 @@ function Remove-ItemExtended {
 # Environment Variables 🌐
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 $ENV:WindotsLocalRepo = Find-WindotsRepository -ProfilePath $PSScriptRoot
-# $ENV:STARSHIP_CONFIG = "$ENV:WindotsLocalRepo\starship\starship.toml"
 $ENV:_ZO_DATA_DIR = $ENV:WindotsLocalRepo
 $ENV:OBSIDIAN_PATH = "$HOME\git\obsidian-vault"
 $ENV:BAT_CONFIG_DIR = "$ENV:WindotsLocalRepo\bat"
@@ -319,11 +318,6 @@ Start-ThreadJob -ScriptBlock {
     }
 } | Out-Null
 
-# function Invoke-Starship-TransientFunction {
-#     &starship module character
-# }
-
-# Invoke-Expression (&starship init powershell)
 # Enable-TransientPrompt
 Invoke-Expression (& { ( zoxide init powershell --cmd cd | Out-String ) })
 

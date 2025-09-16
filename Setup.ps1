@@ -38,7 +38,6 @@ $wingetDeps = @(
     "neovim.neovim"
     "openjs.nodejs"
     "sst.opencode"
-    "starship.starship"
     "task.task"
     "JanDeDobbeleer.OhMyPosh"
 )
