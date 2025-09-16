@@ -110,7 +110,7 @@ map("n", "<leader>bd", function() snacks.bufdelete({ wipe = true }) end, { desc 
 map("n", "<leader>l", ":Lazy<cr>", { desc = "Lazy" })
 
 -- mini.files
-map("n", "<leader>ee", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-- Snacks Picker
+map("n", "<leader>x", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-- Snacks Picker
 
 -- pickers
 map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
