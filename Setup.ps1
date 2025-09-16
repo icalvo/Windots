@@ -51,6 +51,7 @@ $chocoDeps = @(
     "lazygit"
     "mingw"
     "nerd-fonts-jetbrainsmono"
+    "nircmd"
     "ripgrep"
     "sqlite"
     "wezterm"

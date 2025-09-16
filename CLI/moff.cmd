@@ -1,1 +1,1 @@
-C:\CLI\NirCmd.exe monitor off
+nircmd monitor off
