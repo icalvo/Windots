@@ -345,8 +345,6 @@ Import-Module -Name CompletionPredictor
 
 # Things only for non-interactive shells
 if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
-    fastfetch
-
     oh-my-posh init pwsh --config "$ENV:WindotsLocalRepo\ohmyposh\spaceship.omp.yaml" | Invoke-Expression
     # oh-my-posh init pwsh --config "spaceship" | Invoke-Expression
 
