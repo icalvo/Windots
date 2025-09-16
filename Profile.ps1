@@ -319,7 +319,6 @@ Start-ThreadJob -ScriptBlock {
 } | Out-Null
 
 # Enable-TransientPrompt
-Invoke-Expression (& { ( zoxide init powershell --cmd cd | Out-String ) })
 
 $colors = @{
     "Operator"         = "`e[35m" # Purple
@@ -365,3 +364,5 @@ if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
     # dotnet suggest script end
 }
+
+Invoke-Expression (& { ( zoxide init powershell --cmd cd | Out-String ) })
