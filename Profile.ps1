@@ -1,13 +1,3 @@
-# ██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ████████╗███████╗
-# ██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝
-# ██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║   ██║   ███████╗
-# ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║   ██║   ╚════██║
-# ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝   ██║   ███████║
-#  ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
-# Profile.ps1 - Scott McKendry
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
 # Aliases 🔗
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Set-Alias -Name cat -Value bat
@@ -20,7 +10,6 @@ Set-Alias -Name ll -Value Get-ChildItemPretty
 Set-Alias -Name ls -Value Get-ChildItemPretty
 Set-Alias -Name rm -Value Remove-ItemExtended
 Set-Alias -Name su -Value Update-ShellElevation
-Set-Alias -Name tif Show-ThisIsFine
 Set-Alias -Name touch -Value New-File
 Set-Alias -Name up -Value Update-Profile
 Set-Alias -Name us -Value Update-Software
@@ -247,15 +236,6 @@ function Get-ChildItemPretty {
     Write-Host ""
     eza -a -l --header --icons --hyperlink --time-style relative $Path
     Write-Host ""
-}
-
-function Show-ThisIsFine {
-    <#
-    .SYNOPSIS
-        Displays the "This is fine" meme in the console. Alias: tif
-    #>
-    Write-Verbose "Running thisisfine.ps1"
-    Show-ColorScript -Name thisisfine
 }
 
 function Remove-ItemExtended {
