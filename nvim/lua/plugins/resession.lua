@@ -39,15 +39,17 @@ return {
             callback = function()
                 -- Only load the session if nvim was started with no args
                 local repo_root = get_repo_root()
-                if repo_root then
-                    resession.load(repo_root, { silence_errors = true, notify = true })
-                    vim.g.resession_name = repo_root
-                    require("snacks").notifier("Loaded repo session [" .. vim.g.resession_name .. "]")
-                elseif vim.fn.argc(-1) == 0 then
-                    local sanitized_cwd = vim.fn.getcwd()
-                    resession.load(sanitized_cwd, { silence_errors = true, notify = true })
-                    vim.g.resession_name = sanitized_cwd
-                    require("snacks").notifier("Loaded dir session [" .. vim.g.resession_name .. "]")
+                if vim.fn.argc(-1) == 0 then
+                    if repo_root then
+                        resession.load(repo_root, { silence_errors = true, notify = true })
+                        vim.g.resession_name = repo_root
+                        require("snacks").notifier("Loaded repo session [" .. vim.g.resession_name .. "]")
+                    else
+                        local sanitized_cwd = vim.fn.getcwd()
+                        resession.load(sanitized_cwd, { silence_errors = true, notify = true })
+                        vim.g.resession_name = sanitized_cwd
+                        require("snacks").notifier("Loaded dir session [" .. vim.g.resession_name .. "]")
+                    end
                 else
                     require("snacks").notifier("No session loaded")
                 end
