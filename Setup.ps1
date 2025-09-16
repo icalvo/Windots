@@ -44,6 +44,7 @@ $wingetDeps = @(
 $chocoDeps = @(
     "altsnap"
     "bat"
+    "caffeine"
     "fd"
     "fzf"
     "gawk"

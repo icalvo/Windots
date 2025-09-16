@@ -1,1 +1,2 @@
-C:\CLI\caffeine64.exe -replace
+@echo off
+%ChocolateyInstall%\lib\caffeine\caffeine64.exe -replace
