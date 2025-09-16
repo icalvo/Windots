@@ -309,9 +309,9 @@ Start-ThreadJob -ScriptBlock {
     #>
     $ENV:SOFTWARE_UPDATE_AVAILABLE = "⌛"
     $wingetUpdatesString = Start-Job -ScriptBlock { winget list --upgrade-available | Out-String } | Wait-Job | Receive-Job
-    $chocoUpdatesString = Start-Job -ScriptBlock { choco upgrade all --noop -y | Out-String } | Wait-Job | Receive-Job
-    if ($wingetUpdatesString -match "upgrades available" -or $chocoUpdatesString -notmatch "can upgrade 0/") {
-        $ENV:SOFTWARE_UPDATE_AVAILABLE = " "
+    $chocoUpdatesString = Start-Job -ScriptBlock { choco outdated --limit-output | Out-String } | Wait-Job | Receive-Job
+    if ($wingetUpdatesString -match "upgrades available" -or -not [string]::IsNullOrWhiteSpace($chocoUpdatesString)) {
+        $ENV:SOFTWARE_UPDATE_AVAILABLE = "📦 "
     }
     else {
         $ENV:SOFTWARE_UPDATE_AVAILABLE = ""
