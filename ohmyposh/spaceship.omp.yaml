@@ -9,15 +9,15 @@ blocks:
     - type: prompt
       alignment: left
       segments:
-          - template: "{{ .UserName }} "
+          - type: session
             foreground: lightYellow
-            type: session
+            template: "{{ .UserName }} "
             style: plain
-          - properties:
+          - type: path
+            properties:
                 style: folder
             template: "<#ffffff>in</> {{ .Path }} "
             foreground: cyan
-            type: path
             style: plain
           - properties:
                 branch_icon: " <#ff94df><b> </b></>"
@@ -25,6 +25,10 @@ blocks:
             foreground: "#ff94df"
             type: git
             style: plain
+          - type: root
+            style: plain
+            foreground: "#ffff66"
+            template: 
     - type: prompt
       alignment: left
       segments:
