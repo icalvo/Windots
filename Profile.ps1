@@ -336,7 +336,7 @@ Set-PSReadLineOption -PredictionViewStyle InlineView
 Set-PSReadLineKeyHandler -Function AcceptSuggestion -Key Alt+l
 Import-Module -Name CompletionPredictor
 
-# Things only for non-interactive shells
+# Things only for interactive shells
 if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     oh-my-posh init pwsh --config "$ENV:WindotsLocalRepo\ohmyposh\spaceship.omp.yaml" | Invoke-Expression
     # oh-my-posh init pwsh --config "spaceship" | Invoke-Expression
