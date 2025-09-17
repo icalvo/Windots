@@ -1,11 +1,11 @@
-﻿#Requires AutoHotkey v2.0
+#Requires AutoHotkey v2.0
 #SingleInstance Force
 
 ; AutoHotkey v2.0 Script - VIM Cursor Mode Toggle
 ; Press Shift twice to toggle VIM cursor mode
 ; In VIM mode: H=Left, J=Down, K=Up, L=Right
 tip(str := '', fontSize := '') {
-    Static size := 36
+    Static size := 108
     Global g
     Try g.Destroy
     If str != '' {
@@ -15,7 +15,7 @@ tip(str := '', fontSize := '') {
         g.BackColor := 'Black'
         g.AddText 'cYellow', str
         g.Show 'NoActivate'
-	WinSetTransparent 80, g
+        WinSetTransparent 50, g
     }
 }
 ; Variables
@@ -30,14 +30,14 @@ $~Shift::
 {
     global
     currentTime := A_TickCount
-    
+
     ; Prevent keyboard repeat from being counted as multiple presses
     if (shiftPressed) {
         return
     }
-    
+
     shiftPressed := true
-    
+
     ; Check if this is a double-click
     if (currentTime - lastShiftTime <= doubleClickInterval) {
         doubleShiftDetected := true
@@ -52,7 +52,7 @@ $~Shift Up::
 {
     global
     shiftPressed := false
-    
+
     ; Reset double-shift detection after the interval
     SetTimer(ResetDoubleShift, doubleClickInterval + 50)
 }
@@ -75,7 +75,7 @@ EnableVimMode() {
 ToggleVimMode() {
     global
     vimMode := !vimMode
-    
+
     if (vimMode) {
         ; Show tooltip indicating VIM mode is active
         tip("VIM Mode ON")
