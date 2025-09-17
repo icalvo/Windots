@@ -15,7 +15,7 @@ tip(str := '', fontSize := '') {
         g.BackColor := 'Black'
         g.AddText 'cYellow', str
         g.Show 'NoActivate'
-        WinSetTransparent 50, g
+        WinSetTransparent 40, g
     }
 }
 ; Variables
