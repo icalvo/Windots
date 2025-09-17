@@ -11,3 +11,4 @@ CapsLock::Esc
 #!k::WinMaximize "A"
 #!y::WinClose "A"
 #!r::Reload
+RAlt::AppsKey
