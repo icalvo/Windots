@@ -3,6 +3,7 @@
 Set-Alias -Name cat -Value bat
 Set-Alias -Name df -Value Get-Volume
 Set-Alias -Name ff -Value Find-File
+Set-Alias -Name g -Value lazygit
 Set-Alias -Name grep -Value Find-String
 Set-Alias -Name l -Value Get-ChildItemPretty
 Set-Alias -Name la -Value Get-ChildItemPretty
