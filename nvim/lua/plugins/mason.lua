@@ -33,6 +33,7 @@ return {
             "ols",
             "powershell-editor-services",
             "prettier",
+            "pyright",
             "roslyn",
             "rust-analyzer",
             "rzls",
