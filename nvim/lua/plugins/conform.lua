@@ -1,26 +1,27 @@
 return {
     "stevearc/conform.nvim",
-    event = "BufReadPre",
+    lazy = false,
+    -- event = "BufReadPre",
     config = function()
         vim.g.autoformat = true
         require("conform").setup({
             formatters_by_ft = {
+                cs = { "csharpier" },
                 css = { "prettier" },
                 go = { "goimports_reviser", "gofmt" },
                 html = { "prettier" },
+                http = { "kulala-fmt" },
                 javascript = { "prettier" },
-                typescript = { "prettier" },
                 json = { "prettier" },
                 lua = { "stylua" },
                 markdown = { "prettier" },
-                nix = { "nixfmt" },
                 rust = { "rustfmt" },
                 scss = { "prettier" },
                 sh = { "shfmt" },
                 templ = { "templ" },
                 toml = { "taplo" },
+                typescript = { "prettier" },
                 yaml = { "prettier" },
-                cs = { "csharpier" },
             },
 
             format_after_save = function(bufnr)
