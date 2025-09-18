@@ -17,6 +17,10 @@ return {
         require("blink.cmp").setup({
             enabled = is_enabled,
             cmdline = { completion = { menu = { auto_show = true } } },
+            keymap = {
+                preset = "default",
+                ["<CR>"] = { "select_and_accept", "fallback" },
+            },
             completion = {
                 menu = {
                     scrollbar = false,
