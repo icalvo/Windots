@@ -19,17 +19,6 @@ local map = function(modes, lhs, rhs, opts)
     end
 end
 
---- Unmap a key combination to a command
----@param modes string|string[]: The mode(s) to map the key combination to
----@param lhs string: The key combination to map
-local unmap = function(modes, lhs)
-    if type(modes) == "string" then
-        modes = { modes }
-    end
-    for _, mode in ipairs(modes) do
-        vim.keymap.del(mode, lhs)
-    end
-end
 local copilot_toggle_opts = {
     name = "Copilot Completion",
     get = function()
