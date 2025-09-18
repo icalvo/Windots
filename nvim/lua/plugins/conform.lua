@@ -20,14 +20,20 @@ return {
                 templ = { "templ" },
                 toml = { "taplo" },
                 yaml = { "prettier" },
+                cs = { "csharpier" },
             },
 
-            format_after_save = function()
+            format_after_save = function(bufnr)
                 if not vim.g.autoformat then
                     return
                 else
                     if vim.bo.filetype == "ps1" then
                         vim.lsp.buf.format()
+                        return
+                    end
+                    -- Disable autoformat for files in a certain path
+                    local bufname = vim.api.nvim_buf_get_name(bufnr)
+                    if bufname:match("/node_modules/") then
                         return
                     end
                     return { lsp_format = "fallback" }
