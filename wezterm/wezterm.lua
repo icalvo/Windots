@@ -98,9 +98,8 @@ end)
 -- Keybindings
 config.keys = {
     { key = "c", mods = "CTRL|SHIFT", action = wezterm.action({ CopyTo = "ClipboardAndPrimarySelection" }) },
-}
-config.keys = {
     { key = "v", mods = "CTRL", action = wezterm.action({ PasteFrom = "Clipboard" }) },
+    { key = "j", mods = "CTRL|SHIFT", action = wezterm.action.SendKey({ key = "j", mods = "CTRL|SHIFT" }) },
 }
 
 -- Default Shell Configuration
