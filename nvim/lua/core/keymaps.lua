@@ -62,6 +62,14 @@ map({ "n", "x" }, "<Up>", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = tru
 
 -- Map H and L to _ and $ for better ergonomy
 map("n", "H", "_", { desc = "Go to start of line after ws" })
+map("n", "H", function()
+local current_col = vim.fn.virtcol('.')
+  vim.cmd('normal ^')
+  local first_char = vim.fn.virtcol('.')
+  if current_col <= first_char then
+    vim.cmd('normal 0')
+  end
+end, { desc = "Go to start of line after ws" })
 map("n", "L", "$", { desc = "Go to end of line" })
 map("o", "H", "_", { desc = "Move to start of line after ws" })
 map("o", "L", "$", { desc = "Move to end of line" })
