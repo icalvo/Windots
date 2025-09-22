@@ -1,5 +1,6 @@
 return {
     "smiteshp/nvim-navic",
+    lazy = false,
     config = function()
         require("nvim-navic").setup({
             lsp = {
@@ -11,6 +12,7 @@ return {
                     "templ",
                 },
             },
+            highlight = true,
             separator = " 󰁔 ",
         })
     end,
