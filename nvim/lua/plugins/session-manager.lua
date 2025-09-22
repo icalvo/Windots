@@ -43,6 +43,8 @@ return {
                     if repo_root then
                         resession.load(repo_root, { silence_errors = true, notify = true })
                         vim.g.resession_name = repo_root
+                        local repo_name = string.match(repo_root, "([^/\\]+)$")
+                        vim.cmd("silent !wezterm cli set-tab-title " .. repo_name)
                         require("snacks").notifier("Loaded repo session [" .. vim.g.resession_name .. "]")
                     else
                         local sanitized_cwd = vim.fn.getcwd()
