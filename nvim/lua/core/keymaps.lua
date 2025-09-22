@@ -61,7 +61,6 @@ map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true }
 map({ "n", "x" }, "<Up>", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true })
 
 -- Map H and L to _ and $ for better ergonomy
-map("n", "H", "_", { desc = "Go to start of line after ws" })
 map("n", "H", function()
 local current_col = vim.fn.virtcol('.')
   vim.cmd('normal ^')
@@ -69,7 +68,7 @@ local current_col = vim.fn.virtcol('.')
   if current_col <= first_char then
     vim.cmd('normal 0')
   end
-end, { desc = "Go to start of line after ws" })
+end, { desc = "Go to start of line after ws, if already there to beginning" })
 map("n", "L", "$", { desc = "Go to end of line" })
 map("o", "H", "_", { desc = "Move to start of line after ws" })
 map("o", "L", "$", { desc = "Move to end of line" })
@@ -195,4 +194,7 @@ map("n", "<leader>rlt", ":PlenaryBustedFile %<cr>", { desc = "Run Lua Test File"
 map("n", "<leader>rss", run_non_interactive_cmd(vim.fn.expand("%:p")), { desc = "Run shell script" })
 map("n", "<leader>rm", run_non_interactive_cmd("make"), { desc = "Run make" })
 map("n", "<leader>rt", run_non_interactive_cmd("task"), { desc = "Run task" })
+-- test
+map("n", "<leader>rrt", ":Neotest run<cr>", { desc = "Run tests" })
+
 -- stylua: ignore end
