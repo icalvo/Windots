@@ -133,6 +133,7 @@ map("n", "<leader>fd", function() snacks.picker.todo_comments() end, { desc = "T
 map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
 map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
 map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
+map("n", "<leader>fR", function() require("grug-far").with_visual_selection() end, { desc = "Replace in files..." })
 map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
 map("n", "<leader>fS", function() require("pick-resession").pick() end, { desc = "Find Session" })
 map("n", "<leader>ft", function() snacks.picker() end, { desc = "Other pickers..." })
