@@ -68,7 +68,7 @@ return {
                 formats = {
                     icon = function(item)
                         if item.file and item.icon == "file" or item.icon == "directory" then
-                            return M.icon(item.file, item.icon)
+                            return require("snacks").icon(item.file, item.icon)
                         end
                         return { item.icon, width = 2, hl = "icon" }
                     end,
