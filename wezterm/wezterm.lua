@@ -64,6 +64,7 @@ config.enable_tab_bar = true
 config.hide_tab_bar_if_only_one_tab = false
 config.show_tab_index_in_tab_bar = false
 config.use_fancy_tab_bar = false
+config.tab_max_width = 30
 config.colors.tab_bar = {
     background = config.window_background_image and "rgba(0, 0, 0, 0)" or transparent_bg,
     new_tab = { fg_color = config.colors.background, bg_color = config.colors.brights[6] },
@@ -82,8 +83,14 @@ wezterm.on("format-tab-title", function(tab, _, _, _, hover)
         background = config.colors.brights[8]
         foreground = config.colors.background
     end
-
-    local title = tostring(tab.tab_index + 1)
+    local function empty(s)
+        if s == "" then
+            return nil
+        else
+            return s
+        end
+    end
+    local title = empty(tab.tab_title) or tostring(tab.tab_index + 1)
     return {
         { Foreground = { Color = background } },
         { Text = "█" },
