@@ -1,13 +1,19 @@
 return {
     {
-        "echasnovski/mini.pairs",
+        "nvim-mini/mini.pairs",
         event = "InsertEnter",
-        config = function()
-            require("mini.pairs").setup()
+        opts = {},
+        config = function(opts)
+            require("mini.pairs").setup(opts)
+            local map_bs = function(lhs, rhs)
+                vim.keymap.set("i", lhs, rhs, { expr = true, replace_keycodes = false })
+            end
+
+            map_bs("<C-j>", "v:lua.MiniPairs.cr()")
         end,
     },
     {
-        "echasnovski/mini.icons",
+        "nvim-mini/mini.icons",
         specs = {
             { "nvim-tree/nvim-web-devicons", enabled = false, optional = true },
         },
@@ -17,7 +23,7 @@ return {
         end,
     },
     {
-        "echasnovski/mini.indentscope",
+        "nvim-mini/mini.indentscope",
         event = { "BufReadPre", "BufNewFile" },
         opts = {
             symbol = "│",
@@ -44,8 +50,8 @@ return {
         end,
     },
     {
-        "echasnovski/mini.files",
-        dependencies = { "echasnovski/mini.icons" },
+        "nvim-mini/mini.files",
+        dependencies = { "nvim-mini/mini.icons" },
         config = function()
             require("mini.files").setup({
                 windows = {
