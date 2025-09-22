@@ -29,3 +29,4 @@ git:
     paging:
         colorArg: always
         useConfig: true
+quitOnTopLevelReturn: true
