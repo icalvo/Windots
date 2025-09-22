@@ -8,8 +8,10 @@ return {
                 width_nofocus = 40,
             },
             mappings = {
+                close = "<Esc>",
                 go_in = "L",
                 go_in_plus = "l",
+                synchronize = "w",
             },
         })
 
