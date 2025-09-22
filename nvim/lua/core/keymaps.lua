@@ -97,7 +97,6 @@ map("n", "<A-l>", "<C-w>l", { desc = "Go to Right Window", remap = true })
 
 -- Break lines in normal mode
 map("n", "<C-j>", "i<C-m><Esc>", { desc = "Break line in normal mode"})
-map("n", "<C-S-j>", "mzo<Esc>`z", { desc = "Insert a new line below current one and keep cursor position" })
 
 -- Resize window using <ctrl> arrow keys
 map("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase Window Height" })
@@ -113,31 +112,6 @@ map("i", "<C-A-k>", "<esc><cmd>m .-2<cr>==gi", { desc = "Move Up" })
 map("v", "<C-A-j>", ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv", { desc = "Move Down" })
 map("v", "<C-A-k>", ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv", { desc = "Move Up" })
 
--- Buffers
-wk_add_group("<leader>b", "buffer")
-map("n", "<leader>bb", function() utils.switch_to_other_buffer() end, { desc = "Switch to Other Buffer" })
-map("n", "<leader>bd", function() snacks.bufdelete({ wipe = true }) end, { desc = "Delete buffer" })
-
--- Package manager
-map("n", "<leader>l", ":Lazy<cr>", { desc = "Package manager" })
-
--- File explorer
-map("n", "<leader>x", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-- Snacks Picker
-
--- pickers
-wk_add_group("<leader>f", "file/find")
-map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
-map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "select" }}) end, { desc = "Fuzzy find buffers" })
-map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor in CWD" })
-map("n", "<leader>fd", function() snacks.picker.todo_comments() end, { desc = "Todo" })
-map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
-map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
-map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
-map("n", "<leader>fR", function() require("grug-far").with_visual_selection() end, { desc = "Replace in files..." })
-map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
-map("n", "<leader>fS", function() require("pick-resession").pick() end, { desc = "Find Session" })
-map("n", "<leader>ft", function() snacks.picker() end, { desc = "Other pickers..." })
-
 -- flash
 map({ "n", "x", "o" }, "s", function() require("flash").jump() end,  { desc = "Flash" })
 map({ "n", "x", "o" }, "S", function() require("flash").treesitter() end, { desc = "Flash Treesitter" })
@@ -152,6 +126,30 @@ map("n", "N", "'nN'[v:searchforward]", { expr = true, desc = "Prev search result
 map("x", "N", "'nN'[v:searchforward]", { expr = true, desc = "Prev search result" })
 map("o", "N", "'nN'[v:searchforward]", { expr = true, desc = "Prev search result" })
 
+-- Buffers
+wk_add_group("<leader>b", "buffer")
+map("n", "<leader>bb", function() utils.switch_to_other_buffer() end, { desc = "Switch to Other Buffer" })
+map("n", "<leader>bd", function() snacks.bufdelete({ wipe = true }) end, { desc = "Delete buffer" })
+
+-- Package manager
+map("n", "<leader>l", ":Lazy<cr>", { desc = "Package manager" })
+
+-- File explorer
+map("n", "<leader>x", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-- Snacks Picker
+
+-- Search and Replace
+wk_add_group("<leader>f", "file/find")
+map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
+map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "select" }}) end, { desc = "Fuzzy find buffers" })
+map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor in CWD" })
+map("n", "<leader>fd", function() snacks.picker.todo_comments() end, { desc = "Todo" })
+map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
+map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
+map("n", "<leader>fr", function() snacks.picker.recent() end, { desc = "Fuzzy find recent files" })
+map("n", "<leader>fR", function() require("grug-far").with_visual_selection() end, { desc = "Replace in files..." })
+map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
+map("n", "<leader>fS", function() require("pick-resession").pick() end, { desc = "Find Session" })
+map("n", "<leader>ft", function() snacks.picker() end, { desc = "Other pickers..." })
 -- toggle options
 local function map_toggle(keymap, toggle)
     toggle:map(keymap)
