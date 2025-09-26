@@ -58,6 +58,7 @@ $chocoDeps = @(
     "windirstat"
     "zig"
     "zoxide"
+    "yt-dlp"
 )
 
 # PS Modules
