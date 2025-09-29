@@ -114,7 +114,7 @@ let g:WhichKeyDesc_settings_edit = "<leader>sv Edit .ideavimrc"
 let g:WhichKeyDesc_settings_reload = "<leader>sr Reload IdeaVim configuration"
 
 "" Key mappings
-"" ========================================================
+""
 " Force to use more ergonomic <CTRL-J> to create a new line
 inoremap <cr> <NOP>
 
@@ -136,9 +136,9 @@ vnoremap > >gv
 " nnoremap qj @q
 
 " Break line in normal mode
-nnoremap <C-j> i<C-m><Esc>
+nnoremap [<Space> i<C-m><Esc>
 " Insert a new line below current one and keep cursor position
-nnoremap <C-S-j> mzo<Esc>`z
+nnoremap ]<Space> mzo<Esc>`z
 
 " Remove search highlighted
 nnoremap <Esc> :noh<cr>
