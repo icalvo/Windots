@@ -295,13 +295,10 @@ local components = {
     "%=", -- mark end of left alignment
     component("status_messages"),
     component("lazy_updates", "String"),
-    component("copilot_status"),
     component("search_count", "Directory"),
     component("file_name", "Normal"),
     component("other_buffers", "Comment"),
-    component("progress", "Special"),
     component("location", "Changed"),
-    component("clock", "Conceal"),
 }
 
 --- Return the statusline as a concatenated string - use with vim.opt.statusline to set

@@ -36,7 +36,7 @@ opt.showtabline = 0
 
 -- Set statusline
 opt.laststatus = 3
-opt.statusline = require("core.statusline").statusline
+-- opt.statusline = require("core.statusline").statusline
 
 -- Set tab width
 opt.tabstop = 4
