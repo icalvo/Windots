@@ -114,7 +114,7 @@ let g:WhichKeyDesc_settings_edit = "<leader>sv Edit .ideavimrc"
 let g:WhichKeyDesc_settings_reload = "<leader>sr Reload IdeaVim configuration"
 
 "" Key mappings
-"" ========================================================
+""
 " Force to use more ergonomic <CTRL-J> to create a new line
 inoremap <cr> <NOP>
 
@@ -136,9 +136,9 @@ vnoremap > >gv
 " nnoremap qj @q
 
 " Break line in normal mode
-nnoremap <C-j> i<C-m><Esc>
+nnoremap [<Space> i<C-m><Esc>
 " Insert a new line below current one and keep cursor position
-nnoremap <C-S-j> mzo<Esc>`z
+nnoremap ]<Space> mzo<Esc>`z
 
 " Remove search highlighted
 nnoremap <Esc> :noh<cr>
@@ -169,19 +169,19 @@ nnoremap <C-M> <NOP>
 if has('ide')
     " Go to code
     " gd goes to declaration/usages depending on the token
-    nmap gsb <Action>(Forward)
-    nmap gsc <action>(ReSharperGotoContainingDeclaration)
-    nmap gsd <Action>(GotoDeclaration)
-    nmap gsf <Action>(Back)
-    nmap gsj <Action>(MethodDown)
-    nmap gsJ <Action>(GotoImplementation)
-    nmap gsk <Action>(MethodUp)
-    nmap gsK <Action>(GotoSuperMethod)
-    nmap gst <Action>(GotoTypeDeclaration)
-    nmap gss :!SendKeys {F14}<cr>:action FileStructurePopup<cr>
-    nmap gsT <Action>(GotoTest)
-    nmap gsu <Action>(ShowUsages)
-    nmap gsU :action ReSharperGotoContainingDeclaration<cr>:action ShowUsages<cr>
+    nmap <leader>cb <Action>(Forward)
+    nmap <leader>cc <action>(ReSharperGotoContainingDeclaration)
+    nmap <leader>cd <Action>(GotoDeclaration)
+    nmap <leader>cf <Action>(Back)
+    nmap <leader>cj <Action>(MethodDown)
+    nmap <leader>cJ <Action>(GotoImplementation)
+    nmap <leader>ck <Action>(MethodUp)
+    nmap <leader>cK <Action>(GotoSuperMethod)
+    nmap <leader>ct <Action>(GotoTypeDeclaration)
+    nmap <leader>cs :!SendKeys {F14}<cr>:action FileStructurePopup<cr>
+    nmap <leader>cT <Action>(GotoTest)
+    nmap <leader>cu <Action>(ShowUsages)
+    nmap <leader>cU :action ReSharperGotoContainingDeclaration<cr>:action ShowUsages<cr>
 
     " Git windows
     map gtc <Action>(CheckinProject)
@@ -207,7 +207,7 @@ if has('ide')
     imap <C-.> <Esc>:!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
     
     " Comment lines
-    map <leader>c :action CommentByLineComment<CR><Esc>
+    map gcc :action CommentByLineComment<CR><Esc>
 
     " Folding
     map <leader>zc :action CollapseAllRegions<CR>
