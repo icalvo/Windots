@@ -206,7 +206,7 @@ map("n", "<leader>cl", ":check lsp<cr>", { desc = "LSP Info" })
 map("n", "<leader>cs", vim.lsp.buf.signature_help, { desc = "Signature Help" })
 map("n", "<leader>ct", function() snacks.picker.lsp_type_definitions() end, { desc = "Goto Type Definitions" })
 map("n", "<leader>cu", function() snacks.picker.lsp_references() end, { desc = "Goto Usages" })
-map("n", "<leader>cU", "[fgsu", { desc = "Goto Usages of containing method", remap = true })
+map("n", "<leader>cU", "[f<leader>cu", { desc = "Goto Usages of containing method", remap = true })
 
 -- Debugging
 wk_add_group("<leader>d", "debugging")
