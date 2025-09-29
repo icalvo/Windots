@@ -40,3 +40,5 @@ require("lazy").setup({
         },
     },
 })
+-- Close Lazy window with Esc
+require("lazy.view.config").keys.close = "<esc>"
