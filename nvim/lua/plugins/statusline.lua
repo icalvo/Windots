@@ -1,7 +1,11 @@
 return {
     "nvim-lualine/lualine.nvim",
     lazy = false,
-    dependencies = { "nvim-tree/nvim-web-devicons", "smiteshp/nvim-navic" },
+    dependencies = {
+        "nvim-tree/nvim-web-devicons",
+        "smiteshp/nvim-navic",
+        "yavorski/lualine-macro-recording.nvim",
+    },
     opts = {
         options = {
             icons_enabled = true,
@@ -39,7 +43,7 @@ return {
             lualine_a = { "mode" },
             lualine_b = { "branch", "diff", "diagnostics" },
             lualine_c = { "filename", { "navic", color_correction = "dynamic" } },
-            lualine_x = { "encoding", "fileformat", "filetype" },
+            lualine_x = { { "macro_recording", "%S" }, "encoding", "fileformat", "filetype" },
             lualine_y = { "progress" },
             lualine_z = { "location" },
         },
