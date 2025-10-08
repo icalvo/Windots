@@ -197,6 +197,7 @@ map("n", "<leader><tab>h", ":tabprevious<cr>", { desc = "Previous Tab" })
 -- Code/LSP
 wk_add_group("<leader>c", "code")
 map("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action" })
+map("n", "<C-.>", vim.lsp.buf.code_action, { desc = "Code Action" })
 map("n", "<leader>c?", function() vim.diagnostic.open_float({border = 'rounded'}) end, { desc = "Line Diagnostics" })
 map("n", "<leader>cD", vim.lsp.buf.declaration, { desc = "Goto Declaration" })
 map("n", "<leader>cd", function() snacks.picker.lsp_definitions() end, { desc = "Goto Definitions" })
