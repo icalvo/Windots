@@ -3,74 +3,34 @@ return {
         -- Debug Framework
         "mfussenegger/nvim-dap",
         dependencies = {
-            "rcarriga/nvim-dap-ui",
-            "ramboe/ramboe-dotnet-utils",
+            "nvim-neotest/neotest",
+            "GustavEikaas/easy-dotnet.nvim",
         },
         config = function()
             local dap = require("dap")
-
-            local mason_path = vim.fn.expand("$MASON/packages/netcoredbg/netcoredbg/netcoredbg.exe")
-
-            local netcoredbg_adapter = {
-                type = "executable",
-                command = mason_path,
-                args = { "--interpreter=vscode" },
-            }
-
-            dap.adapters.netcoredbg = netcoredbg_adapter -- needed for normal debugging
-            dap.adapters.coreclr = netcoredbg_adapter -- needed for unit test debugging
-
-            dap.configurations.cs = {
-                {
-                    type = "coreclr",
-                    name = "launch - netcoredbg",
-                    request = "launch",
-                    program = function()
-                        return require("dap-dll-autopicker").build_dll_path()
-                    end,
-
-                    -- justMyCode = false,
-                    -- stopAtEntry = false,
-                    -- -- program = function()
-                    -- --   -- todo: request input from ui
-                    -- --   return "/path/to/your.dll"
-                    -- -- end,
-                    -- env = {
-                    --   ASPNETCORE_ENVIRONMENT = function()
-                    --     -- todo: request input from ui
-                    --     return "Development"
-                    --   end,
-                    --   ASPNETCORE_URLS = function()
-                    --     -- todo: request input from ui
-                    --     return "http://localhost:5050"
-                    --   end,
-                    -- },
-                    -- cwd = function()
-                    --   -- todo: request input from ui
-                    --   return vim.fn.getcwd()
-                    -- end,
-                },
-            }
+            local neotest = require("neotest")
 
             local map = vim.keymap.set
 
             local opts = { noremap = true, silent = true }
 
-            map("n", "<F5>", "<Cmd>lua require'dap'.continue()<CR>", opts)
-            map("n", "<F6>", "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<CR>", opts)
-            map("n", "<F9>", "<Cmd>lua require'dap'.toggle_breakpoint()<CR>", opts)
-            map("n", "<F10>", "<Cmd>lua require'dap'.step_over()<CR>", opts)
-            map("n", "<F11>", "<Cmd>lua require'dap'.step_into()<CR>", opts)
-            map("n", "<F8>", "<Cmd>lua require'dap'.step_out()<CR>", opts)
-            -- map("n", "<F12>", "<Cmd>lua require'dap'.step_out()<CR>", opts)
-            map("n", "<leader>dr", "<Cmd>lua require'dap'.repl.open()<CR>", opts)
-            map("n", "<leader>dl", "<Cmd>lua require'dap'.run_last()<CR>", opts)
+-- stylua: ignore start
+            map("n", "<F5>", function() dap.continue() end, opts)
+            map("n", "<F6>", function() neotest.run.run({strategy = 'dap'}) end, opts)
+            map("n", "<F9>", function() dap.toggle_breakpoint() end, opts)
+            map("n", "<F10>", function() dap.step_over() end, opts)
+            map("n", "<F11>", function() dap.step_into() end, opts)
+            map("n", "<F8>", function() dap.step_out() end, opts)
+            -- map("n", "<F12>", function() dap.step_out() end, opts)
+            map("n", "<leader>dr", function() dap.repl.open() end, opts)
+            map("n", "<leader>dl", function() dap.run_last() end, opts)
             map(
                 "n",
                 "<leader>dt",
-                "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<CR>",
+                function() neotest.run.run({strategy = 'dap'}) end,
                 { noremap = true, silent = true, desc = "debug nearest test" }
             )
+            require("easy-dotnet.netcoredbg").register_dap_variables_viewer()
         end,
     },
     {

@@ -17,6 +17,19 @@ return {
         require("blink.cmp").setup({
             enabled = is_enabled,
             cmdline = { completion = { menu = { auto_show = true } } },
+            fuzzy = { implementation = "prefer_rust_with_warning" },
+            sources = {
+                default = { "lsp", "easy-dotnet", "path" },
+                providers = {
+                    ["easy-dotnet"] = {
+                        name = "easy-dotnet",
+                        enabled = true,
+                        module = "easy-dotnet.completion.blink",
+                        score_offset = 10000,
+                        async = true,
+                    },
+                },
+            },
             keymap = {
                 preset = "default",
                 ["<CR>"] = { "select_and_accept", "fallback" },
