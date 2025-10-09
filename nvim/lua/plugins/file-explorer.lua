@@ -11,7 +11,7 @@ return {
                 close = "<Esc>",
                 go_in = "L",
                 go_in_plus = "l",
-                synchronize = "w",
+                synchronize = "<C-s>",
             },
         })
 
