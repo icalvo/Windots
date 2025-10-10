@@ -8,19 +8,16 @@ vim.diagnostic.config({
     },
 })
 vim.lsp.enable({
-    "bicep",
+    -- "bicep",
     -- "docker_compose_language_service",
     "html",
     "jsonls",
     "luals",
-    "ols",
     "powershell_es",
     -- "pyright",
     "rust_analyzer",
     "tailwindcss",
-    "taplo",
-    "templ",
-    -- "terraformls",
+    "taplo", -- toml
     "ts_ls",
     "yamlls",
 })
@@ -31,3 +28,4 @@ vim.lsp.config("kulala-ls", {
     filetypes = { "http" },
     root_markers = { ".git" },
 })
+vim.lsp.inlay_hint.enable()
