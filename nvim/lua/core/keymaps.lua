@@ -244,4 +244,17 @@ map("n", "<leader>et", run_non_interactive_cmd("task"), { desc = "Run task" })
 -- test
 wk_add_group("<leader>t", "test")
 map("n", "<leader>tt", ":Neotest run<cr>", { desc = "Run tests" })
+
+-- obsidian
+
+map("n", "<leader>on", "<cmd>Obsidian new_from_template Core<cr>", { desc = "New Obsidian note" })
+map("n", "<leader>oo", "<cmd>Obsidian search<cr>", { desc = "Search Obsidian notes" })
+map("n", "<leader>os", "<cmd>Obsidian quick_switch<cr>", { desc = "Quick Switch" })
+map("n", "<leader>ob", "<cmd>Obsidian backlinks<cr>", { desc = "Show location list of backlinks" })
+map("n", "<leader>of", "<cmd>Obsidian follow_link<cr>", { desc = "Follow link under cursor" })
+map("n", "<leader>ot", "<cmd>Obsidian template Core<cr>", { desc = "Apply Core Template" })
+-- Custom git sync job - manual trigger. Auto sync is available but off by default.
+-- Toggle on with <leader>to (toggle obsidian git sync)
+map("n", "<leader>og", "<cmd>ObsidianGitSync<cr>", { desc = "Sync changes to git" })
+
 -- stylua: ignore end
