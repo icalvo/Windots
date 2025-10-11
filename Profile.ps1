@@ -315,6 +315,7 @@ Set-PSReadLineOption -PredictionSource HistoryAndPlugin
 Set-PSReadLineOption -PredictionViewStyle InlineView
 Set-PSReadLineKeyHandler -Function AcceptSuggestion -Key Alt+l
 Import-Module -Name CompletionPredictor
+Import-Module -Name PsReadLine
 
 # Things only for interactive shells
 if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
@@ -343,6 +344,18 @@ if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
 
     $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
     # dotnet suggest script end
+    function OnViModeChange {
+        if ($args[0] -eq 'Command') {
+            # Set the cursor to a steady block.
+            Write-Host -NoNewline "`e[2 q"
+        } else {
+            # Set the cursor to a steady line.
+            Write-Host -NoNewline "`e[6 q"
+        }
+    }
+    Write-Host -NoNewline "`e[6 q"
+    # Set-PSReadLineOption -EditMode vi -ViModeIndicator Cursor
+    Set-PSReadLineOption -EditMode vi -ViModeIndicator Script -ViModeChangeHandler $Function:OnViModeChange
 }
 
 Invoke-Expression (& { ( zoxide init powershell --cmd cd | Out-String ) })
