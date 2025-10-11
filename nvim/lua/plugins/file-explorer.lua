@@ -11,7 +11,6 @@ return {
                 close = "<Esc>",
                 go_in = "L",
                 go_in_plus = "l",
-                synchronize = "<C-s>",
             },
         })
 
@@ -230,6 +229,18 @@ return {
         autocmd("User", {
             pattern = "MiniFilesBufferCreate",
             callback = function(args)
+                -- Enable :write for synchronizing changes
+                vim.schedule(function()
+                    vim.api.nvim_set_option_value("buftype", "acwrite", { buf = 0 })
+                    vim.api.nvim_buf_set_name(0, tostring(vim.api.nvim_get_current_win()))
+                    vim.api.nvim_create_autocmd("BufWriteCmd", {
+                        buffer = ev.data.buf_id,
+                        callback = function()
+                            require("mini.files").synchronize()
+                        end,
+                    })
+                end)
+                -- <leader>a : dotnet new
                 local buf_id = args.data.buf_id
                 vim.keymap.set("n", "<leader>a", function()
                     local entry = require("mini.files").get_fs_entry()
