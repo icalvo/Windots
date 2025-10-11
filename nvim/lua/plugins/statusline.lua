@@ -41,7 +41,16 @@ return {
         },
         sections = {
             lualine_a = { "mode" },
-            lualine_b = { { require("easy-dotnet.ui-modules.jobs").lualine }, "branch", "diff", "diagnostics" },
+            lualine_b = {
+                {
+                    "require'salesforce.org_manager':get_default_alias()",
+                    icon = "󰢎",
+                },
+                { require("easy-dotnet.ui-modules.jobs").lualine },
+                "branch",
+                "diff",
+                "diagnostics",
+            },
             lualine_c = { "filename", { "navic", color_correction = "dynamic" } },
             lualine_x = { { "macro_recording", "%S" }, "encoding", "fileformat", "filetype" },
             lualine_y = { "progress" },
