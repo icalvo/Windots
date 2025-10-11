@@ -11,7 +11,7 @@ return {
             },
             registries = {
                 "github:mason-org/mason-registry",
-                "github:Crashdummyy/mason-registry",
+                "github:crashdummyy/mason-registry",
             },
         })
 
@@ -21,9 +21,6 @@ return {
             "bicep-lsp",
             "docker-compose-language-service",
             "dockerfile-language-server",
-            "goimports-reviser",
-            "golines",
-            "gopls",
             "html-lsp",
             "jq",
             "json-lsp",
@@ -35,7 +32,6 @@ return {
             "prettier",
             "pyright",
             "roslyn",
-            "rust-analyzer",
             "rzls",
             "shfmt",
             "stylua",

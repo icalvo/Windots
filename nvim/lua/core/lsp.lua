@@ -15,7 +15,7 @@ vim.lsp.enable({
     "luals",
     "powershell_es",
     -- "pyright",
-    "rust_analyzer",
+    -- "rust_analyzer",
     "tailwindcss",
     "taplo", -- toml
     "ts_ls",
