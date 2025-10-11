@@ -185,7 +185,10 @@ map("n", "<leader>w-", "<C-W>s", { desc = "Split window below", remap = true })
 map("n", "<leader>w|", "<C-W>v", { desc = "Split window right", remap = true })
 map("n", "<leader>-", "<C-W>s", { desc = "Split window below", remap = true })
 map("n", "<leader>|", "<C-W>v", { desc = "Split window right", remap = true })
+
+-- visual layout
 map("n", "<leader>vz", function() snacks.zen() end, { desc = "Zen mode" })
+map("n", "<leader>vv", ":only<cr>", { desc = "Close other windows" })
 
 -- tabs
 wk_add_group("<leader><Tab>", "tabs")
