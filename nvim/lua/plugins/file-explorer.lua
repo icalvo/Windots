@@ -228,7 +228,7 @@ return {
         })
         autocmd("User", {
             pattern = "MiniFilesBufferCreate",
-            callback = function(args)
+            callback = function(ev)
                 -- Enable :write for synchronizing changes
                 vim.schedule(function()
                     vim.api.nvim_set_option_value("buftype", "acwrite", { buf = 0 })
@@ -241,7 +241,6 @@ return {
                     })
                 end)
                 -- <leader>a : dotnet new
-                local buf_id = args.data.buf_id
                 vim.keymap.set("n", "<leader>a", function()
                     local entry = require("mini.files").get_fs_entry()
                     if entry == nil then
@@ -252,8 +251,9 @@ return {
                     if entry.fs_type == "file" then
                         target_dir = vim.fn.fnamemodify(entry.path, ":h")
                     end
+                    require("mini.files").close() -- close mini files before opening new window
                     require("easy-dotnet").create_new_item(target_dir)
-                end, { buffer = buf_id, desc = "Create file from dotnet template" })
+                end, { buffer = ev.data.buf_id, desc = "Create file from dotnet template" })
             end,
         })
     end,
