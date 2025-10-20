@@ -1,5 +1,6 @@
 local utils = require("core.utils")
 local snacks = require("snacks")
+local dotnet = require("easy-dotnet")
 
 --- Map a key combination to a command
 ---@param modes string|string[]: The mode(s) to map the key combination to
@@ -175,6 +176,7 @@ map("n", "<leader>gg", function() snacks.lazygit() end, { desc = "Lazygit" })
 map("n", "<esc>", ":noh<cr><esc>", { desc = "Escape and clear hlsearch" })
 
 -- quit
+wk_add_group("<leader>q", "quit")
 map("n", "<leader>qq", ":qa<cr>", { desc = "Quit all" })
 
 -- windows
@@ -187,6 +189,7 @@ map("n", "<leader>-", "<C-W>s", { desc = "Split window below", remap = true })
 map("n", "<leader>|", "<C-W>v", { desc = "Split window right", remap = true })
 
 -- visual layout
+wk_add_group("<leader>v", "visual layout")
 map("n", "<leader>vz", function() snacks.zen() end, { desc = "Zen mode" })
 map("n", "<leader>vv", ":only<cr>", { desc = "Close other windows" })
 
@@ -213,7 +216,24 @@ map("n", "<leader>cu", function() snacks.picker.lsp_references() end, { desc = "
 map("n", "<leader>cU", "[f<leader>cu", { desc = "Goto Usages of containing method", remap = true })
 
 -- Debugging
-wk_add_group("<leader>d", "debugging")
+wk_add_group("<leader>d", ".NET debugging")
+            local dap = require("dap")
+            local neotest = require("neotest")
+map("n", "<leader>dd", function() dotnet.run_profile() end, { desc = "Run" })
+            map("n", "<F5>", function() dap.continue() end, { desc = "Continue" })
+            map("n", "<F6>", function() neotest.run.run({strategy = 'dap'}) end, { desc = "Test Debug" })
+            map("n", "<F9>", function() dap.toggle_breakpoint() end, { desc = "Toggle breakpoint" })
+            map("n", "<F10>", function() dap.step_over() end, { desc = "Step over" })
+            map("n", "<F11>", function() dap.step_into() end, { desc = "Step into" })
+            map("n", "<F8>", function() dap.step_out() end, { desc = "Step out" })
+            map("n", "<leader>dp", function() dap.repl.open() end, { desc = "Open repl" })
+            map("n", "<leader>dl", function() dap.run_last() end, { desc = "Run last" })
+            map(
+                "n",
+                "<leader>dt",
+                function() neotest.run.run({strategy = 'dap'}) end,
+                { desc = "debug nearest test" }
+            )
 
 -- Refactoring
 wk_add_group("<leader>r", "refactor")
@@ -246,7 +266,7 @@ wk_add_group("<leader>t", "test")
 map("n", "<leader>tt", ":Neotest run<cr>", { desc = "Run tests" })
 
 -- obsidian
-
+wk_add_group("<leader>o", "obsidian")
 map("n", "<leader>on", "<cmd>Obsidian new_from_template Core<cr>", { desc = "New Obsidian note" })
 map("n", "<leader>oo", "<cmd>Obsidian search<cr>", { desc = "Search Obsidian notes" })
 map("n", "<leader>os", "<cmd>Obsidian quick_switch<cr>", { desc = "Quick Switch" })

@@ -22,7 +22,7 @@ return {
             map("n", "<F11>", function() dap.step_into() end, opts)
             map("n", "<F8>", function() dap.step_out() end, opts)
             -- map("n", "<F12>", function() dap.step_out() end, opts)
-            map("n", "<leader>dr", function() dap.repl.open() end, opts)
+            map("n", "<leader>dp", function() dap.repl.open() end, opts)
             map("n", "<leader>dl", function() dap.run_last() end, opts)
             map(
                 "n",

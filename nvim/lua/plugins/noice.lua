@@ -16,6 +16,12 @@ return {
             routes = {
                 {
                     filter = {
+                        cmdline = "^:ls$",
+                    },
+                    view = "split",
+                },
+                {
+                    filter = {
                         event = "msg_show",
                         any = {
                             { find = "%d+L, %d+B" },
