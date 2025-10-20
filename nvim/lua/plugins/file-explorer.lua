@@ -198,12 +198,14 @@ return {
             return vim.api.nvim_create_augroup("MiniFiles_" .. name, { clear = true })
         end
 
+        local counter = 0
         autocmd("User", {
             group = augroup("start"),
             pattern = "MiniFilesExplorerOpen",
             callback = function()
                 local bufnr = vim.api.nvim_get_current_buf()
                 updateGitStatus(bufnr)
+                counter = 0
             end,
         })
 
@@ -232,7 +234,9 @@ return {
                 -- Enable :write for synchronizing changes
                 vim.schedule(function()
                     vim.api.nvim_set_option_value("buftype", "acwrite", { buf = 0 })
-                    vim.api.nvim_buf_set_name(0, tostring(vim.api.nvim_get_current_win()))
+                    -- Give the file a unique name to enable the write cmd
+                    vim.api.nvim_buf_set_name(0, "minifiles" .. counter)
+                    counter = counter + 1
                     vim.api.nvim_create_autocmd("BufWriteCmd", {
                         buffer = ev.data.buf_id,
                         callback = function()
