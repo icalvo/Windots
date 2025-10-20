@@ -103,8 +103,38 @@ F14::
 ~AppsKey::EnableVimMode()
 
 ; VIM mode key mappings (only active when vimMode is true)
-#HotIf vimMode
+; #HotIf vimMode and WinActive("ahk_exe Dorico5.exe")
+; 
+; $h::Send("{Left}")
+; $j::Send("{Down}")
+; $k::Send("{Up}")
+; $l::Send("{Right}")
+; $^h::Send("^{Left}")
+; $^j::Send("^{Down}")
+; $^k::Send("^{Up}")
+; $^l::Send("^{Right}")
+; $+h::Send("+{Left}")
+; $+j::Send("+{Down}")
+; $+k::Send("+{Up}")
+; $+l::Send("+{Right}")
+; $^+h::Send("^+{Left}")
+; $^+j::Send("^+{Down}")
+; $^+k::Send("^+{Up}")
+; $^+l::Send("^+{Right}")
+; $!h::Send("!{Left}")
+; $!j::Send("!{Down}")
+; $!k::Send("!{Up}")
+; $!l::Send("!{Right}")
+; $!+h::Send("!+{Left}")
+; $!+j::Send("!+{Down}")
+; $!+k::Send("!+{Up}")
+; $!+l::Send("!+{Right}")
+; $!^+h::Send("!^+{Left}")
+; $!^+j::Send("!^+{Down}")
+; $!^+k::Send("!^+{Up}")
+; $!^+l::Send("!^+{Right}")
 
+#HotIf vimMode
 $h::Send("{Left}")
 $j::Send("{Down}")
 $k::Send("{Up}")
@@ -121,5 +151,5 @@ $^l::Send("{End}")
 ~Enter::ToggleVimMode()
 ~Esc::ToggleVimMode()
 CapsLock::ToggleVimMode()
-#HotIf  ; End conditional hotkeys
-
+#!h::tip()
+#HotIf
