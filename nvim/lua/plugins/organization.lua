@@ -15,7 +15,7 @@ return {
     opts = {
         completion = { blink = true },
         picker = { snacks = true },
-        disable_frontmatter = true,
+        frontmatter = { enabled = false },
         -- new_notes_location = "notes_subdir",
         -- notes_subdir = "Zettelkasten",
         templates = { folder = "Templates", date_format = "%y-%m-%d", time_format = "%H:%M" },
