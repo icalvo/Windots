@@ -40,7 +40,14 @@ return {
             },
         },
         sections = {
-            lualine_a = { "mode" },
+            lualine_a = {
+                {
+                    "mode",
+                    fmt = function(str)
+                        return str:sub(1, 1)
+                    end,
+                },
+            },
             lualine_b = {
                 {
                     "require'salesforce.org_manager':get_default_alias()",
@@ -51,33 +58,28 @@ return {
                 "diff",
                 "diagnostics",
             },
-            lualine_c = { "filename", { "navic", color_correction = "dynamic" } },
+            lualine_c = { { "filename", color = { fg = "#ffffff" } }, { "navic", color_correction = "dynamic" } },
             lualine_x = {
-                {
-                    require("noice").api.status.message.get_hl,
-                    cond = require("noice").api.status.message.has,
-                },
-                {
-                    require("noice").api.status.command.get,
-                    cond = require("noice").api.status.command.has,
-                    color = { fg = "#ff9e64" },
-                },
-                {
-                    require("noice").api.status.mode.get,
-                    cond = require("noice").api.status.mode.has,
-                    color = { fg = "#ff9e64" },
-                },
                 {
                     require("noice").api.status.search.get,
                     cond = require("noice").api.status.search.has,
-                    color = { fg = "#ff9e64" },
+                    color = { fg = "#ff9eff" },
                 },
                 { "macro_recording", "%S" },
-                "encoding",
+                {
+                    "encoding",
+                    fmt = function(str)
+                        if str == "utf-8" then
+                            return ""
+                        else
+                            return str
+                        end
+                    end,
+                },
                 "fileformat",
                 "filetype",
             },
-            lualine_y = { "progress" },
+            lualine_y = {},
             lualine_z = { "location" },
         },
         inactive_sections = {
