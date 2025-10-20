@@ -26,7 +26,4 @@ gui:
             - "#ffffff"
 git:
     parseEmoji: true
-    paging:
-        colorArg: always
-        useConfig: true
 quitOnTopLevelReturn: true
