@@ -11,7 +11,7 @@ require("lazy").setup({
     },
     defaults = {
         lazy = true,
-        version = false,
+        version = "*",
     },
     install = {
         missing = true,
