@@ -142,7 +142,7 @@ map("n", "<leader>x", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-
 wk_add_group("<leader>f", "file/find")
 map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
 map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "select" }}) end, { desc = "Fuzzy find buffers" })
-map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor in CWD" })
+map("n", "<leader>fc", function() snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')}) end, { desc = "Find config files"})
 map("n", "<leader>fd", function() snacks.picker.todo_comments() end, { desc = "Todo" })
 map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
 map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
@@ -151,6 +151,7 @@ map("n", "<leader>fR", function() require("grug-far").with_visual_selection() en
 map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
 map("n", "<leader>fS", function() require("pick-resession").pick() end, { desc = "Find Session" })
 map("n", "<leader>ft", function() snacks.picker() end, { desc = "Other pickers..." })
+map("n", "<leader>fw", function() snacks.picker.grep_word() end, { desc = "Find word under cursor in CWD" })
 -- toggle options
 local function map_toggle(keymap, toggle)
     toggle:map(keymap)
