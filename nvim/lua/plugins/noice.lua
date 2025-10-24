@@ -16,7 +16,10 @@ return {
             routes = {
                 {
                     filter = {
-                        cmdline = "^:ls$",
+                        any = {
+                            { cmdline = "^:ls$" },
+                            { cmdline = "^:verbose" },
+                        },
                     },
                     view = "split",
                 },
