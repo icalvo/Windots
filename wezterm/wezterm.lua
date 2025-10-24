@@ -121,4 +121,14 @@ if host_os == "linux" then
     config.window_decorations = nil -- use system decorations
 end
 
+wezterm.on("update-right-status", function(window, pane)
+    local home = "C:/Users/ignacio.calvo"
+    local cwd_uri = pane:get_current_working_dir().file_path:sub(2):gsub(home, "~")
+
+    -- Make it italic and underlined
+    window:set_right_status(wezterm.format({
+        { Attribute = { Italic = true } },
+        { Text = cwd_uri },
+    }))
+end)
 return config
