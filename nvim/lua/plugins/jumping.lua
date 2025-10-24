@@ -1,8 +1,8 @@
 return {
 	{
 		"folke/flash.nvim",
-		event = "VeryLazy",
-		---@type Flash.Config
+		event = "verylazy",
+		---@type flash.config
 		opts = {
 			modes = {
 				char = {
