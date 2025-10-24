@@ -231,19 +231,19 @@ return {
         autocmd("User", {
             pattern = "MiniFilesBufferCreate",
             callback = function(ev)
-                -- Enable :write for synchronizing changes
-                vim.schedule(function()
-                    vim.api.nvim_set_option_value("buftype", "acwrite", { buf = 0 })
-                    -- Give the file a unique name to enable the write cmd
-                    vim.api.nvim_buf_set_name(0, "minifiles" .. counter)
-                    counter = counter + 1
-                    vim.api.nvim_create_autocmd("BufWriteCmd", {
-                        buffer = ev.data.buf_id,
-                        callback = function()
-                            require("mini.files").synchronize()
-                        end,
-                    })
-                end)
+                -- -- Enable :write for synchronizing changes
+                -- vim.schedule(function()
+                --     vim.api.nvim_set_option_value("buftype", "acwrite", { buf = ev.data.buf_id })
+                --     -- Give the file a unique name to enable the write cmd
+                --     vim.api.nvim_buf_set_name(ev.data.buf_id, "minifiles" .. counter)
+                --     counter = counter + 1
+                --     vim.api.nvim_create_autocmd("BufWriteCmd", {
+                --         buffer = ev.data.buf_id,
+                --         callback = function()
+                --             require("mini.files").synchronize()
+                --         end,
+                --     })
+                -- end)
                 -- <leader>a : dotnet new
                 vim.keymap.set("n", "<leader>a", function()
                     local entry = require("mini.files").get_fs_entry()
