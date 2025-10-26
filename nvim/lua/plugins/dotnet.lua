@@ -1,16 +1,7 @@
 return {
     {
         "seblyng/roslyn.nvim",
-        lazy = false,
-        init = function()
-            -- We add the Razor file types before the plugin loads.
-            vim.filetype.add({
-                extension = {
-                    razor = "razor",
-                    cshtml = "razor",
-                },
-            })
-        end,
+        ft = { "cs", "razor" },
         dependencies = {
             {
                 -- By loading as a dependencies, we ensure that we are available to set
@@ -20,7 +11,9 @@ return {
             },
         },
         config = function()
-            -- Using mason
+            -- Use one of the methods in the Integration section to compose the command.
+            local mason_registry = require("mason-registry")
+
             local rzls_path = vim.fn.expand("$MASON/packages/rzls/libexec")
             local cmd = {
                 "roslyn",
@@ -60,10 +53,24 @@ return {
             })
             vim.lsp.enable("roslyn")
         end,
+        init = function()
+            -- We add the Razor file types before the plugin loads.
+            vim.filetype.add({
+                extension = {
+                    razor = "razor",
+                    cshtml = "razor",
+                },
+            })
+        end,
     },
+    -- {
+    --     "seblyng/roslyn.nvim",
+    --     ft = { "cs" },
+    --     opts = {},
+    -- },
     {
         "GustavEikaas/easy-dotnet.nvim",
-        enabled = false,
+        enabled = true,
         dependencies = {
             "nvim-lua/plenary.nvim",
             "folke/snacks.nvim",

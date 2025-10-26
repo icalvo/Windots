@@ -8,49 +8,49 @@ local dotnet = require("easy-dotnet")
 ---@param rhs string|function: The command to run when the key combination is pressed
 ---@param opts table: Options to pass to the keymap
 local map = function(modes, lhs, rhs, opts)
-    local options = { silent = true }
-    if opts then
-        options = vim.tbl_extend("force", options, opts)
-    end
-    if type(modes) == "string" then
-        modes = { modes }
-    end
-    for _, mode in ipairs(modes) do
-        vim.keymap.set(mode, lhs, rhs, options)
-    end
+	local options = { silent = true }
+	if opts then
+		options = vim.tbl_extend("force", options, opts)
+	end
+	if type(modes) == "string" then
+		modes = { modes }
+	end
+	for _, mode in ipairs(modes) do
+		vim.keymap.set(mode, lhs, rhs, options)
+	end
 end
 
 local copilot_toggle_opts = {
-    name = "Copilot Completion",
-    get = function()
-        return not require("copilot.client").is_disabled()
-    end,
-    set = function(state)
-        if state then
-            require("copilot.command").enable()
-        else
-            require("copilot.command").disable()
-        end
-    end,
+	name = "Copilot Completion",
+	get = function()
+		return not require("copilot.client").is_disabled()
+	end,
+	set = function(state)
+		if state then
+			require("copilot.command").enable()
+		else
+			require("copilot.command").disable()
+		end
+	end,
 }
 
 --- Open a non-interactive terminal and run a command. Keeps the current window focused.
 ---@param cmd string: The command to run
 local function run_non_interactive_cmd(cmd)
-    return function()
-        local win = vim.api.nvim_get_current_win()
-        snacks.terminal.toggle(cmd, { interactive = false })
-        vim.api.nvim_set_current_win(win)
-    end
+	return function()
+		local win = vim.api.nvim_get_current_win()
+		snacks.terminal.toggle(cmd, { interactive = false })
+		vim.api.nvim_set_current_win(win)
+	end
 end
 
 --- Open mini.files, also if the current buffer is not a file
 local function open_mini_files_safe()
-    local path = vim.bo.buftype ~= "nofile" and vim.api.nvim_buf_get_name(0) or nil
-    local ok = pcall(require("mini.files").open, path)
-    if not ok then
-        require("mini.files").open()
-    end
+	local path = vim.bo.buftype ~= "nofile" and vim.api.nvim_buf_get_name(0) or nil
+	local ok = pcall(require("mini.files").open, path)
+	if not ok then
+		require("mini.files").open()
+	end
 end
 
 -- stylua: ignore start
@@ -142,7 +142,7 @@ map("n", "<leader>x", open_mini_files_safe, { desc = "Open mini.files (cwd)" })-
 wk_add_group("<leader>f", "file/find")
 map("n", "<leader><leader>", function() snacks.picker.smart() end, { desc = "Smart Fuzzy Find" })
 map("n", "<leader>fb", function() snacks.picker.buffers({ layout = { preset = "select" }}) end, { desc = "Fuzzy find buffers" })
-map("n", "<leader>fc", function() snacks.picker.grep_word() end, { desc = "Find word under cursor in CWD" })
+map("n", "<leader>fc", function() snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')}) end, { desc = "Find config files"})
 map("n", "<leader>fd", function() snacks.picker.todo_comments() end, { desc = "Todo" })
 map("n", "<leader>ff", function() snacks.picker.files({ hidden = true }) end, { desc = "Fuzzy find files" })
 map("n", "<leader>fh", function() snacks.picker.help() end, { desc = "Find help tags" })
@@ -151,6 +151,7 @@ map("n", "<leader>fR", function() require("grug-far").with_visual_selection() en
 map("n", "<leader>fs", function() snacks.picker.grep() end, { desc = "Find string in CWD" })
 map("n", "<leader>fS", function() require("pick-resession").pick() end, { desc = "Find Session" })
 map("n", "<leader>ft", function() snacks.picker() end, { desc = "Other pickers..." })
+map("n", "<leader>fw", function() snacks.picker.grep_word() end, { desc = "Find word under cursor in CWD" })
 -- toggle options
 local function map_toggle(keymap, toggle)
     toggle:map(keymap)

@@ -57,6 +57,10 @@ return {
                 "branch",
                 "diff",
                 "diagnostics",
+                {
+                    require("kulala").get_selected_env,
+                    color = { fg = "#ffcc00" },
+                },
             },
             lualine_c = { { "filename", color = { fg = "#ffffff" } }, { "navic", color_correction = "dynamic" } },
             lualine_x = {

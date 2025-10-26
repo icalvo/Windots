@@ -1,5 +1,6 @@
 -- Initialize Configuration
 local wezterm = require("wezterm")
+local act = wezterm.action
 local config = wezterm.config_builder()
 local opacity = 1
 local transparent_bg = "rgba(22, 24, 26, " .. opacity .. ")"
@@ -103,10 +104,16 @@ wezterm.on("format-tab-title", function(tab, _, _, _, hover)
 end)
 
 -- Keybindings
+config.leader = {
+    key = "a",
+    mods = "CTRL",
+    timeout_milliseconds = 2000,
+}
 config.keys = {
-    { key = "c", mods = "CTRL|SHIFT", action = wezterm.action({ CopyTo = "ClipboardAndPrimarySelection" }) },
-    { key = "v", mods = "CTRL", action = wezterm.action({ PasteFrom = "Clipboard" }) },
-    { key = "j", mods = "CTRL|SHIFT", action = wezterm.action.SendKey({ key = "j", mods = "CTRL|SHIFT" }) },
+    { key = "c", mods = "CTRL|SHIFT", action = act({ CopyTo = "ClipboardAndPrimarySelection" }) },
+    { key = "v", mods = "CTRL", action = act({ PasteFrom = "Clipboard" }) },
+    { key = "j", mods = "CTRL|SHIFT", action = act.SendKey({ key = "j", mods = "CTRL|SHIFT" }) },
+    { key = "c", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
 }
 
 -- Default Shell Configuration
@@ -121,4 +128,14 @@ if host_os == "linux" then
     config.window_decorations = nil -- use system decorations
 end
 
+wezterm.on("update-right-status", function(window, pane)
+    local home = "C:/Users/ignacio.calvo"
+    local cwd_uri = pane:get_current_working_dir().file_path:sub(2):gsub(home, "~")
+
+    -- Make it italic and underlined
+    window:set_right_status(wezterm.format({
+        { Attribute = { Italic = true } },
+        { Text = cwd_uri },
+    }))
+end)
 return config

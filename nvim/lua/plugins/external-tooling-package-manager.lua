@@ -19,6 +19,7 @@ return {
         local ignore_on_nixos = { "nil" }
         local mason_packages = {
             "bicep-lsp",
+            "csharpier",
             "docker-compose-language-service",
             "dockerfile-language-server",
             "html-lsp",
