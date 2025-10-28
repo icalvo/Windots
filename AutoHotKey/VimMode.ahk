@@ -121,5 +121,6 @@ $^l::Send("{End}")
 ~Enter::ToggleVimMode()
 ~Esc::ToggleVimMode()
 CapsLock::ToggleVimMode()
+~^+Enter::ToggleVimMode()
 #HotIf  ; End conditional hotkeys
 
