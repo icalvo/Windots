@@ -5,6 +5,7 @@ upgrade:
     interval: 168h
     auto: false
     notice: false
+console_title_template: "{{ .Env.GITREPO }}"
 blocks:
     - type: prompt
       alignment: left

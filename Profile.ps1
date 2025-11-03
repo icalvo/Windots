@@ -357,7 +357,8 @@ if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     # Set-PSReadLineOption -EditMode vi -ViModeIndicator Cursor
     Set-PSReadLineOption -EditMode vi -ViModeIndicator Script -ViModeChangeHandler $Function:OnViModeChange
 }
-function Set-EnvVar
+
+function Set-EnvVars
 {
   $p = $executionContext.SessionState.Path.CurrentLocation
   $osc7 = ""
@@ -368,6 +369,16 @@ function Set-EnvVar
     $osc7 = "$ansi_escape]7;file://${env:COMPUTERNAME}/${provider_path}${ansi_escape}\"
   }
   $env:OSC7=$osc7
+    $repo = git rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $repo = Split-Path -Leaf $repo
+        $repo = "R:$repo"
+    } else {
+        $repo = Split-Path -Leaf (Get-Location)
+    }
+    $env:GITREPO = $repo
 }
-New-Alias -Name 'Set-PoshContext' -Value 'Set-EnvVar' -Scope Global -Force
+
+New-Alias -Name 'Set-PoshContext' -Value 'Set-EnvVars' -Scope Global -Force
+
 Invoke-Expression (& { ( zoxide init powershell --cmd cd | Out-String ) })
