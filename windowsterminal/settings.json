@@ -10,7 +10,8 @@
     "initialCols": 150,
     "initialPosition": ",",
     "initialRows": 38,
-    "keybindings": [
+    "keybindings": 
+    [
         {
             "id": "Terminal.CopyToClipboard",
             "keys": "ctrl+c"
@@ -28,24 +29,31 @@
             "keys": "alt+shift+d"
         }
     ],
-    "newTabMenu": [
+    "launchMode": "maximized",
+    "newTabMenu": 
+    [
         {
             "type": "remainingProfiles"
         }
     ],
-    "profiles": {
-        "defaults": {
+    "profiles": 
+    {
+        "defaults": 
+        {
+            "backgroundImage": "C:\\Users\\ignacio.calvo\\Repos\\Windots\\wezterm\\bg-blurred.png",
             "colorScheme": "cyberdream",
-            "font": {
+            "font": 
+            {
                 "face": "JetBrainsMono Nerd Font",
-                "size": 10.4
+                "size": 12
             },
             "opacity": 90,
             "padding": "10",
             "scrollbarState": "hidden",
             "useAcrylic": true
         },
-        "list": [
+        "list": 
+        [
             {
                 "commandline": "%SystemRoot%\\System32\\cmd.exe",
                 "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
@@ -72,7 +80,8 @@
             }
         ]
     },
-    "schemes": [
+    "schemes": 
+    [
         {
             "background": "#16181A",
             "black": "#16181A",
@@ -98,5 +107,7 @@
         }
     ],
     "showTabsInTitlebar": true,
-    "themes": []
+    "theme": "dark",
+    "themes": [],
+    "windowingBehavior": "useAnyExisting"
 }
