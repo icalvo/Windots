@@ -8,11 +8,49 @@
 
 -- Use this section to add custom general mappings. See `:h vim.keymap.set()`.
 
--- An example helper to create a Normal mode mapping
+-- Helper to create a Normal mode mapping
 local nmap = function(lhs, rhs, desc)
   -- See `:h vim.keymap.set()`
   vim.keymap.set('n', lhs, rhs, { desc = desc })
 end
+
+--- Map a key combination to a command
+---@param modes string|string[]: The mode(s) to map the key combination to
+---@param lhs string: The key combination to map
+---@param rhs string|function: The command to run when the key combination is pressed
+---@param opts table|string: Options to pass to the keymap
+local map = function(modes, lhs, rhs, opts)
+  if type(opts) == 'string' then opts = { desc = opts } end
+  local options = { silent = true }
+  if opts then options = vim.tbl_extend('force', options, opts) end
+  if type(modes) == 'string' then modes = { modes } end
+  for _, mode in ipairs(modes) do
+    vim.keymap.set(mode, lhs, rhs, options)
+  end
+end
+
+-- better up/down
+map({ 'n', 'x' }, 'j', "v:count == 0 ? 'gj' : 'j'", { desc = 'Down', expr = true })
+map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true })
+
+-- Map H and L to _ and $ for better ergonomy
+local smart_go_to_begin_of_line = function()
+  local current_col = vim.fn.virtcol('.')
+  vim.cmd('normal ^')
+  local first_char = vim.fn.virtcol('.')
+  if current_col <= first_char then vim.cmd('normal 0') end
+end
+map(
+  '',
+  'H',
+  smart_go_to_begin_of_line,
+  'Go to start of line after ws, or to beginning'
+)
+map('', 'L', '$', 'Go to end of line')
+map('n', '<C-a>', 'ggVG', 'Select all the buffer')
+
+-- Clear search highlight with <esc>
+map('n', '<esc>', ':noh<cr><esc>', 'Escape and clear hlsearch')
 
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
@@ -125,7 +163,7 @@ nmap_leader('cu', vim.lsp.buf.references,                                       
 nmap_leader("cU", "[f<leader>cu",                                                "Goto Usages of containing method")
 nmap_leader('ct', vim.lsp.buf.type_definition,                                   'Type definition')
 
-add_group  { mode = 'n', keys = '<Leader>d', desc = 'Refactor...' }
+add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
 
 add_group  { mode = 'n', keys = '<Leader>e', desc = 'Explore/Edit...' }
 -- e is for 'Explore' and 'Edit'. Common usage:
