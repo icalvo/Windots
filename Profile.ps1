@@ -372,7 +372,7 @@ function Set-EnvVars
     $repo = git rev-parse --show-toplevel 2>$null
     if ($LASTEXITCODE -eq 0) {
         $repo = Split-Path -Leaf $repo
-        $repo = "R:$repo"
+        $repo = "🧰 $repo"
     } else {
         $repo = Split-Path -Leaf (Get-Location)
     }
