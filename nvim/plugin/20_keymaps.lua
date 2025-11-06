@@ -40,17 +40,14 @@ local smart_go_to_begin_of_line = function()
   local first_char = vim.fn.virtcol('.')
   if current_col <= first_char then vim.cmd('normal 0') end
 end
-map(
-  '',
-  'H',
-  smart_go_to_begin_of_line,
-  'Go to start of line after ws, or to beginning'
-)
-map('', 'L', '$', 'Go to end of line')
-map('n', '<C-a>', 'ggVG', 'Select all the buffer')
+
+-- stylua: ignore start
+map('',  'H',     smart_go_to_begin_of_line, 'Go to start of line after ws, or to beginning')
+map('',  'L',     '$',                       'Go to end of line')
+map('n', '<C-a>', 'ggVG',                    'Select all the buffer')
 
 -- Clear search highlight with <esc>
-map('n', '<esc>', ':noh<cr><esc>', 'Escape and clear hlsearch')
+map('n', '<esc>', ':noh<cr><esc>',           'Escape and clear hlsearch')
 
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
@@ -59,21 +56,6 @@ nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
-nmap('<leader>dd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>", '')
-nmap('<F5>', "<Cmd>lua require('dap').continue()<cr>", '')
-nmap('<F6>', "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", '')
-nmap('<F9>', "<Cmd>lua require('dap').toggle_breakpoint()<cr>", '')
-nmap('<F10>', "<Cmd>lua require('dap').step_over()<cr>", '')
-nmap('<F11>', "<Cmd>lua require('dap').step_into()<cr>", '')
-nmap('<F8>', "<Cmd>lua require('dap').step_out()<cr>", '')
-nmap('<F12>', "<Cmd>lua require('dap').step_out()<cr>", '')
-nmap('<leader>dp', "<Cmd>lua require('dap').repl.open()<cr>", '')
-nmap('<leader>dl', "<Cmd>lua require('dap').run_last()<cr>", '')
-nmap(
-  '<leader>dt',
-  "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>",
-  'debug nearest test'
-)
 -- stylua: ignore start
 -- The next part (until `-- stylua: ignore end`) is aligned manually for easier
 -- reading. Consider preserving this or remove `-- stylua` lines to autoformat.
@@ -164,6 +146,17 @@ nmap_leader("cU", "[f<leader>cu",                                               
 nmap_leader('ct', vim.lsp.buf.type_definition,                                   'Type definition')
 
 add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
+nmap_leader('dd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>",   'Run default profile')
+nmap_leader('dp', "<Cmd>lua require('dap').repl.open()<cr>",                     'Open REPL')
+nmap_leader('dl', "<Cmd>lua require('dap').run_last()<cr>",                      'Run last debug config')
+nmap_leader('dt', "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", 'Debug nearest test')
+nmap('<F5>',      "<Cmd>lua require('dap').continue()<cr>",                      'Continue')
+nmap('<F6>',      "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", 'Debug nearest test')
+nmap('<F9>',      "<Cmd>lua require('dap').toggle_breakpoint()<cr>",             'Toggle breakpoint')
+nmap('<F10>',     "<Cmd>lua require('dap').step_over()<cr>",                     'Step over')
+nmap('<F11>',     "<Cmd>lua require('dap').step_into()<cr>",                     'Step into')
+nmap('<F8>',      "<Cmd>lua require('dap').step_out()<cr>",                      'Step out')
+nmap('<F12>',     "<Cmd>lua require('dap').step_out()<cr>",                      'Step out')
 
 add_group  { mode = 'n', keys = '<Leader>e', desc = 'Explore/Edit...' }
 -- e is for 'Explore' and 'Edit'. Common usage:
