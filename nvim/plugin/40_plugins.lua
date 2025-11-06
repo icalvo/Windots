@@ -723,3 +723,13 @@ later(
     })
   end
 )
+later(
+  function()
+    add({
+      source = 'kdheepak/lazygit.nvim',
+      depends = {
+        'nvim-lua/plenary.nvim',
+      },
+    })
+  end
+)
