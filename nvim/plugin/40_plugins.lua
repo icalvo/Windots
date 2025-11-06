@@ -204,7 +204,7 @@ later(function()
   -- - `:h Conform`
   -- - `:h conform-options`
   -- - `:h conform-formatters`
-  vim.g.autoformat = true
+  vim.g.autoformat = false
   require('conform').setup({
     formatters_by_ft = {
       cs = { 'csharpier' },
