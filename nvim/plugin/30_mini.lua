@@ -65,9 +65,23 @@ now(function()
       move_with_alt = true,
     },
     autocommands = {
+      basic = false,
       relnum_in_visual_mode = true,
     },
   })
+  local gr = vim.api.nvim_create_augroup('MiniBasicsAutocommands', {})
+
+  local au = function(event, pattern, callback, desc)
+    vim.api.nvim_create_autocmd(event, { group = gr, pattern = pattern, callback = callback, desc = desc })
+  end
+  au('TextYankPost', '*', function() vim.hl.on_yank({ higroup = 'IncSearch', timeout = 800 }) end, 'Highlight yanked text')
+
+  local start_terminal_insert = vim.schedule_wrap(function(data)
+    -- Try to start terminal mode only if target terminal is current
+    if not (vim.api.nvim_get_current_buf() == data.buf and vim.bo.buftype == 'terminal') then return end
+    vim.cmd('startinsert')
+  end)
+  au('TermOpen', 'term://*', start_terminal_insert, 'Start builtin terminal in Insert mode')
 end)
 
 -- Icon provider. Usually no need to use manually. It is used by plugins like
