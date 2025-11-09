@@ -72,16 +72,35 @@ now(function()
   local gr = vim.api.nvim_create_augroup('MiniBasicsAutocommands', {})
 
   local au = function(event, pattern, callback, desc)
-    vim.api.nvim_create_autocmd(event, { group = gr, pattern = pattern, callback = callback, desc = desc })
+    vim.api.nvim_create_autocmd(
+      event,
+      { group = gr, pattern = pattern, callback = callback, desc = desc }
+    )
   end
-  au('TextYankPost', '*', function() vim.hl.on_yank({ higroup = 'IncSearch', timeout = 800 }) end, 'Highlight yanked text')
+  au(
+    'TextYankPost',
+    '*',
+    function() vim.hl.on_yank({ higroup = 'IncSearch', timeout = 800 }) end,
+    'Highlight yanked text'
+  )
 
   local start_terminal_insert = vim.schedule_wrap(function(data)
     -- Try to start terminal mode only if target terminal is current
-    if not (vim.api.nvim_get_current_buf() == data.buf and vim.bo.buftype == 'terminal') then return end
+    if
+      not (
+        vim.api.nvim_get_current_buf() == data.buf and vim.bo.buftype == 'terminal'
+      )
+    then
+      return
+    end
     vim.cmd('startinsert')
   end)
-  au('TermOpen', 'term://*', start_terminal_insert, 'Start builtin terminal in Insert mode')
+  au(
+    'TermOpen',
+    'term://*',
+    start_terminal_insert,
+    'Start builtin terminal in Insert mode'
+  )
 end)
 
 -- Icon provider. Usually no need to use manually. It is used by plugins like
@@ -314,7 +333,7 @@ later(function()
       -- For more complicated textobjects that require structural awareness,
       -- use tree-sitter. This example makes `aF`/`iF` mean around/inside function
       -- definition (not call). See `:h MiniAi.gen_spec.treesitter()` for details.
-      F = ai.gen_spec.treesitter({ a = '@function.outer', i = '@function.inner' }),
+      F = ai.gen_spec.treesitter({ a = '@function.name', i = '@function.name' }),
     },
 
     -- 'mini.ai' by default mostly mimics built-in search behavior: first try
