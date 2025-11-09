@@ -71,6 +71,15 @@ now(function()
   })
 end)
 
+later(
+  function()
+    add({
+      source = 'ibhagwan/fzf-lua',
+      depends = { 'nvim-mini/mini.icons' },
+    })
+  end
+)
+
 -- Testing
 later(function()
   add({
@@ -404,7 +413,7 @@ later(function()
     -- if no picker is specified, the plugin will determine
     -- the available one automatically with this priority:
     -- telescope -> fzf -> snacks ->  basic
-    picker = 'basic',
+    picker = 'fzf',
     background_scanning = true,
     notifications = {
       --Set this to false if you have configured lualine to avoid double logging
