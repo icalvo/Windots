@@ -295,7 +295,6 @@ later(function()
     return path
   end
 
-  local dap = require('dap')
   local dotnet = require('easy-dotnet')
   -- Options are not required
   dotnet.setup({
