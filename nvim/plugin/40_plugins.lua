@@ -109,10 +109,10 @@ later(function()
   -- - `:h Conform`
   -- - `:h conform-options`
   -- - `:h conform-formatters`
-  vim.g.autoformat = false
+  vim.g.autoformat = true
   require('conform').setup({
     formatters_by_ft = {
-      cs = { 'csharpier' },
+      -- cs = { 'csharpier' },
       css = { 'prettier' },
       html = { 'prettier' },
       http = { 'kulala-fmt' },
