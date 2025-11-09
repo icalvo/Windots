@@ -502,10 +502,19 @@ now(function()
   -- Install only those that you need
   add('sainnhe/everforest')
   add('Shatur/neovim-ayu')
+  add('folke/tokyonight.nvim')
+  add('catppuccin/nvim')
+  add('rose-pine/neovim')
+  require('ayu').setup({
+    overrides = {
+      -- To see the available highlight groups, run :source $VIMRUNTIME/syntax/hitest.vim
+      -- Search = { bg = "#ff00ff"}
+    },
+  })
   add('ellisonleao/gruvbox.nvim')
 
   -- Enable only one
-  vim.cmd('color ayu-mirage')
+  vim.cmd('color tokyonight')
 end)
 
 -- Statusline
