@@ -54,6 +54,28 @@ map('n', '<esc>', ':noh<cr><esc>',           'Escape and clear hlsearch')
 nmap('[p', '<Cmd>exe "put! " . v:register<CR>', 'Paste Above')
 nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 
+
+  -- keymaps
+  -- You can use the capture groups defined in `textobjects.scm`
+local xomap = function(lhs, rhs, desc)
+  -- See `:h vim.keymap.set()`
+  vim.keymap.set({ 'x', 'o' }, lhs, rhs, { desc = desc })
+end
+local select = function(capture)
+    return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("' .. capture .. '", "textobjects")<CR>'
+end
+xomap('af', select('@function.outer'), 'Around Function')
+xomap('af', select('@function.outer'), 'Inside Function')
+xomap("ac", select("@class.outer"), 'Around Class')
+xomap("ic", select("@class.inner"), 'Inside Class')
+xomap("aa", select("@parameter.outer"), 'Around Parameter')
+xomap("ia", select("@parameter.inner"), 'Inside Parameter')
+xomap("al", select("@loop.outer"), 'Around Loop')
+xomap("il", select("@loop.inner"), 'Inside Loop')
+xomap("ai", select("@conditional.outer"), 'Around Conditional')
+xomap("ii", select("@conditional.inner"), 'Inside Conditional')
+xomap("ab", select("@block.outer"), 'Around Block')
+xomap("ib", select("@block.inner"), 'Inside Block')
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
 -- stylua: ignore start
