@@ -149,23 +149,24 @@ nmap_leader('bW', '<Cmd>lua MiniBufremove.wipeout(0, true)<CR>', 'Wipeout!')
 -- by an "replace" operator in 'mini.operators' (which is more commonly used).
 add_group  { mode = 'n', keys = '<Leader>c', desc = 'Code...' }
 add_group  { mode = 'x', keys = '<Leader>c', desc = 'Code...' }
+local betterReferences = 'require("fzf-lua").lsp_references({ ignore_current_line = true,jump_to_single_result = true })'
+local usagesContainingMethod =
+  '<Cmd>lua require("nvim-treesitter-textobjects.move").goto_previous_start("@function.name", "textobjects"); ' .. betterReferences .. '<CR>'
 
-nmap("<C-.>",     vim.lsp.buf.code_action,                                       "Code Action")
+nmap("<C-.>",     '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
 nmap_leader("c?", function() vim.diagnostic.open_float({border = 'rounded'}) end, "Line Diagnostics")
-nmap_leader("ca", vim.lsp.buf.code_action,                                        "Code Action")
-nmap_leader('cd', vim.lsp.buf.definition,                                        'Source definition')
-nmap_leader("cD", vim.lsp.buf.declaration,                                        "Goto Declaration")
-nmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>', 'Format')
-xmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>', 'Format selection')
-nmap_leader('ci', vim.lsp.buf.implementation,                                    'Implementation')
-nmap_leader('ch', vim.lsp.buf.hover,                                             'Hover')
-nmap_leader("cl", ":check lsp<cr>",                                              "LSP Info")
-nmap_leader('cr', vim.lsp.buf.rename,                                            'Rename')
-nmap_leader("cs", vim.lsp.buf.signature_help,                                    "Signature Help")
-nmap_leader('cu', vim.lsp.buf.references,                                        'Usages')
--- nmap_leader('fR', '<Cmd>Pick lsp scope="references"<CR>',       'References (LSP)')
-nmap_leader("cU", "[f<leader>cu",                                                "Goto Usages of containing method")
-nmap_leader('ct', vim.lsp.buf.type_definition,                                   'Type definition')
+nmap_leader("ca", '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
+nmap_leader('cd', '<Cmd>FzfLua lsp_definitions<CR>',                              'Source definition')
+nmap_leader("cD", '<Cmd>FzfLua lsp_declarations<CR>',                             "Goto Declaration")
+xmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>',  'Format selection')
+nmap_leader('ci', '<Cmd>FzfLua lsp_implementations<CR>',                          'Implementation')
+nmap_leader('ch', vim.lsp.buf.hover,                                              'Hover')
+nmap_leader("cl", "<Cmd>check lsp<cr>",                                           "LSP Info")
+nmap_leader('cr', vim.lsp.buf.rename,                                             'Rename')
+nmap_leader("cs", vim.lsp.buf.signature_help,                                     "Signature Help")
+nmap_leader('cu', '<Cmd>lua ' .. betterReferences .. '<CR>',                      'Usages')
+nmap_leader("cU", usagesContainingMethod,                                         "Goto Usages of containing method")
+nmap_leader('ct', '<Cmd>FzfLua lsp_typedefs<CR>',                                 'Type definition')
 
 add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
 nmap_leader('dd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>",   'Run default profile')
