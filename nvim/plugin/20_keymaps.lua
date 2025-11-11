@@ -54,6 +54,28 @@ map('n', '<esc>', ':noh<cr><esc>',           'Escape and clear hlsearch')
 nmap('[p', '<Cmd>exe "put! " . v:register<CR>', 'Paste Above')
 nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 
+
+  -- keymaps
+  -- You can use the capture groups defined in `textobjects.scm`
+local xomap = function(lhs, rhs, desc)
+  -- See `:h vim.keymap.set()`
+  vim.keymap.set({ 'x', 'o' }, lhs, rhs, { desc = desc })
+end
+local select = function(capture)
+    return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("' .. capture .. '", "textobjects")<CR>'
+end
+xomap('af', select('@function.outer'), 'Around Function')
+xomap('af', select('@function.outer'), 'Inside Function')
+xomap("ac", select("@class.outer"), 'Around Class')
+xomap("ic", select("@class.inner"), 'Inside Class')
+xomap("aa", select("@parameter.outer"), 'Around Parameter')
+xomap("ia", select("@parameter.inner"), 'Inside Parameter')
+xomap("al", select("@loop.outer"), 'Around Loop')
+xomap("il", select("@loop.inner"), 'Inside Loop')
+xomap("ai", select("@conditional.outer"), 'Around Conditional')
+xomap("ii", select("@conditional.inner"), 'Inside Conditional')
+xomap("ab", select("@block.outer"), 'Around Block')
+xomap("ib", select("@block.inner"), 'Inside Block')
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
 -- stylua: ignore start
@@ -110,7 +132,7 @@ local new_scratch_buffer = function()
   vim.api.nvim_win_set_buf(0, vim.api.nvim_create_buf(true, true))
 end
 
-nmap_leader('ba', '<Cmd>b#<CR>',                                 'Alternate')
+nmap_leader('bb', '<Cmd>b#<CR>',                                 'Alternate')
 nmap_leader('bd', '<Cmd>lua MiniBufremove.delete()<CR>',         'Delete')
 nmap_leader('bD', '<Cmd>lua MiniBufremove.delete(0, true)<CR>',  'Delete!')
 nmap_leader('bs', new_scratch_buffer,                            'Scratch')
@@ -127,23 +149,24 @@ nmap_leader('bW', '<Cmd>lua MiniBufremove.wipeout(0, true)<CR>', 'Wipeout!')
 -- by an "replace" operator in 'mini.operators' (which is more commonly used).
 add_group  { mode = 'n', keys = '<Leader>c', desc = 'Code...' }
 add_group  { mode = 'x', keys = '<Leader>c', desc = 'Code...' }
+local betterReferences = 'require("fzf-lua").lsp_references({ ignore_current_line = true,jump_to_single_result = true })'
+local usagesContainingMethod =
+  '<Cmd>lua require("nvim-treesitter-textobjects.move").goto_previous_start("@function.name", "textobjects"); ' .. betterReferences .. '<CR>'
 
-nmap("<C-.>",     vim.lsp.buf.code_action,                                       "Code Action")
+nmap("<C-.>",     '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
 nmap_leader("c?", function() vim.diagnostic.open_float({border = 'rounded'}) end, "Line Diagnostics")
-nmap_leader("ca", vim.lsp.buf.code_action,                                        "Code Action")
-nmap_leader('cd', vim.lsp.buf.definition,                                        'Source definition')
-nmap_leader("cD", vim.lsp.buf.declaration,                                        "Goto Declaration")
-nmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>', 'Format')
-xmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>', 'Format selection')
-nmap_leader('ci', vim.lsp.buf.implementation,                                    'Implementation')
-nmap_leader('ch', vim.lsp.buf.hover,                                             'Hover')
-nmap_leader("cl", ":check lsp<cr>",                                              "LSP Info")
-nmap_leader('cr', vim.lsp.buf.rename,                                            'Rename')
-nmap_leader("cs", vim.lsp.buf.signature_help,                                    "Signature Help")
-nmap_leader('cu', vim.lsp.buf.references,                                        'Usages')
--- nmap_leader('fR', '<Cmd>Pick lsp scope="references"<CR>',       'References (LSP)')
-nmap_leader("cU", "[f<leader>cu",                                                "Goto Usages of containing method")
-nmap_leader('ct', vim.lsp.buf.type_definition,                                   'Type definition')
+nmap_leader("ca", '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
+nmap_leader('cd', '<Cmd>FzfLua lsp_definitions<CR>',                              'Source definition')
+nmap_leader("cD", '<Cmd>FzfLua lsp_declarations<CR>',                             "Goto Declaration")
+xmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>',  'Format selection')
+nmap_leader('ci', '<Cmd>FzfLua lsp_implementations<CR>',                          'Implementation')
+nmap_leader('ch', vim.lsp.buf.hover,                                              'Hover')
+nmap_leader("cl", "<Cmd>check lsp<cr>",                                           "LSP Info")
+nmap_leader('cr', vim.lsp.buf.rename,                                             'Rename')
+nmap_leader("cs", vim.lsp.buf.signature_help,                                     "Signature Help")
+nmap_leader('cu', '<Cmd>lua ' .. betterReferences .. '<CR>',                      'Usages')
+nmap_leader("cU", usagesContainingMethod,                                         "Goto Usages of containing method")
+nmap_leader('ct', '<Cmd>FzfLua lsp_typedefs<CR>',                                 'Type definition')
 
 add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
 nmap_leader('dd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>",   'Run default profile')
@@ -212,6 +235,7 @@ nmap_leader('fh', '<Cmd>Pick help<CR>',                         'Help tags')
 nmap_leader('fH', '<Cmd>Pick hl_groups<CR>',                    'Highlight groups')
 nmap_leader('fl', '<Cmd>Pick buf_lines scope="all"<CR>',        'Lines (all)')
 nmap_leader('fL', '<Cmd>Pick buf_lines scope="current"<CR>',    'Lines (buf)')
+nmap_leader('fo', '<Cmd>Pick oldfiles',                         'Old files')
 nmap_leader('fm', '<Cmd>Pick git_hunks<CR>',                    'Modified hunks (all)')
 nmap_leader('fM', '<Cmd>Pick git_hunks path="%"<CR>',           'Modified hunks (buf)')
 nmap_leader('fy', '<Cmd>Pick registers<CR>',                    'Registers')
@@ -238,6 +262,7 @@ nmap_leader('gc', '<Cmd>Git commit<CR>',                    'Commit')
 nmap_leader('gC', '<Cmd>Git commit --amend<CR>',            'Commit amend')
 nmap_leader('gd', '<Cmd>Git diff<CR>',                      'Diff')
 nmap_leader('gD', '<Cmd>Git diff -- %<CR>',                 'Diff buffer')
+nmap_leader('gg', '<Cmd>LazyGit<CR>',                       'LazyGit')
 nmap_leader('gl', '<Cmd>' .. git_log_cmd .. '<CR>',         'Log')
 nmap_leader('gL', '<Cmd>' .. git_log_buf_cmd .. '<CR>',     'Log buffer')
 nmap_leader('go', '<Cmd>lua MiniDiff.toggle_overlay()<CR>', 'Toggle overlay')

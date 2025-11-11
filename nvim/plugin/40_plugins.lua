@@ -35,145 +35,50 @@ now(function()
     checkout = 'main',
     -- Update tree-sitter parser after plugin is updated
     hooks = { post_checkout = function() vim.cmd('TSUpdate') end },
-    depends = {
-      {
-        source = 'nvim-treesitter/nvim-treesitter-textobjects',
-        -- Same logic as for 'nvim-treesitter'
-        checkout = 'main',
-      },
+  })
+  add({
+    source = 'nvim-treesitter/nvim-treesitter-textobjects',
+    -- Same logic as for 'nvim-treesitter'
+    checkout = 'main',
+  })
+  require('nvim-treesitter-textobjects').setup({
+    select = {
+      -- Automatically jump forward to textobj, similar to targets.vim
+      lookahead = true,
+      -- You can choose the select mode (default is charwise 'v')
+      --
+      -- Can also be a function which gets passed a table with the keys
+      -- * query_string: eg '@function.inner'
+      -- * method: eg 'v' or 'o'
+      -- and should return the mode ('v', 'V', or '<c-v>') or a table
+      -- mapping query_strings to modes.
+      -- selection_modes = {
+      --   ['@parameter.outer'] = 'v', -- charwise
+      --   ['@function.outer'] = 'V', -- linewise
+      --   ['@class.outer'] = '<c-v>', -- blockwise
+      -- },
+      -- If you set this to `true` (default is `false`) then any textobject is
+      -- extended to include preceding or succeeding whitespace. Succeeding
+      -- whitespace has priority in order to act similarly to eg the built-in
+      -- `ap`.
+      --
+      -- Can also be a function which gets passed a table with the keys
+      -- * query_string: eg '@function.inner'
+      -- * selection_mode: eg 'v'
+      -- and should return true of false
+      include_surrounding_whitespace = false,
     },
   })
-  require('nvim-treesitter.config').setup({
-    highlight = { enable = true },
-    indent = { enable = true },
-    incremental_selection = {
-      enable = true,
-      keymaps = {
-        node_incremental = 'v',
-        node_decremental = 'V',
-      },
-    },
-    textobjects = {
-      select = {
-        enable = true,
-        lookahead = true,
-        keymaps = {
-          ['af'] = '@function.outer',
-          ['if'] = '@function.inner',
-          ['ac'] = '@class.outer',
-          ['ic'] = '@class.inner',
-          ['aa'] = '@parameter.outer',
-          ['ia'] = '@parameter.inner',
-          ['al'] = '@loop.outer',
-          ['il'] = '@loop.inner',
-          ['ai'] = '@conditional.outer',
-          ['ii'] = '@conditional.inner',
-          ['ab'] = '@block.outer',
-          ['ib'] = '@block.inner',
-        },
-      },
-      move = {
-        enable = true,
-        set_jumps = true,
-        goto_next_start = {
-          [']f'] = '@function.name',
-          [']c'] = '@class.name',
-        },
-        goto_next_end = {
-          [']F'] = '@function.name',
-          [']C'] = '@class.name',
-        },
-        goto_previous_start = {
-          ['[f'] = '@function.name',
-          ['[c'] = '@class.name',
-        },
-        goto_previous_end = {
-          ['[F'] = '@function.name',
-          ['[C'] = '@class.name',
-        },
-      },
-    },
-    ensure_installed = {
-      'bash',
-      'bicep',
-      'css',
-      'c_sharp',
-      'gitignore',
-      'go',
-      'gomod',
-      'gosum',
-      'gowork',
-      'html',
-      'http',
-      'json',
-      'lua',
-      'luadoc',
-      'luap',
-      'markdown',
-      'markdown_inline',
-      'nix',
-      'odin',
-      'powershell',
-      'razor',
-      'regex',
-      'ron',
-      'rust',
-      'sql',
-      'templ',
-      'terraform',
-      'toml',
-      'typescript',
-      'vimdoc',
-      'yaml',
-    },
-  })
-  -- -- Define languages which will have parsers installed and auto enabled
-  -- local languages = {
-  --   -- These are already pre-installed with Neovim. Used as an example.
-  --   'bash',
-  --   'bicep',
-  --   'css',
-  --   'c_sharp',
-  --   'gitignore',
-  --   'html',
-  --   'http',
-  --   'json',
-  --   'lua',
-  --   'luadoc',
-  --   'luap',
-  --   'markdown',
-  --   'markdown_inline',
-  --   'powershell',
-  --   'razor',
-  --   'regex',
-  --   'sql',
-  --   'templ',
-  --   'toml',
-  --   'typescript',
-  --   'vimdoc',
-  --   'yaml',
-  --   -- Add here more languages with which you want to use tree-sitter
-  --   -- To see available languages:
-  --   -- - Execute `:=require('nvim-treesitter').get_available()`
-  --   -- - Visit 'SUPPORTED_LANGUAGES.md' file at
-  --   --   https://github.com/nvim-treesitter/nvim-treesitter/blob/main
-  -- }
-  -- -- local isnt_installed = function(lang)
-  -- --   return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
-  -- -- end
-  -- -- local to_install = vim.tbl_filter(isnt_installed, languages)
-  -- -- if #to_install > 0 then require('nvim-treesitter').install(to_install) end
-  -- --
-  -- -- Enable tree-sitter after opening a file for a target language
-  -- local filetypes = {}
-  -- for _, lang in ipairs(languages) do
-  --   for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
-  --     table.insert(filetypes, ft)
-  --   end
-  -- end
-  -- local ts_start = function(ev) vim.treesitter.start(ev.buf) end
-  -- _G.Config.new_autocmd('FileType', filetypes, ts_start, 'Start tree-sitter')
 end)
+
+later(
+  function()
+    add({
+      source = 'ibhagwan/fzf-lua',
+      depends = { 'nvim-mini/mini.icons' },
+    })
+  end
+)
 
 -- Testing
 later(function()
@@ -207,7 +112,7 @@ later(function()
   vim.g.autoformat = true
   require('conform').setup({
     formatters_by_ft = {
-      cs = { 'csharpier' },
+      -- cs = { 'csharpier' },
       css = { 'prettier' },
       html = { 'prettier' },
       http = { 'kulala-fmt' },
@@ -390,7 +295,6 @@ later(function()
     return path
   end
 
-  local dap = require('dap')
   local dotnet = require('easy-dotnet')
   -- Options are not required
   dotnet.setup({
@@ -508,7 +412,7 @@ later(function()
     -- if no picker is specified, the plugin will determine
     -- the available one automatically with this priority:
     -- telescope -> fzf -> snacks ->  basic
-    picker = 'basic',
+    picker = 'fzf',
     background_scanning = true,
     notifications = {
       --Set this to false if you have configured lualine to avoid double logging
@@ -598,10 +502,19 @@ now(function()
   -- Install only those that you need
   add('sainnhe/everforest')
   add('Shatur/neovim-ayu')
+  add('folke/tokyonight.nvim')
+  add('catppuccin/nvim')
+  add('rose-pine/neovim')
+  require('ayu').setup({
+    overrides = {
+      -- To see the available highlight groups, run :source $VIMRUNTIME/syntax/hitest.vim
+      -- Search = { bg = "#ff00ff"}
+    },
+  })
   add('ellisonleao/gruvbox.nvim')
 
   -- Enable only one
-  vim.cmd('color ayu-mirage')
+  vim.cmd('color tokyonight')
 end)
 
 -- Statusline
@@ -719,6 +632,16 @@ later(
       depends = {
         'nvim-lua/plenary.nvim',
         'nvim-treesitter/nvim-treesitter',
+      },
+    })
+  end
+)
+later(
+  function()
+    add({
+      source = 'kdheepak/lazygit.nvim',
+      depends = {
+        'nvim-lua/plenary.nvim',
       },
     })
   end
