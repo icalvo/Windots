@@ -169,6 +169,7 @@ nnoremap <C-M> <NOP>
 if has('ide')
     " Go to code
     " gd goes to declaration/usages depending on the token
+    nmap <leader>ca :!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
     nmap <leader>cb <Action>(Forward)
     nmap <leader>cc <action>(ReSharperGotoContainingDeclaration)
     nmap <leader>cd <Action>(GotoDeclaration)
