@@ -2,7 +2,7 @@
 
 "" Base Settings
 "" ========================================================
-
+let mapleader=" "
 set scrolloff=10
 set number
 set relativenumber
