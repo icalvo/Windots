@@ -184,11 +184,24 @@ now(function()
         return starter.sections.sessions(5, true)()
       end,
       starter.sections.recent_files(5, false, false),
-      starter.sections.pick(),
       function()
         return {
+        -- stylua: ignore start
+          { action = 'FzfLua command_history',   name = 'Command history', section = 'Pick' },
+          { action = 'lua MiniFiles.open()',     name = 'Explorer',        section = 'Pick' },
+          { action = 'FzfLua files',             name = 'Files',           section = 'Pick' },
+          { action = 'FzfLua grep',              name = 'Grep live',       section = 'Pick' },
+          { action = 'FzfLua help',              name = 'Help tags',       section = 'Pick' },
+          { action = 'FzfLua visit_paths',       name = 'Visited paths',   section = 'Pick' },
+          -- stylua: ignore end
+        }
+      end,
+      function()
+        return {
+          -- stylua: ignore start
           { name = 'Edit new buffer', action = 'enew', section = 'Actions' },
-          { name = 'Quit Neovim', action = 'qall', section = 'Actions' },
+          { name = 'Quit Neovim'    , action = 'qall', section = 'Actions' },
+          -- stylua: ignore end
         }
       end,
     },

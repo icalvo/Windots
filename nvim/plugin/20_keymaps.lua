@@ -242,7 +242,7 @@ nmap_leader('fy', '<Cmd>FzfLua registers<CR>',                    'Registers')
 nmap_leader('fr', '<Cmd>FzfLua resume<CR>',                       'Resume')
 nmap_leader('fs', '<Cmd>FzfLua lsp scope="workspace_symbol"<CR>', 'Symbols workspace')
 nmap_leader('fS', '<Cmd>FzfLua lsp scope="document_symbol"<CR>',  'Symbols document')
-nmap_leader('fv', '<Cmd>FzfLua visit_paths cwd=""<CR>',           'Visit paths (all)')
+nmap_leader('fv', '<Cmd>FzfLua visit_paths_all<CR>',           'Visit paths (all)')
 nmap_leader('fV', '<Cmd>FzfLua visit_paths<CR>',                  'Visit paths (cwd)')
 
 add_group  { mode = 'n', keys = '<Leader>g', desc = 'Git...' }
