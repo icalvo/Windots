@@ -37,7 +37,7 @@ $wingetDeps = @(
     "mbuilov.sed"
     "microsoft.powershell"
     "neovim.neovim"
-    "openjs.nodejs"
+    "openjs.nodejs.lts"
     "sst.opencode"
     "task.task"
     "JanDeDobbeleer.OhMyPosh"
