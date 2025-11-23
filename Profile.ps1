@@ -382,4 +382,4 @@ function Set-EnvVars
 New-Alias -Name 'Set-PoshContext' -Value 'Set-EnvVars' -Scope Global -Force
 $Env:CC="gcc"
 
-Invoke-Expression (& { ( zoxide init powershell --cmd cd | Out-String ) })
+Invoke-Expression (& { ( zoxide init powershell | Out-String ) })
