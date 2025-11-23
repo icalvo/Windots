@@ -54,7 +54,7 @@ let g:WhichKey_SortOrder = "by_key_prefix_first"
 
 let g:WhichKeyDesc_leader = "<leader> Leader key"
 
-let g:WhichKeyDesc_leader = "<leader>x Open file explorer"
+let g:WhichKeyDesc_leader = "<leader>ef Open file explorer"
 
 let g:WhichKeyDesc_easymotion = "<leader>j Jump with Easymotion"
 let g:WhichKeyDesc_easymotion_prefix = "<leader><leader>"
@@ -168,6 +168,9 @@ nnoremap <Right> <NOP>
 nnoremap <PageUp> <NOP>
 nnoremap <PageDown> <NOP>
 nnoremap <C-M> <NOP>
+" Search occurrences
+nmap ]f <Action>(NextOccurence)
+nmap [f <Action>(PreviousOccurence)
 
 if has('ide')
     " Go to code
@@ -204,8 +207,8 @@ endif
 "" Leader commands
 "" ========================================================
 
-" Opensymotion-prefix) NERDTree (use q to exit)
-map <leader>ef <Action>(ActivateProjectToolWindow)
+" Open NERDTree (use q to exit)
+map <leader>ef :NERDTreeToggle<CR>
 if has('ide')
     map <C-.> :!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
     imap <C-.> <Esc>:!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
@@ -231,14 +234,15 @@ if has('ide')
     map <leader>vv <Action>(HideAllWindows)
 
     " Actions
+    map <leader>af :action FindInPath<cr>
     map <leader>ai <action>(ActivateAIAssistantToolWindow)
     map <leader>am :!SendKeys {F14}<cr>:action MainMenu<cr>
-    map <leader>as :action SearchEverywhere<cr>
-    map <leader>aq <action>(Exit)
-    map <leader>at :set trackactionids<cr>:action ActivateNotificationsToolWindow<cr>
     map <leader>an <Action>(CloseAllNotifications)
     map <leader>ao :action RiderManageRecentProjects<cr>
-    map <leader>fg :action FindInPath<cr>
+    map <leader>ar <Action>(UsageView.Rerun)
+    map <leader>as :action SearchEverywhere<cr>
+    map <leader>at :set trackactionids<cr>:action ActivateNotificationsToolWindow<cr>
+    map <leader>aq <action>(Exit)
 
     " File navigation
     map <leader>ff <action>(GotoFile)
@@ -267,7 +271,7 @@ if has('ide')
     " Settings and configuration
     map <leader>sq :action IdeaVim.ReloadVimRc.reload<cr>:wq<cr>
     map <leader>sr <Action>(IdeaVim.ReloadVimRc.reload)
-    map <leader>se :e ~/.ideavimrc<cr>
+    map <leader>es :e ~/.ideavimrc<cr>
 
     " Debug commands
     nmap <leader>dd <Action>(Debug)
