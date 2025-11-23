@@ -20,8 +20,8 @@ set visualbell
 if has('ide')
     " Ideavim-specific settings
     set ideajoin
-    set clipboard+=unnamed   
-    
+    set clipboard+=unnamed
+
     " Enable plugins that are pre-installed by Ideavim
 	set surround
 	set highlightedyank
@@ -33,7 +33,7 @@ if has('ide')
 	set which-key
 else
     " Use system clipboard
-    set clipboard+=unnamed   
+    set clipboard+=unnamed
 
 	call plug#begin()
 	Plug 'tpope/vim-surround'
@@ -59,7 +59,7 @@ let g:WhichKeyDesc_leader = "<leader>x Open file explorer"
 let g:WhichKeyDesc_easymotion = "<leader>j Jump with Easymotion"
 let g:WhichKeyDesc_easymotion_prefix = "<leader><leader>"
 
-let g:WhichKeyDesc_comment = "<leader>c Comment line"
+let g:WhichKeyDesc_comment = "gcc Comment line"
 
 let g:WhichKeyDesc_fold = "<leader>z Folding"
 let g:WhichKeyDesc_fold_all = "<leader>zc Fold all regions"
@@ -153,6 +153,9 @@ onoremap H _
 onoremap L $
 nnoremap <C-a> ggVG
 
+" Select what you have pasted
+nnoremap gp `[v`]
+
 " Jump around (with easymotion)
 nmap s <Plug>(easymotion-s2)
 nmap S <Plug>(easymotion-bd-w)
@@ -186,7 +189,7 @@ if has('ide')
 
     " Git windows
     map gtc <Action>(CheckinProject)
-    map gts <Action>(ActivateVersionControlToolWindow)
+    map gtw <Action>(ActivateVersionControlToolWindow)
     map gtb :!SendKeys {F14}<cr>:action Git.Branches<cr>
     map gth :!SendKeys {F14}<cr>:action Vcs.ShowMessageHistory<cr>
     map gtp <Action>(Vcs.Push)
@@ -194,19 +197,19 @@ if has('ide')
     map gtf <Action>(Git.Fetch)
     map gta <Action>(Vcs.ToggleAmendCommitMode)
     map gtu <Action>(Vcs.UpdateProject)Returns expected results
-    map <C-S-Enter> <Action>(Git.Commit.And.Push.Executor)
-    imap <C-S-Enter> <Action>(Git.Commit.And.Push.Executor)
+    map <C-S-Enter> :action Git.Commit.And.Push.Executor<cr>:action HideAllWindows<cr>
+    imap <C-S-Enter> <Esc>:action Git.Commit.And.Push.Executor<cr>:action HideAllWindows<cr>
 endif
 
 "" Leader commands
 "" ========================================================
 
 " Opensymotion-prefix) NERDTree (use q to exit)
-map <leader>x :NERDTreeFind<CR>
+map <leader>ef <Action>(ActivateProjectToolWindow)
 if has('ide')
     map <C-.> :!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
     imap <C-.> <Esc>:!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
-    
+
     " Comment lines
     map gcc :action CommentByLineComment<CR><Esc>
 
@@ -235,8 +238,8 @@ if has('ide')
     map <leader>at :set trackactionids<cr>:action ActivateNotificationsToolWindow<cr>
     map <leader>an <Action>(CloseAllNotifications)
     map <leader>ao :action RiderManageRecentProjects<cr>
-    map <leader>af :action FindInPath<cr> 
-    
+    map <leader>fg :action FindInPath<cr>
+
     " File navigation
     map <leader>ff <action>(GotoFile)
     map <leader>fr :!SendKeys {F14}<cr>:action RecentFiles<cr>
@@ -254,7 +257,7 @@ if has('ide')
     map <leader>rr :!SendKeys {F14}<cr>:action Refactorings.QuickListPopupAction<cr>
     map <leader>ri <Action>(Inline)
     map <leader>rp <Action>(IntroduceParameter)
-    
+
     " Errors
     map <leader>en <Action>(ReSharperGotoNextErrorInSolution)
     map <leader>ep <Action>(ReSharperGotoPrevErrorInSolution)
@@ -277,7 +280,7 @@ if has('ide')
     nmap <leader>dr <Action>(Resume)
     nmap <leader>dx :!SendKeys {F14}<cr>:action RedesignedRunConfigurationSelector<cr>
     nmap <leader>dw <Action>(ActivateDebugToolWindow)
-    map  <leader>dbb <Action>(ToggleLineBreakpoint) 
+    map  <leader>dbb <Action>(ToggleLineBreakpoint)
 
     " Testing
     nmap <leader>tl <Action>(RiderUnitTestRunSolutionAction)
@@ -286,6 +289,6 @@ else
     map <leader>sq :w<cr>:source $MYVIMRC<cr>:q<cr>
     map <leader>sr :w<cr>:source $MYVIMRC<cr>
     map <leader>se :e $MYVIMRC<cr>
-    
+
     map <leader>aq :qa<cr>
 endif
