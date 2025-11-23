@@ -22,6 +22,7 @@ $symlinks = @{
     "$HOME\AppData\Roaming\neovide"                                                                 = ".\neovide"
     "$HOME\AppData\Roaming\AltSnap\AltSnap.ini"                                                     = ".\altsnap\AltSnap.ini"
     "$ENV:PROGRAMFILES\WezTerm\wezterm_modules"                                                     = ".\wezterm\"
+    "$HOME\.ideavimrc"                                                                              = ".\.ideavimrc"
 }
 
 # Winget & choco dependencies
