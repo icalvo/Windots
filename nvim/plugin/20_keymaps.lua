@@ -34,8 +34,8 @@ map({ 'n', 'x' }, 'j', "v:count == 0 ? 'gj' : 'j'", { desc = 'Down', expr = true
 map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true })
 
 -- shift doesn't leave visual mode
-map('x', '>', '>gv', { desc = 'Shift and stay visual', expr = true })
-map('x', '<', '<gv', { desc = 'Shift and stay visual', expr = true })
+map('x', '>', '>gv', { desc = 'Shift right and stay visual' })
+map('x', '<', '<gv', { desc = 'Shift left and stay visual' })
 
 -- Map H and L to _ and $ for better ergonomy
 local smart_go_to_begin_of_line = function()
@@ -153,7 +153,7 @@ nmap_leader('bW', '<Cmd>lua MiniBufremove.wipeout(0, true)<CR>', 'Wipeout!')
 -- by an "replace" operator in 'mini.operators' (which is more commonly used).
 add_group  { mode = 'n', keys = '<Leader>c', desc = 'Code...' }
 add_group  { mode = 'x', keys = '<Leader>c', desc = 'Code...' }
-local betterReferences = 'require("fzf-lua").lsp_references({ ignore_current_line = true,jump_to_single_result = true })'
+local betterReferences = 'require("fzf-lua").lsp_references({ ignore_current_line = true, jump1 = true })'
 local usagesContainingMethod =
   '<Cmd>lua require("nvim-treesitter-textobjects.move").goto_previous_start("@function.name", "textobjects"); ' .. betterReferences .. '<CR>'
 
