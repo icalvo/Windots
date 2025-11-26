@@ -9,6 +9,11 @@ CapsLock::Esc
     }
 }
 #!k::WinMaximize "A"
-#!y::WinClose "A"
+#!y::
+{
+    Try {
+        WinClose "A"
+    }
+}
 #!r::Reload
 RAlt::AppsKey
