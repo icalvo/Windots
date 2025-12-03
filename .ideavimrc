@@ -23,28 +23,28 @@ if has('ide')
     set clipboard+=unnamed
 
     " Enable plugins that are pre-installed by Ideavim
-	set surround
-	set highlightedyank
-	set nerdtree
-	set mini-ai
-	set argtextobj
-	set notimeout
-	set easymotion
-	set which-key
+    set surround
+    set highlightedyank
+    set nerdtree
+    set mini-ai
+    set argtextobj
+    set notimeout
+    set easymotion
+    set which-key
 else
     " Use system clipboard
     set clipboard+=unnamed
 
-	call plug#begin()
-	Plug 'tpope/vim-surround'
-	Plug 'machakann/vim-highlightedyank'
-	Plug 'preservim/nerdtree'
-	Plug 'echasnovski/mini.ai'
-	Plug 'vim-scripts/argtextobj.vim'
-	Plug 'easymotion/vim-easymotion'
-	Plug 'liuchengxu/vim-which-key'
-	Plug 'AckslD/nvim-whichkey-setup.lua'
-	call plug#end()
+    call plug#begin()
+    Plug 'tpope/vim-surround'
+    Plug 'machakann/vim-highlightedyank'
+    Plug 'preservim/nerdtree'
+    Plug 'echasnovski/mini.ai'
+    Plug 'vim-scripts/argtextobj.vim'
+    Plug 'easymotion/vim-easymotion'
+    Plug 'liuchengxu/vim-which-key'
+    Plug 'AckslD/nvim-whichkey-setup.lua'
+    call plug#end()
 endif
 let g:WhichKey_FontSize = 16
 let g:WhichKey_FontFamily = "Consolas"
@@ -175,17 +175,16 @@ nmap [f <Action>(PreviousOccurence)
 if has('ide')
     " Go to code
     " gd goes to declaration/usages depending on the token
-    nmap <leader>ca :!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
+    nmap <leader>ca :action ShowIntentionActions<cr>
     nmap <leader>cb <Action>(Forward)
     nmap <leader>cc <action>(ReSharperGotoContainingDeclaration)
     nmap <leader>cd <Action>(GotoDeclaration)
     nmap <leader>cf <Action>(Back)
+    nmap <leader>ci <Action>(GotoImplementation)
     nmap <leader>cj <Action>(MethodDown)
-    nmap <leader>cJ <Action>(GotoImplementation)
     nmap <leader>ck <Action>(MethodUp)
     nmap <leader>cK <Action>(GotoSuperMethod)
     nmap <leader>ct <Action>(GotoTypeDeclaration)
-    nmap <leader>cs :!SendKeys {F14}<cr>:action FileStructurePopup<cr>
     nmap <leader>cT <Action>(GotoTest)
     nmap <leader>cu <Action>(ShowUsages)
     nmap <leader>cU :action ReSharperGotoContainingDeclaration<cr>:action ShowUsages<cr>
@@ -193,8 +192,8 @@ if has('ide')
     " Git windows
     map gtc <Action>(CheckinProject)
     map gtw <Action>(ActivateVersionControlToolWindow)
-    map gtb :!SendKeys {F14}<cr>:action Git.Branches<cr>
-    map gth :!SendKeys {F14}<cr>:action Vcs.ShowMessageHistory<cr>
+    map gtb :action Git.Branches<cr>
+    map gth :action Vcs.ShowMessageHistory<cr>
     map gtp <Action>(Vcs.Push)
     map gtn <Action>(Git.CreateNewBranch)
     map gtf <Action>(Git.Fetch)
@@ -207,15 +206,17 @@ endif
 "" Leader commands
 "" ========================================================
 
-" Open NERDTree (use q to exit)
-map <leader>ef :NERDTreeToggle<CR>
 if has('ide')
-    map <C-.> :!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
-    imap <C-.> <Esc>:!SendKeys {F14}<cr>:action ShowIntentionActions<cr>
+    map <C-.> :action ShowIntentionActions<cr>
+    imap <C-.> <Esc>:action ShowIntentionActions<cr>
 
     " Comment lines
     map gcc :action CommentByLineComment<CR><Esc>
 
+    " Explore/Edit commands
+    map <leader>ef :NERDTreeToggle<CR>
+    map <leader>es :e ~/.ideavimrc<cr>
+    
     " Folding
     map <leader>zc :action CollapseAllRegions<CR>
     map <leader>zo :action ExpandAllRegions<CR>
@@ -234,20 +235,21 @@ if has('ide')
     map <leader>vv <Action>(HideAllWindows)
 
     " Actions
-    map <leader>af :action FindInPath<cr>
     map <leader>ai <action>(ActivateAIAssistantToolWindow)
-    map <leader>am :!SendKeys {F14}<cr>:action MainMenu<cr>
+    map <leader>am :action MainMenu<cr>
     map <leader>an <Action>(CloseAllNotifications)
-    map <leader>ao :action RiderManageRecentProjects<cr>
     map <leader>ar <Action>(UsageView.Rerun)
-    map <leader>as :action SearchEverywhere<cr>
     map <leader>at :set trackactionids<cr>:action ActivateNotificationsToolWindow<cr>
     map <leader>aq <action>(Exit)
 
-    " File navigation
+    " Find
+    map <leader>fa :action SearchEverywhere<cr>
     map <leader>ff <action>(GotoFile)
-    map <leader>fr :!SendKeys {F14}<cr>:action RecentFiles<cr>
-    map <leader>fl :!SendKeys {F14}<cr>:action RecentLocations<cr>
+    map <leader>fg :action FindInPath<cr>
+    map <leader>fl :action RecentLocations<cr>
+    map <leader>fp :action RiderManageRecentProjects<cr>
+    map <leader>fr :action RecentFiles<cr>
+    nmap <leader>fs :action FileStructurePopup<cr>
 
     " Close active tab
     map <leader>q <action>(CloseContent)
@@ -258,20 +260,19 @@ if has('ide')
     map <leader>rv <Action>(IntroduceVariable)
     map <leader>rf <Action>(IntroduceField)
     map <leader>rs <Action>(ChangeSignature)
-    map <leader>rr :!SendKeys {F14}<cr>:action Refactorings.QuickListPopupAction<cr>
+    map <leader>rr :action Refactorings.QuickListPopupAction<cr>
     map <leader>ri <Action>(Inline)
     map <leader>rp <Action>(IntroduceParameter)
 
     " Errors
-    map <leader>en <Action>(ReSharperGotoNextErrorInSolution)
-    map <leader>ep <Action>(ReSharperGotoPrevErrorInSolution)
-    map <leader>ej <Action>(GotoNextError)
-    map <leader>ek <Action>(GotoPreviousError)
+    map ]e <Action>(ReSharperGotoNextErrorInSolution)
+    map [e <Action>(ReSharperGotoPrevErrorInSolution)
+    map ]d <Action>(GotoNextError)
+    map [d <Action>(GotoPreviousError)
 
     " Settings and configuration
     map <leader>sq :action IdeaVim.ReloadVimRc.reload<cr>:wq<cr>
     map <leader>sr <Action>(IdeaVim.ReloadVimRc.reload)
-    map <leader>es :e ~/.ideavimrc<cr>
 
     " Debug commands
     nmap <leader>dd <Action>(Debug)
@@ -282,7 +283,7 @@ if has('ide')
     nmap <leader>dc <Action>(RunToCursor)
     nmap <leader>dm <Action>(JumpToStatement)
     nmap <leader>dr <Action>(Resume)
-    nmap <leader>dx :!SendKeys {F14}<cr>:action RedesignedRunConfigurationSelector<cr>
+    nmap <leader>dx :action RedesignedRunConfigurationSelector<cr>
     nmap <leader>dw <Action>(ActivateDebugToolWindow)
     map  <leader>dbb <Action>(ToggleLineBreakpoint)
 
