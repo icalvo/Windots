@@ -115,8 +115,6 @@ let g:WhichKeyDesc_settings_reload = "<leader>sr Reload IdeaVim configuration"
 
 "" Key mappings
 ""
-" Force to use more ergonomic <CTRL-J> to create a new line
-inoremap <cr> <NOP>
 
 " Tab navigation
 nnoremap <A-n> :tabnext<CR>
@@ -146,12 +144,6 @@ nnoremap <Esc> :noh<cr>
 " Y yanks to EOL instead of full line, matching C and D.
 nnoremap Y y$
 
-" Map H and L to a left-right functionality
-nnoremap H _
-nnoremap L $
-onoremap H _
-onoremap L $
-nnoremap <C-a> ggVG
 
 " Select what you have pasted
 nnoremap gp `[v`]
@@ -160,14 +152,6 @@ nnoremap gp `[v`]
 nmap s <Plug>(easymotion-s2)
 nmap S <Plug>(easymotion-bd-w)
 
-" Learning mappings
-nnoremap <Up> <NOP>
-nnoremap <Down> <NOP>
-nnoremap <Left> <NOP>
-nnoremap <Right> <NOP>
-nnoremap <PageUp> <NOP>
-nnoremap <PageDown> <NOP>
-nnoremap <C-M> <NOP>
 " Search occurrences
 nmap ]f <Action>(NextOccurence)
 nmap [f <Action>(PreviousOccurence)
@@ -235,6 +219,7 @@ if has('ide')
     map <leader>vv <Action>(HideAllWindows)
 
     " Actions
+    nnoremap <Leader>aa ggVG
     map <leader>ai <action>(ActivateAIAssistantToolWindow)
     map <leader>am :action MainMenu<cr>
     map <leader>an <Action>(CloseAllNotifications)
