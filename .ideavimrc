@@ -136,8 +136,7 @@ vnoremap > >gv
 " Break line in normal mode
 nnoremap [<Space> i<C-m><Esc>
 " Insert a new line below current one and keep cursor position
-nnoremap ]<Space> mzo<Esc>`z
-
+nnoremap ]<Space> mzo<Esc>0"_D`z
 " Remove search highlighted
 nnoremap <Esc> :noh<cr>
 
@@ -177,12 +176,13 @@ if has('ide')
     map gtc <Action>(CheckinProject)
     map gtw <Action>(ActivateVersionControlToolWindow)
     map gtb :action Git.Branches<cr>
-    map gth :action Vcs.ShowMessageHistory<cr>
     map gtp <Action>(Vcs.Push)
     map gtn <Action>(Git.CreateNewBranch)
     map gtf <Action>(Git.Fetch)
     map gta <Action>(Vcs.ToggleAmendCommitMode)
     map gtu <Action>(Vcs.UpdateProject)Returns expected results
+    map <C-H> :action Vcs.ShowMessageHistory<cr>
+    imap <C-H> <Esc>:action Vcs.ShowMessageHistory<cr>
     map <C-S-Enter> :action Git.Commit.And.Push.Executor<cr>:action HideAllWindows<cr>
     imap <C-S-Enter> <Esc>:action Git.Commit.And.Push.Executor<cr>:action HideAllWindows<cr>
 endif
@@ -198,7 +198,7 @@ if has('ide')
     map gcc :action CommentByLineComment<CR><Esc>
 
     " Explore/Edit commands
-    map <leader>ef :NERDTreeToggle<CR>
+    map <leader>ef :NERDTree<CR>
     map <leader>es :e ~/.ideavimrc<cr>
     
     " Folding
@@ -226,7 +226,10 @@ if has('ide')
     map <leader>ar <Action>(UsageView.Rerun)
     map <leader>at :set trackactionids<cr>:action ActivateNotificationsToolWindow<cr>
     map <leader>aq <action>(Exit)
+    map <leader>ass <action>(Replace)
+    map <leader>asf <action>(ReplaceInPath)
 
+    map <leader>bm :action EfCore.Features.Migrations.AddMigrationAction<cr>
     " Find
     map <leader>fa :action SearchEverywhere<cr>
     map <leader>ff <action>(GotoFile)
@@ -235,7 +238,6 @@ if has('ide')
     map <leader>fp :action RiderManageRecentProjects<cr>
     map <leader>fr :action RecentFiles<cr>
     nmap <leader>fs :action FileStructurePopup<cr>
-
     " Close active tab
     map <leader>q <action>(CloseContent)
 
