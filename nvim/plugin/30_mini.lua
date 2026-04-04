@@ -62,7 +62,7 @@ now(function()
       -- Create `<C-hjkl>` mappings for window navigation
       windows = true,
       -- Create `<M-hjkl>` mappings for navigation in Insert and Command modes
-      move_with_alt = true,
+      move_with_alt = false,
     },
     autocommands = {
       basic = false,
