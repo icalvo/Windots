@@ -9,9 +9,19 @@
 -- Use this file to install and configure other such plugins.
 
 -- Make concise helpers for installing/adding plugins in two stages
-local add, now, later = MiniDeps.add, MiniDeps.now, MiniDeps.later
-local now_if_args = _G.Config.now_if_args
+local gh = function(x) return 'https://github.com/' .. x end
+local add = function(spec, args)
+  if type(spec) == 'string' then
+    vim.pack.add({ spec }, args)
+  else
+    vim.pack.add(spec, args)
+  end
+end
+local now, later = Config.now, Config.later
+local now_if_args = Config.now_if_args
 local dbg = function(s) vim.notify(s, vim.log.levels.INFO, { title = 'IGNACIO' }) end
+
+vim.cmd('packadd nvim.undotree')
 -- Tree-sitter ================================================================
 
 -- Tree-sitter is a tool for fast incremental parsing. It converts text into
@@ -28,19 +38,31 @@ local dbg = function(s) vim.notify(s, vim.log.levels.INFO, { title = 'IGNACIO' }
 --   textobjects (see `:h text-objects`, `:h MiniAi.gen_spec.treesitter()`).
 --
 -- Add these plugins now if file (and not 'mini.starter') is shown after startup.
-now(function()
+now_if_args(function()
+  -- Define hook to update tree-sitter parsers after plugin is updated
+  local ts_update = function() vim.cmd('TSUpdate') end
+  Config.on_packchanged('nvim-treesitter', { 'update' }, ts_update, ':TSUpdate')
+
   add({
-    source = 'nvim-treesitter/nvim-treesitter',
-    -- Use `main` branch since `master` branch is frozen, yet still default
-    checkout = 'main',
-    -- Update tree-sitter parser after plugin is updated
-    hooks = { post_checkout = function() vim.cmd('TSUpdate') end },
+    gh('nvim-treesitter/nvim-treesitter'),
+    gh('nvim-treesitter/nvim-treesitter-textobjects'),
   })
-  add({
-    source = 'nvim-treesitter/nvim-treesitter-textobjects',
-    -- Same logic as for 'nvim-treesitter'
-    checkout = 'main',
-  })
+  local languages = { 'html', 'javascript', 'sql', 'razor' }
+  local isnt_installed = function(lang)
+    return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
+  end
+  local to_install = vim.tbl_filter(isnt_installed, languages)
+  if #to_install > 0 then require('nvim-treesitter').install(to_install) end
+
+  -- Enable tree-sitter after opening a file for a target language
+  local filetypes = {}
+  for _, lang in ipairs(languages) do
+    for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
+      table.insert(filetypes, ft)
+    end
+  end
+  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
+  Config.new_autocmd('FileType', filetypes, ts_start, 'Start tree-sitter')
   require('nvim-treesitter-textobjects').setup({
     select = {
       -- Automatically jump forward to textobj, similar to targets.vim
@@ -73,10 +95,11 @@ end)
 
 later(function()
   add({
-    source = 'ibhagwan/fzf-lua',
-    depends = { 'nvim-mini/mini.icons' },
+    gh('nvim-mini/mini.icons'),
+    gh('ibhagwan/fzf-lua'),
   })
   local fzf_lua = require('fzf-lua')
+  vim.cmd('FzfLua register_ui_select')
 
   -- Register mini.visits extension
   fzf_lua.register_extension(
@@ -112,14 +135,12 @@ end)
 -- Testing
 later(function()
   add({
-    source = 'nvim-neotest/neotest',
-    depends = {
-      'nvim-neotest/nvim-nio',
-      'nvim-lua/plenary.nvim',
-      'antoinemadec/FixCursorHold.nvim',
-      'nvim-treesitter/nvim-treesitter',
-      -- "marilari88/neotest-vitest",
-    },
+    gh('nvim-neotest/nvim-nio'),
+    gh('nvim-lua/plenary.nvim'),
+    gh('antoinemadec/FixCursorHold.nvim'),
+    gh('nvim-treesitter/nvim-treesitter'),
+    -- gh("marilari88/neotest-vitest"),
+    gh('nvim-neotest/neotest'),
   })
 end)
 
@@ -132,7 +153,7 @@ end)
 -- The 'stevearc/conform.nvim' plugin is a good and maintained solution for easier
 -- formatting setup.
 later(function()
-  add('stevearc/conform.nvim')
+  add(gh('stevearc/conform.nvim'))
 
   -- See also:
   -- - `:h Conform`
@@ -190,7 +211,7 @@ end)
 -- snippet files. They are organized in 'snippets/' directory (mostly) per language.
 -- 'mini.snippets' is designed to work with it as seamlessly as possible.
 -- See `:h MiniSnippets.gen_loader.from_lang()`.
-later(function() add('rafamadriz/friendly-snippets') end)
+later(function() add(gh('rafamadriz/friendly-snippets')) end)
 
 -- Honorable mentions =========================================================
 
@@ -203,7 +224,7 @@ later(function() add('rafamadriz/friendly-snippets') end)
 --
 -- You can use it like so:
 later(function()
-  add('mason-org/mason.nvim')
+  add(gh('mason-org/mason.nvim'))
   require('mason').setup({
     ui = {
       border = 'rounded',
@@ -231,8 +252,6 @@ later(function()
     'powershell-editor-services',
     'prettier',
     'pyright',
-    'roslyn',
-    'rzls',
     'shfmt',
     'stylua',
     'tailwindcss-language-server',
@@ -266,11 +285,9 @@ later(function()
     },
   })
   add({
-    source = 'seblyng/roslyn.nvim',
-    depends = { 'tris203/rzls.nvim' },
+    gh('mason-org/mason.nvim'),
   })
-  require('rzls').setup({})
-  require('roslyn').setup({})
+  local _ = require('mason.settings').current.install_root_dir
 
   local lsps = {
     { 'html' },
@@ -294,15 +311,9 @@ end)
 -- Debugging
 later(function()
   add({
-    source = 'mfussenegger/nvim-dap',
-    depends = {
-      {
-        source = 'GustavEikaas/easy-dotnet.nvim',
-        depends = {
-          'nvim-lua/plenary.nvim',
-        },
-      },
-    },
+    gh('nvim-lua/plenary.nvim'),
+    gh('GustavEikaas/easy-dotnet.nvim'),
+    gh('mfussenegger/nvim-dap'),
   })
 
   local function get_secret_path(secret_guid)
@@ -459,8 +470,11 @@ later(function()
 end)
 
 later(function()
-  add({ source = 'rcarriga/nvim-dap-ui', depends = { 'mfussenegger/nvim-dap' } })
-
+  add({
+    gh('mfussenegger/nvim-dap'),
+    gh('nvim-neotest/nvim-nio'),
+    gh('rcarriga/nvim-dap-ui'),
+  })
   local dapui = require('dapui')
   local dap = require('dap')
 
@@ -494,7 +508,7 @@ end)
 
 -- REST client
 now(function()
-  add('mistweaverco/kulala.nvim')
+  add(gh('mistweaverco/kulala.nvim'))
   require('kulala').setup({
     global_keymaps = true,
     global_keymaps_prefix = '<leader>R',
@@ -510,7 +524,7 @@ end)
 --   pattern = { '*.http', '*.rest' }, -- Add specific file types here
 --   once = true,
 --   callback = function()
---     add('mistweaverco/kulala.nvim')
+--     add(gh('mistweaverco/kulala.nvim')
 --     require('kulala').setup({
 --       global_keymaps = true,
 --       global_keymaps_prefix = '<leader>R',
@@ -529,18 +543,20 @@ end)
 -- enabled in 'plugin/30_mini.lua' or other suggested 'mini.hues' based ones.
 now(function()
   -- Install only those that you need
-  add('sainnhe/everforest')
-  add('Shatur/neovim-ayu')
-  add('folke/tokyonight.nvim')
-  add('catppuccin/nvim')
-  add('rose-pine/neovim')
-  require('ayu').setup({
-    overrides = {
-      -- To see the available highlight groups, run :source $VIMRUNTIME/syntax/hitest.vim
-      -- Search = { bg = "#ff00ff"}
-    },
+  add({
+    gh('folke/tokyonight.nvim'),
+    -- gh('sainnhe/everforest'),
+    -- gh('Shatur/neovim-ayu'),
+    -- gh('catppuccin/nvim'),
+    -- gh('ellisonleao/gruvbox.nvim'),
+    -- gh('rose-pine/neovim'),
   })
-  add('ellisonleao/gruvbox.nvim')
+  -- require('ayu').setup({
+  --   overrides = {
+  --     -- To see the available highlight groups, run :source $VIMRUNTIME/syntax/hitest.vim
+  --     -- Search = { bg = "#ff00ff"}
+  --   },
+  -- })
 
   -- Enable only one
   vim.cmd('color tokyonight')
@@ -549,12 +565,10 @@ end)
 -- Statusline
 now(function()
   add({
-    source = 'nvim-lualine/lualine.nvim',
-    depends = {
-      'nvim-tree/nvim-web-devicons',
-      'smiteshp/nvim-navic',
-      'yavorski/lualine-macro-recording.nvim',
-    },
+    gh('nvim-tree/nvim-web-devicons'),
+    gh('smiteshp/nvim-navic'),
+    gh('yavorski/lualine-macro-recording.nvim'),
+    gh('nvim-lualine/lualine.nvim'),
   })
   require('lualine').setup({
     options = {
@@ -603,6 +617,9 @@ now(function()
         },
         {
           "require'easy-dotnet.ui-modules.jobs':lualine()",
+        },
+        {
+          "require'easy-dotnet.actions.run':get_info()",
         },
         'branch',
         'diff',
@@ -657,21 +674,18 @@ end)
 later(
   function()
     add({
-      source = 'ThePrimeagen/refactoring.nvim',
-      depends = {
-        'nvim-lua/plenary.nvim',
-        'nvim-treesitter/nvim-treesitter',
-      },
+      gh('nvim-lua/plenary.nvim'),
+      gh('nvim-treesitter/nvim-treesitter'),
+      gh('ThePrimeagen/refactoring.nvim'),
     })
   end
 )
 later(
   function()
     add({
-      source = 'kdheepak/lazygit.nvim',
-      depends = {
-        'nvim-lua/plenary.nvim',
-      },
+      gh('nvim-lua/plenary.nvim'),
+      gh('kdheepak/lazygit.nvim'),
     })
   end
 )
+now(function() add(gh('xTacobaco/cursor-agent.nvim')) end)
