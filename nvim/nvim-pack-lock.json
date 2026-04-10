@@ -32,6 +32,10 @@
       "rev": "a04ad0dbc725134edbee3a5eea29290976695357",
       "src": "https://github.com/kdheepak/lazygit.nvim"
     },
+    "lualine-ex": {
+      "rev": "249726e5512e02f319614959d1ae1c733a9bb622",
+      "src": "https://github.com/dokwork/lualine-ex"
+    },
     "lualine-macro-recording.nvim": {
       "rev": "e2dcf63ba74e6111b53e1520a4f8a17a3d7427a1",
       "src": "https://github.com/yavorski/lualine-macro-recording.nvim"
@@ -56,14 +60,6 @@
       "rev": "fd0b7986dd0ae04e38ec7dc0c78a432e3820839c",
       "src": "https://github.com/nvim-neotest/neotest"
     },
-    "neovim": {
-      "rev": "cf2a288696b03d0934da713d66c6d71557b5c997",
-      "src": "https://github.com/rose-pine/neovim"
-    },
-    "nvim": {
-      "rev": "16408d203973da7e43fab87c6f9d3bf7fa98fa8b",
-      "src": "https://github.com/catppuccin/nvim"
-    },
     "nvim-dap": {
       "rev": "4f5deb110d9ff8994d96c21df95e2271d11214f9",
       "src": "https://github.com/mfussenegger/nvim-dap"
@@ -71,6 +67,10 @@
     "nvim-dap-ui": {
       "rev": "d9770a55188bb34c2bdce7d90a6151181beb6966",
       "src": "https://github.com/rcarriga/nvim-dap-ui"
+    },
+    "nvim-lspconfig": {
+      "rev": "9ccd58a7949091c0cc2777d4e92a45a209c808c1",
+      "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-navic": {
       "rev": "f5eba192f39b453675d115351808bd51276d9de5",
@@ -99,10 +99,6 @@
     "refactoring.nvim": {
       "rev": "6784b54587e6d8a6b9ea199318512170ffb9e418",
       "src": "https://github.com/ThePrimeagen/refactoring.nvim"
-    },
-    "roslyn.nvim": {
-      "rev": "ff43201090361b8936e008a006473b59ef2c0ca6",
-      "src": "https://github.com/seblyng/roslyn.nvim"
     },
     "tokyonight.nvim": {
       "rev": "cdc07ac78467a233fd62c493de29a17e0cf2b2b6",

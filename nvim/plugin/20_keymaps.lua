@@ -10,7 +10,7 @@
 
 -- Helper to create a Normal mode mapping
 local nmap = function(lhs, rhs, desc)
-    -- See `:h vim.keymap.set()`
+    -- See `:h vim.keymap.set()
     vim.keymap.set("n", lhs, rhs, { desc = desc })
 end
 
@@ -236,7 +236,7 @@ nmap_leader('fG', '<Cmd>FzfLua grep_cword<CR>'                , 'Grep current wo
 nmap_leader('fh', '<Cmd>FzfLua help<CR>'                      , 'Help tags')
 nmap_leader('fH', '<Cmd>FzfLua hl_groups<CR>'                 , 'Highlight groups')
 nmap_leader('fl', '<Cmd>FzfLua lines<CR>'                     , 'Lines (buf)')
-nmap_leader('fo', '<Cmd>FzfLua oldfiles'                      , 'Old files')
+nmap_leader('fo', '<Cmd>FzfLua oldfiles<CR>'                  , 'Old files')
 nmap_leader('fm', '<Cmd>FzfLua git_hunks<CR>'                 , 'Modified hunks (all)')
 nmap_leader('fM', '<Cmd>FzfLua git_hunks path="%"<CR>'        , 'Modified hunks (buf)')
 nmap_leader('fy', '<Cmd>FzfLua registers<CR>'                 , 'Registers')
@@ -326,10 +326,10 @@ xmap_leader("rv",  ":Refactor extract_var<CR>",           "Extract variable")
 add_group  { mode = 'n', keys = '<Leader>R', desc = 'REST...' }
 -- REST Client (lookup Kulala plugin configuration)
 
-add_group  { mode = 'n', keys = '<Leader>s', desc = 'Session...' }
+add_group  { mode = 'n', keys = '<Leader>s', desc = 'aSession...' }
 -- s is for 'Session'. Common usage:
 -- - `<Leader>sn` - start new session
--- - `<Leader>sr` - read previously started session
+-- - `<Leader>sr` - read previously started sessioan
 -- - `<Leader>sd` - delete previously started session
 local session_new = 'MiniSessions.write(vim.fn.input("Session name: "))'
 
@@ -344,7 +344,7 @@ nmap_leader('tT', '<Cmd>horizontal term<CR>', 'Terminal (horizontal)')
 nmap_leader('tt', '<Cmd>vertical term<CR>',   'Terminal (vertical)')
 
 add_group  { mode = 'n', keys = '<Leader>v', desc = 'Visits...' }
-nmap_leader('u', "<Cmd>lua require('undotree').open()", 'Undotree')
+nmap_leader('u', "<Cmd>lua require('undotree').open()<CR>", 'Undotree')
 -- v is for 'Visits'. Common usage:
 -- - `<Leader>vv` - add    "core" label to current file.
 -- - `<Leader>vV` - remove "core" label to current file.
