@@ -19,9 +19,12 @@ Set-Alias -Name vim -Value nvim
 Set-Alias -Name vid -Value neovide
 Set-Alias -Name which -Value Show-Command
 
-
 # Putting the FUN in Functions 🎉
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+function ask {
+    & agent --mode ask @args
+}
+
 function Find-WindotsRepository {
     <#
     .SYNOPSIS
@@ -311,10 +314,12 @@ $colors = @{
 }
 
 Set-PSReadLineOption -Colors $colors
-Set-PSReadLineOption -PredictionSource HistoryAndPlugin
-Set-PSReadLineOption -PredictionViewStyle InlineView
-Set-PSReadLineKeyHandler -Function AcceptSuggestion -Key Alt+l
-Import-Module -Name CompletionPredictor
+if (-not [Console]::IsOutputRedirected) {
+    Set-PSReadLineOption -PredictionSource HistoryAndPlugin
+    Set-PSReadLineOption -PredictionViewStyle InlineView
+    Set-PSReadLineKeyHandler -Function AcceptSuggestion -Key Alt+l
+    Import-Module -Name CompletionPredictor
+}
 Import-Module -Name PsReadLine
 
 # Things only for interactive shells
