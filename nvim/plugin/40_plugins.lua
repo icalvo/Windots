@@ -167,7 +167,6 @@ later(function()
     add({
         gh("nvim-neotest/nvim-nio"),
         gh("nvim-lua/plenary.nvim"),
-        gh("antoinemadec/FixCursorHold.nvim"),
         treesitter_package,
         -- gh("marilari88/neotest-vitest"),
         gh("nvim-neotest/neotest"),
