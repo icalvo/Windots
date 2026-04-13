@@ -1,4 +1,8 @@
 #!r::Reload
+
+CapsLock::Esc
+Esc::CapsLock
+
 >^a::Send("á")
 >^e::Send("é")
 >^i::Send("í")
