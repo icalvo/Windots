@@ -42,6 +42,7 @@ vim.cmd.packadd("nvim.undotree")
 --   textobjects (see `:h text-objects`, `:h MiniAi.gen_spec.treesitter()`).
 --
 -- Add these plugins now if file (and not 'mini.starter') is shown after startup.
+local treesitter_package = { src = gh("nvim-treesitter/nvim-treesitter"), version = "main" }
 now_if_args(function()
     -- Define hook to update tree-sitter parsers after plugin is updated
     local ts_update = function()
@@ -50,7 +51,7 @@ now_if_args(function()
     Config.on_packchanged("nvim-treesitter", { "update" }, ts_update, ":TSUpdate")
 
     add({
-        gh("nvim-treesitter/nvim-treesitter"),
+        treesitter_package,
         gh("nvim-treesitter/nvim-treesitter-textobjects"),
     })
     local install_directory = vim.fn.stdpath("data") .. "\\site"
@@ -167,7 +168,7 @@ later(function()
         gh("nvim-neotest/nvim-nio"),
         gh("nvim-lua/plenary.nvim"),
         gh("antoinemadec/FixCursorHold.nvim"),
-        gh("nvim-treesitter/nvim-treesitter"),
+        treesitter_package,
         -- gh("marilari88/neotest-vitest"),
         gh("nvim-neotest/neotest"),
     })
@@ -331,7 +332,7 @@ later(function()
         gh("mason-org/mason.nvim"),
         gh("neovim/nvim-lspconfig"),
     })
-    local _ = require("mason.settings").current.install_root_dir
+    local mason_dir = require("mason.settings").current.install_root_dir
 
     setup_lsp("html")
     setup_lsp("jsonls")
@@ -381,7 +382,7 @@ later(function()
             Lua = {},
         },
     })
-    setup_lsp("powershell_es")
+    setup_lsp("powershell_es", { bundle_path = mason_dir .. "/packages/powershell-editor-services" })
     setup_lsp("tailwindcss")
     setup_lsp("taplo")
     setup_lsp("ts_ls")
@@ -777,7 +778,7 @@ end)
 later(function()
     add({
         gh("nvim-lua/plenary.nvim"),
-        gh("nvim-treesitter/nvim-treesitter"),
+        treesitter_package,
         gh("ThePrimeagen/refactoring.nvim"),
     })
 end)
@@ -790,5 +791,4 @@ end)
 now(function()
     add(gh("xTacobaco/cursor-agent.nvim"))
     vim.g.cursor_agent_mapped = true
-    require("cursor-agent").setup({})
 end)

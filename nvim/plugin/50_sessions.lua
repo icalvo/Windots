@@ -21,19 +21,20 @@ end
 local function get_session_file()
     local cwd = vim.fn.getcwd()
     local session_path = cwd
-    local git_root = vim.fn.finddir(".git", cwd .. ";")
-    if git_root ~= "" and type(git_root) == "string" then
-        git_root = vim.fn.fnamemodify(git_root, ":h")
-        -- if
-        --     git_root ~= session_path
-        --     and ask_yes_no(
-        --         "You are in a git repo, do you want to load its session instead of the one for the current dir?",
-        --         true
-        --     )
-        -- then
-        session_path = git_root
-        -- end
-    end
+    -- local git_root = vim.fn.finddir(".git", cwd .. ";")
+    -- if git_root ~= "" and type(git_root) == "string" then
+    --     log_info("Found git dir " .. git_root)
+    --     git_root = vim.fn.fnamemodify(git_root, ":h")
+    --     -- if
+    --     --     git_root ~= session_path
+    --     --     and ask_yes_no(
+    --     --         "You are in a git repo, do you want to load its session instead of the one for the current dir?",
+    --     --         true
+    --     --     )
+    --     -- then
+    --     session_path = git_root
+    --     -- end
+    -- end
     local session_name = session_path:gsub("/", "__"):gsub(":", "__"):gsub("\\", "__")
 
     return session_dir .. session_name .. ".vim"

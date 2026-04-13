@@ -10,8 +10,8 @@
 
 -- Helper to create a Normal mode mapping
 local nmap = function(lhs, rhs, desc)
-    -- See `:h vim.keymap.set()
-    vim.keymap.set("n", lhs, rhs, { desc = desc })
+	-- See `:h vim.keymap.set()
+	vim.keymap.set("n", lhs, rhs, { desc = desc })
 end
 
 --- Map a key combination to a command
@@ -20,19 +20,19 @@ end
 ---@param rhs string|function: The command to run when the key combination is pressed
 ---@param opts table|string: Options to pass to the keymap
 local map = function(modes, lhs, rhs, opts)
-    if type(opts) == "string" then
-        opts = { desc = opts }
-    end
-    local options = { silent = true }
-    if opts then
-        options = vim.tbl_extend("force", options, opts)
-    end
-    if type(modes) == "string" then
-        modes = { modes }
-    end
-    for _, mode in ipairs(modes) do
-        vim.keymap.set(mode, lhs, rhs, options)
-    end
+	if type(opts) == "string" then
+		opts = { desc = opts }
+	end
+	local options = { silent = true }
+	if opts then
+		options = vim.tbl_extend("force", options, opts)
+	end
+	if type(modes) == "string" then
+		modes = { modes }
+	end
+	for _, mode in ipairs(modes) do
+		vim.keymap.set(mode, lhs, rhs, options)
+	end
 end
 
 -- better up/down
@@ -57,13 +57,13 @@ nmap("\\p", "<Cmd>lua MiniHipatterns.toggle()", "MiniHipatterns")
 -- keymaps
 -- You can use the capture groups defined in `textobjects.scm`
 local xomap = function(lhs, rhs, desc)
-    -- See `:h vim.keymap.set()`
-    vim.keymap.set({ "x", "o" }, lhs, rhs, { desc = desc })
+	-- See `:h vim.keymap.set()`
+	vim.keymap.set({ "x", "o" }, lhs, rhs, { desc = desc })
 end
 local select = function(capture)
-    return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("'
-        .. capture
-        .. '", "textobjects")<CR>'
+	return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("'
+		.. capture
+		.. '", "textobjects")<CR>'
 end
 xomap("af", select("@function.outer"), "Around Function")
 xomap("af", select("@function.outer"), "Inside Function")
@@ -133,7 +133,6 @@ add_group  { mode = 'n', keys = '<Leader>b', desc = 'Buffer...' }
 local new_scratch_buffer = function()
   vim.api.nvim_win_set_buf(0, vim.api.nvim_create_buf(true, true))
 end
-
 nmap_leader('bb', '<Cmd>b#<CR>',                                 'Alternate')
 nmap_leader('bd', '<Cmd>lua MiniBufremove.delete()<CR>',         'Delete')
 nmap_leader('bD', '<Cmd>lua MiniBufremove.delete(0, true)<CR>',  'Delete!')
@@ -201,7 +200,7 @@ local explore_quickfix = function()
 end
 
 nmap_leader('ed', '<Cmd>lua MiniFiles.open()<CR>',          'Directory')
-nmap_leader('ef', explore_at_file,                          'File directory')
+nmap_leader('ef', explore_at_file,                          'Current file directory')
 nmap_leader('ei', '<Cmd>edit $MYVIMRC<CR>',                 'init.lua')
 nmap_leader('ek', edit_plugin_file('20_keymaps.lua'),       'Keymaps config')
 nmap_leader('em', edit_plugin_file('30_mini.lua'),          'MINI config')
@@ -253,22 +252,21 @@ add_group  { mode = 'x', keys = '<Leader>g', desc = 'Git...' }
 -- - `<Leader>go` - toggle 'mini.diff' overlay to show in-buffer unstaged changes
 -- - `<Leader>gd` - show unstaged changes as a patch in separate tabpage
 -- - `<Leader>gL` - show Git log of current file
-local git_log_cmd = [[Git log --pretty=format:\%h\ \%as\ │\ \%s --topo-order]]
-local git_log_buf_cmd = git_log_cmd .. ' --follow -- %'
+-- local git_log_cmd = [[Git log --pretty=format:\%h\ \%as\ │\ \%s --topo-order]]
+-- local git_log_buf_cmd = git_log_cmd .. ' --follow -- %'
 
-nmap_leader('ga', '<Cmd>Git diff --cached<CR>',             'Added diff')
-nmap_leader('gA', '<Cmd>Git diff --cached -- %<CR>',        'Added diff buffer')
-nmap_leader('gc', '<Cmd>Git commit<CR>',                    'Commit')
-nmap_leader('gC', '<Cmd>Git commit --amend<CR>',            'Commit amend')
-nmap_leader('gd', '<Cmd>Git diff<CR>',                      'Diff')
-nmap_leader('gD', '<Cmd>Git diff -- %<CR>',                 'Diff buffer')
-nmap_leader('gg', '<Cmd>LazyGitCurrentFile<CR>',            'LazyGit')
-nmap_leader('gl', '<Cmd>' .. git_log_cmd .. '<CR>',         'Log')
-nmap_leader('gL', '<Cmd>' .. git_log_buf_cmd .. '<CR>',     'Log buffer')
-nmap_leader('go', '<Cmd>lua MiniDiff.toggle_overlay()<CR>', 'Toggle overlay')
-nmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>',  'Show at cursor')
-
-xmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at selection')
+-- nmap_leader('ga', '<Cmd>Git diff --cached<CR>',             'Added diff')
+-- nmap_leader('gA', '<Cmd>Git diff --cached -- %<CR>',        'Added diff buffer')
+-- nmap_leader('gc', '<Cmd>Git commit<CR>',                    'Commit')
+-- nmap_leader('gC', '<Cmd>Git commit --amend<CR>',            'Commit amend')
+-- nmap_leader('gd', '<Cmd>Git diff<CR>',                      'Diff')
+-- nmap_leader('gD', '<Cmd>Git diff -- %<CR>',                 'Diff buffer')
+-- nmap_leader('gl', '<Cmd>' .. git_log_cmd .. '<CR>',         'Log')
+-- nmap_leader('gL', '<Cmd>' .. git_log_buf_cmd .. '<CR>',     'Log buffer')
+-- nmap_leader('go', '<Cmd>lua MiniDiff.toggle_overlay()<CR>', 'Toggle overlay')
+-- nmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>',  'Show at cursor')
+-- nmap_leader('gg', '<Cmd>LazyGitCurrentFile<CR>',            'LazyGit')
+nmap_leader('g', '<Cmd>LazyGitCurrentFile<CR>',            'LazyGit')
 
 add_group  { mode = 'n', keys = '<Leader>m', desc = 'Map...' }
 -- m is for 'Map'. Common usage:
@@ -288,28 +286,6 @@ nmap_leader('ot', '<Cmd>lua MiniTrailspace.trim()<CR>',    'Trim trailspace')
 nmap_leader('oz', '<Cmd>lua MiniMisc.zoom()<CR>',          'Zoom toggle')
 
 -- Refactoring
-
--- Function to perform LSP code actions
-local function code_action()
-    local params = vim.lsp.util.make_range_params()
-    params.context = { diagnostics = {} } -- You can expand this with diagnostics if needed
-
-    -- Call the LSP code action
-    vim.lsp.buf_request_all(0, 'textDocument/codeAction', params, function(err, res)
-        if err then
-            print("Error: " .. err.message)
-            return
-        end
-        for _, action in ipairs(res or {}) do
-            if action.title == "Inline Variable" then  -- Change this to your specific action title
-                vim.lsp.buf.execute_command(action.command)
-            end
-        end
-    end)
-end
-
--- Key mapping for the specific code action
-
 add_group  { mode = 'n', keys = '<Leader>r', desc = 'Refactor...' }
 add_group  { mode = 'x', keys = '<Leader>r', desc = 'Refactor...' }
 
@@ -318,7 +294,6 @@ nmap_leader("rbf", ":Refactor extract_block_to_file<CR>", "Extract block to file
 xmap_leader("re",  ":Refactor extract<CR>",               "Extract function")
 xmap_leader("rf",  ":Refactor extract_to_file<CR>",       "Extract function to file")
 nmap_leader("ri",  ":Refactor inline_var<CR>",            "Inline variable")
-nmap_leader('rri', code_action,                           "Inline variable a")
 nmap_leader("rI",  ":Refactor inline_func<CR>",           "Inline function")
 nmap_leader("rn",  vim.lsp.buf.rename,                    "Rename")
 xmap_leader("rv",  ":Refactor extract_var<CR>",           "Extract variable")
@@ -326,17 +301,7 @@ xmap_leader("rv",  ":Refactor extract_var<CR>",           "Extract variable")
 add_group  { mode = 'n', keys = '<Leader>R', desc = 'REST...' }
 -- REST Client (lookup Kulala plugin configuration)
 
-add_group  { mode = 'n', keys = '<Leader>s', desc = 'aSession...' }
--- s is for 'Session'. Common usage:
--- - `<Leader>sn` - start new session
--- - `<Leader>sr` - read previously started sessioan
--- - `<Leader>sd` - delete previously started session
-local session_new = 'MiniSessions.write(vim.fn.input("Session name: "))'
-
-nmap_leader('sd', '<Cmd>lua MiniSessions.select("delete")<CR>', 'Delete')
-nmap_leader('sn', '<Cmd>lua ' .. session_new .. '<CR>',         'New')
-nmap_leader('sr', '<Cmd>lua MiniSessions.select("read")<CR>',   'Read')
-nmap_leader('sw', '<Cmd>lua MiniSessions.write()<CR>',          'Write current')
+add_group  { mode = 'n', keys = '<Leader>s', desc = 'Session...' }
 
 add_group  { mode = 'n', keys = '<Leader>t', desc = 'Terminal...' }
 -- t is for 'Terminal'
@@ -351,6 +316,8 @@ nmap_leader('u', "<Cmd>lua require('undotree').open()<CR>", 'Undotree')
 -- - `<Leader>vc` - pick among all files with "core" label.
 local make_pick_core = function(cwd, desc)
   return function()
+        local MiniVisits = require("mini.visits")
+        local MiniExtra = require("mini.extra")
     local sort_latest = MiniVisits.gen_sort.default({ recency_weight = 1 })
     local local_opts = { cwd = cwd, filter = 'core', sort = sort_latest }
     MiniExtra.pickers.visit_paths(local_opts, { source = { name = desc } })
