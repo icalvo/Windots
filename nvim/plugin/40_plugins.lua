@@ -414,6 +414,7 @@ later(function()
     end
 
     local dotnet = require("easy-dotnet")
+    local mason_dir = require("mason.settings").current.install_root_dir
     -- Options are not required
     dotnet.setup({
         lsp = {
@@ -421,7 +422,7 @@ later(function()
         },
         debugger = {
             -- The path to netcoredbg executable
-            bin_path = "C:\\Users\\ignacio.calvo\\AppData\\Local\\nvim-data\\mason\\bin\\netcoredbg.cmd",
+            bin_path = mason_dir .. "bin/netcoredbg.cmd",
             -- bin_path = vim.fn.expand("$MASON/packages/netcoredbg/netcoredbg/"),
             auto_register_dap = true,
             mappings = {
