@@ -9,23 +9,19 @@
 -- Use this file to install and configure other such plugins.
 
 -- Make concise helpers for installing/adding plugins in two stages
-local gh = function(x)
-    return "https://github.com/" .. x
-end
+local gh = function(x) return 'https://github.com/' .. x end
 local add = function(spec, args)
-    if type(spec) == "string" then
-        vim.pack.add({ spec }, args)
-    else
-        vim.pack.add(spec, args)
-    end
+  if type(spec) == 'string' then
+    vim.pack.add({ spec }, args)
+  else
+    vim.pack.add(spec, args)
+  end
 end
 local now, later = Config.now, Config.later
 local now_if_args = Config.now_if_args
-local dbg = function(s)
-    vim.notify(s, vim.log.levels.INFO, { title = "IGNACIO" })
-end
+local dbg = function(s) vim.notify(s, vim.log.levels.INFO, { title = 'IGNACIO' }) end
 
-vim.cmd.packadd("nvim.undotree")
+vim.cmd.packadd('nvim.undotree')
 -- Tree-sitter ================================================================
 
 -- Tree-sitter is a tool for fast incremental parsing. It converts text into
@@ -42,135 +38,132 @@ vim.cmd.packadd("nvim.undotree")
 --   textobjects (see `:h text-objects`, `:h MiniAi.gen_spec.treesitter()`).
 --
 -- Add these plugins now if file (and not 'mini.starter') is shown after startup.
-local treesitter_package = { src = gh("nvim-treesitter/nvim-treesitter"), version = "main" }
+local treesitter_package =
+  { src = gh('nvim-treesitter/nvim-treesitter'), version = 'main' }
 now_if_args(function()
-    -- Define hook to update tree-sitter parsers after plugin is updated
-    local ts_update = function()
-        vim.cmd("TSUpdate")
-    end
-    Config.on_packchanged("nvim-treesitter", { "update" }, ts_update, ":TSUpdate")
+  -- Define hook to update tree-sitter parsers after plugin is updated
+  local ts_update = function() vim.cmd('TSUpdate') end
+  Config.on_packchanged('nvim-treesitter', { 'update' }, ts_update, ':TSUpdate')
 
-    add({
-        treesitter_package,
-        gh("nvim-treesitter/nvim-treesitter-textobjects"),
-    })
-    local install_directory = vim.fn.stdpath("data") .. "\\site"
-    require("nvim-treesitter").setup({
-        -- Directory to install parsers and queries to (prepended to `runtimepath` to have priority)
-        install_dir = install_directory,
-    })
-    vim.opt.runtimepath:append(install_directory)
-    local languages = { "html", "javascript", "sql" }
-    local isnt_installed = function(lang)
-        return #vim.api.nvim_get_runtime_file("parser/" .. lang .. ".*", false) == 0
-    end
-    local to_install = vim.tbl_filter(isnt_installed, languages)
-    if #to_install > 0 then
-        require("nvim-treesitter").install(to_install)
-    end
+  add({
+    treesitter_package,
+    gh('nvim-treesitter/nvim-treesitter-textobjects'),
+  })
+  local install_directory = vim.fn.stdpath('data') .. '\\site'
+  require('nvim-treesitter').setup({
+    -- Directory to install parsers and queries to (prepended to `runtimepath` to have priority)
+    install_dir = install_directory,
+  })
+  vim.opt.runtimepath:append(install_directory)
+  local languages = { 'html', 'javascript', 'sql' }
+  local isnt_installed = function(lang)
+    return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
+  end
+  local to_install = vim.tbl_filter(isnt_installed, languages)
+  if #to_install > 0 then require('nvim-treesitter').install(to_install) end
 
-    -- Enable tree-sitter after opening a file for a target language
-    local filetypes = {}
-    for _, lang in ipairs(languages) do
-        for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
-            table.insert(filetypes, ft)
-        end
+  -- Enable tree-sitter after opening a file for a target language
+  local filetypes = {}
+  for _, lang in ipairs(languages) do
+    for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
+      table.insert(filetypes, ft)
     end
-    local ts_start = function(ev)
-        vim.treesitter.start(ev.buf)
-    end
-    vim.api.nvim_create_autocmd("FileType", {
-        callback = function(args)
-            local filetype = args.match
-            local lang = vim.treesitter.language.get_lang(filetype)
-            if vim.tbl_contains(require("nvim-treesitter.config").get_available(), lang) then
-                require("nvim-treesitter").install(lang):await(function()
-                    vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-                    vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-                    vim.treesitter.start()
-                end)
-            end
-        end,
-    })
-    -- Config.new_autocmd("FileType", filetypes, ts_start, "Start tree-sitter")
-    require("nvim-treesitter-textobjects").setup({
-        select = {
-            -- Automatically jump forward to textobj, similar to targets.vim
-            lookahead = true,
-            -- You can choose the select mode (default is charwise 'v')
-            --
-            -- Can also be a function which gets passed a table with the keys
-            -- * query_string: eg '@function.inner'
-            -- * method: eg 'v' or 'o'
-            -- and should return the mode ('v', 'V', or '<c-v>') or a table
-            -- mapping query_strings to modes.
-            -- selection_modes = {
-            --   ['@parameter.outer'] = 'v', -- charwise
-            --   ['@function.outer'] = 'V', -- linewise
-            --   ['@class.outer'] = '<c-v>', -- blockwise
-            -- },
-            -- If you set this to `true` (default is `false`) then any textobject is
-            -- extended to include preceding or succeeding whitespace. Succeeding
-            -- whitespace has priority in order to act similarly to eg the built-in
-            -- `ap`.
-            --
-            -- Can also be a function which gets passed a table with the keys
-            -- * query_string: eg '@function.inner'
-            -- * selection_mode: eg 'v'
-            -- and should return true of false
-            include_surrounding_whitespace = false,
-        },
-    })
+  end
+  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
+  vim.api.nvim_create_autocmd('FileType', {
+    callback = function(args)
+      local filetype = args.match
+      local lang = vim.treesitter.language.get_lang(filetype)
+      if
+        vim.tbl_contains(require('nvim-treesitter.config').get_available(), lang)
+      then
+        require('nvim-treesitter').install(lang):await(function()
+          vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          vim.treesitter.start()
+        end)
+      end
+    end,
+  })
+  -- Config.new_autocmd("FileType", filetypes, ts_start, "Start tree-sitter")
+  require('nvim-treesitter-textobjects').setup({
+    select = {
+      -- Automatically jump forward to textobj, similar to targets.vim
+      lookahead = true,
+      -- You can choose the select mode (default is charwise 'v')
+      --
+      -- Can also be a function which gets passed a table with the keys
+      -- * query_string: eg '@function.inner'
+      -- * method: eg 'v' or 'o'
+      -- and should return the mode ('v', 'V', or '<c-v>') or a table
+      -- mapping query_strings to modes.
+      -- selection_modes = {
+      --   ['@parameter.outer'] = 'v', -- charwise
+      --   ['@function.outer'] = 'V', -- linewise
+      --   ['@class.outer'] = '<c-v>', -- blockwise
+      -- },
+      -- If you set this to `true` (default is `false`) then any textobject is
+      -- extended to include preceding or succeeding whitespace. Succeeding
+      -- whitespace has priority in order to act similarly to eg the built-in
+      -- `ap`.
+      --
+      -- Can also be a function which gets passed a table with the keys
+      -- * query_string: eg '@function.inner'
+      -- * selection_mode: eg 'v'
+      -- and should return true of false
+      include_surrounding_whitespace = false,
+    },
+  })
 end)
 
 later(function()
-    add({
-        gh("nvim-mini/mini.icons"),
-        gh("ibhagwan/fzf-lua"),
-    })
-    local fzf_lua = require("fzf-lua")
-    vim.cmd("FzfLua register_ui_select")
+  add({
+    gh('nvim-mini/mini.icons'),
+    gh('ibhagwan/fzf-lua'),
+  })
+  local fzf_lua = require('fzf-lua')
+  vim.cmd('FzfLua register_ui_select')
 
-    -- Register mini.visits extension
-    fzf_lua.register_extension(
-        "visit_paths", -- name
-        function()
-            local path = require("fzf-lua.path")
-            local cwd = vim.fn.getcwd()
-            local paths = require("mini.visits").list_paths()
-            -- Convert absolute paths to relative paths
-            local relative_paths = {}
-            for _, p in ipairs(paths) do
-                table.insert(relative_paths, path.relative_to(p, cwd))
-            end
-            return fzf_lua.fzf_exec(relative_paths, {
-                prompt = "Visit Paths> ",
-                cwd = cwd,
-                cwd_prompt = true, -- Enable cwd in prompt
-                cwd_prompt_shorten_len = 32, -- Shorten if longer than 32 chars
-                cwd_prompt_shorten_val = 1, -- Length of shortened parts
-                previewer = "builtin",
-                actions = {
-                    ["default"] = fzf_lua.actions.file_edit,
-                    ["ctrl-s"] = fzf_lua.actions.file_split,
-                    ["ctrl-v"] = fzf_lua.actions.file_vsplit,
-                },
-            })
-        end, -- function
-        { prompt = "Visit> " }, -- default options (optional)
-        false -- override existing (optional)
-    )
+  -- Register mini.visits extension
+  fzf_lua.register_extension(
+    'visit_paths', -- name
+    function()
+      local path = require('fzf-lua.path')
+      local cwd = vim.fn.getcwd()
+      local paths = require('mini.visits').list_paths()
+      -- Convert absolute paths to relative paths
+      local relative_paths = {}
+      for _, p in ipairs(paths) do
+        table.insert(relative_paths, path.relative_to(p, cwd))
+      end
+      return fzf_lua.fzf_exec(relative_paths, {
+        prompt = 'Visit Paths> ',
+        cwd = cwd,
+        cwd_prompt = true, -- Enable cwd in prompt
+        cwd_prompt_shorten_len = 32, -- Shorten if longer than 32 chars
+        cwd_prompt_shorten_val = 1, -- Length of shortened parts
+        previewer = 'builtin',
+        actions = {
+          ['default'] = fzf_lua.actions.file_edit,
+          ['ctrl-s'] = fzf_lua.actions.file_split,
+          ['ctrl-v'] = fzf_lua.actions.file_vsplit,
+        },
+      })
+    end, -- function
+    { prompt = 'Visit> ' }, -- default options (optional)
+    false -- override existing (optional)
+  )
 end)
 
 -- Testing
 later(function()
-    add({
-        gh("nvim-neotest/nvim-nio"),
-        gh("nvim-lua/plenary.nvim"),
-        treesitter_package,
-        -- gh("marilari88/neotest-vitest"),
-        gh("nvim-neotest/neotest"),
-    })
+  add({
+    gh('nvim-neotest/nvim-nio'),
+    gh('nvim-lua/plenary.nvim'),
+    treesitter_package,
+    -- gh("marilari88/neotest-vitest"),
+    gh('nvim-neotest/neotest'),
+  })
 end)
 
 -- Formatting =================================================================
@@ -182,55 +175,53 @@ end)
 -- The 'stevearc/conform.nvim' plugin is a good and maintained solution for easier
 -- formatting setup.
 later(function()
-    add(gh("stevearc/conform.nvim"))
+  add(gh('stevearc/conform.nvim'))
 
-    -- See also:
-    -- - `:h Conform`
-    -- - `:h conform-options`
-    -- - `:h conform-formatters`
-    vim.g.autoformat = true
-    require("conform").setup({
-        formatters_by_ft = {
-            -- cs = { 'csharpier' },
-            css = { "prettier" },
-            html = { "prettier" },
-            http = { "kulala-fmt" },
-            javascript = { "prettier" },
-            json = { "prettier" },
-            lua = { "stylua" },
-            markdown = { "prettier" },
-            scss = { "prettier" },
-            sh = { "shfmt" },
-            templ = { "templ" },
-            toml = { "taplo" },
-            typescript = { "prettier" },
-            yaml = { "prettier" },
-        },
+  -- See also:
+  -- - `:h Conform`
+  -- - `:h conform-options`
+  -- - `:h conform-formatters`
+  vim.g.autoformat = true
+  require('conform').setup({
+    formatters_by_ft = {
+      -- cs = { 'csharpier' },
+      css = { 'prettier' },
+      html = { 'prettier' },
+      http = { 'kulala-fmt' },
+      javascript = { 'prettier' },
+      json = { 'prettier' },
+      lua = { 'stylua' },
+      markdown = { 'prettier' },
+      scss = { 'prettier' },
+      sh = { 'shfmt' },
+      templ = { 'templ' },
+      toml = { 'taplo' },
+      typescript = { 'prettier' },
+      yaml = { 'prettier' },
+    },
 
-        format_after_save = function(bufnr)
-            if not vim.g.autoformat then
-                return
-            else
-                if vim.bo.filetype == "ps1" then
-                    vim.lsp.buf.format()
-                    return
-                end
-                -- Disable autoformat for files in a certain path
-                local bufname = vim.api.nvim_buf_get_name(bufnr)
-                if bufname:match("/node_modules/") then
-                    return
-                end
-                return { lsp_format = "fallback" }
-            end
-        end,
+    format_after_save = function(bufnr)
+      if not vim.g.autoformat then
+        return
+      else
+        if vim.bo.filetype == 'ps1' then
+          vim.lsp.buf.format()
+          return
+        end
+        -- Disable autoformat for files in a certain path
+        local bufname = vim.api.nvim_buf_get_name(bufnr)
+        if bufname:match('/node_modules/') then return end
+        return { lsp_format = 'fallback' }
+      end
+    end,
 
-        formatters = {
-            goimports_reviser = {
-                command = "goimports-reviser",
-                args = { "-output", "stdout", "$FILENAME" },
-            },
-        },
-    })
+    formatters = {
+      goimports_reviser = {
+        command = 'goimports-reviser',
+        args = { '-output', 'stdout', '$FILENAME' },
+      },
+    },
+  })
 end)
 
 -- Snippets ===================================================================
@@ -242,9 +233,7 @@ end)
 -- snippet files. They are organized in 'snippets/' directory (mostly) per language.
 -- 'mini.snippets' is designed to work with it as seamlessly as possible.
 -- See `:h MiniSnippets.gen_loader.from_lang()`.
-later(function()
-    add(gh("rafamadriz/friendly-snippets"))
-end)
+later(function() add(gh('rafamadriz/friendly-snippets')) end)
 
 -- Honorable mentions =========================================================
 
@@ -257,359 +246,355 @@ end)
 --
 -- You can use it like so:
 later(function()
-    add(gh("mason-org/mason.nvim"))
-    require("mason").setup({
-        ui = {
-            border = "rounded",
-            width = 0.8,
-            height = 0.8,
-        },
-        registries = {
-            "github:mason-org/mason-registry",
-            "github:crashdummyy/mason-registry",
-        },
-    })
+  add(gh('mason-org/mason.nvim'))
+  require('mason').setup({
+    ui = {
+      border = 'rounded',
+      width = 0.8,
+      height = 0.8,
+    },
+    registries = {
+      'github:mason-org/mason-registry',
+      'github:crashdummyy/mason-registry',
+    },
+  })
 
-    local mason_packages = {
-        -- "bicep-lsp",
-        "csharpier",
-        "docker-compose-language-service",
-        "dockerfile-language-server",
-        "html-lsp",
-        "jq",
-        "json-lsp",
-        "lua-language-server",
-        "markdownlint-cli2",
-        "netcoredbg",
-        "ols",
-        "powershell-editor-services",
-        "prettier",
-        "pyright",
-        "shfmt",
-        "stylua",
-        "tailwindcss-language-server",
-        "taplo",
-        "templ",
-        "terraform-ls",
-        "typescript-language-server",
-        "yaml-language-server",
-    }
+  local mason_packages = {
+    -- "bicep-lsp",
+    'csharpier',
+    'docker-compose-language-service',
+    'dockerfile-language-server',
+    'html-lsp',
+    'jq',
+    'json-lsp',
+    'lua-language-server',
+    'markdownlint-cli2',
+    'netcoredbg',
+    'ols',
+    'powershell-editor-services',
+    'prettier',
+    'pyright',
+    'shfmt',
+    'stylua',
+    'tailwindcss-language-server',
+    'taplo',
+    'templ',
+    'terraform-ls',
+    'typescript-language-server',
+    'yaml-language-server',
+  }
 
-    local mr = require("mason-registry")
-    local function ensure_installed()
-        for _, tool in ipairs(mason_packages) do
-            local p = mr.get_package(tool)
-            if not p:is_installed() then
-                p:install()
-            end
-        end
+  local mr = require('mason-registry')
+  local function ensure_installed()
+    for _, tool in ipairs(mason_packages) do
+      local p = mr.get_package(tool)
+      if not p:is_installed() then p:install() end
     end
-    if mr.refresh then
-        mr.refresh(ensure_installed)
-    else
-        ensure_installed()
-    end
+  end
+  if mr.refresh then
+    mr.refresh(ensure_installed)
+  else
+    ensure_installed()
+  end
 end)
 
 -- LSPS ========================================================
 local function setup_lsp(name, config)
-    if config then
-        vim.lsp.config(name, config)
-    else
-        vim.lsp.config(name, {})
-    end
-    vim.lsp.enable(name)
+  if config then
+    vim.lsp.config(name, config)
+  else
+    vim.lsp.config(name, {})
+  end
+  vim.lsp.enable(name)
 end
 later(function()
-    vim.filetype.add({
-        extension = {
-            razor = "razor",
-            cshtml = "razor",
-        },
-    })
-    add({
-        gh("mason-org/mason.nvim"),
-        gh("neovim/nvim-lspconfig"),
-    })
-    local mason_dir = require("mason.settings").current.install_root_dir
+  vim.filetype.add({
+    extension = {
+      razor = 'razor',
+      cshtml = 'razor',
+    },
+  })
+  add({
+    gh('mason-org/mason.nvim'),
+    gh('neovim/nvim-lspconfig'),
+  })
+  local mason_dir = require('mason.settings').current.install_root_dir
 
-    setup_lsp("html")
-    setup_lsp("jsonls")
-    setup_lsp("lua_ls", {
-        on_init = function(client)
-            if client.workspace_folders then
-                local path = client.workspace_folders[1].name
-                if
-                    path ~= vim.fn.stdpath("config")
-                    and (vim.uv.fs_stat(path .. "/.luarc.json") or vim.uv.fs_stat(path .. "/.luarc.jsonc"))
-                then
-                    return
-                end
-            end
+  setup_lsp('html')
+  setup_lsp('jsonls')
+  setup_lsp('lua_ls', {
+    on_init = function(client)
+      if client.workspace_folders then
+        local path = client.workspace_folders[1].name
+        if
+          path ~= vim.fn.stdpath('config')
+          and (
+            vim.uv.fs_stat(path .. '/.luarc.json')
+            or vim.uv.fs_stat(path .. '/.luarc.jsonc')
+          )
+        then
+          return
+        end
+      end
 
-            client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
-                runtime = {
-                    -- Tell the language server which version of Lua you're using (most
-                    -- likely LuaJIT in the case of Neovim)
-                    version = "LuaJIT",
-                    -- Tell the language server how to find Lua modules same way as Neovim
-                    -- (see `:h lua-module-load`)
-                    path = {
-                        "lua/?.lua",
-                        "lua/?/init.lua",
-                    },
-                },
-                -- Make the server aware of Neovim runtime files
-                workspace = {
-                    checkThirdParty = false,
-                    library = {
-                        vim.env.VIMRUNTIME,
-                        -- Depending on the usage, you might want to add additional paths
-                        -- here.
-                        -- '${3rd}/luv/library',
-                        -- '${3rd}/busted/library',
-                    },
-                    -- Or pull in all of 'runtimepath'.
-                    -- NOTE: this is a lot slower and will cause issues when working on
-                    -- your own configuration.
-                    -- See https://github.com/neovim/nvim-lspconfig/issues/3189
-                    -- library = vim.api.nvim_get_runtime_file('', true),
-                },
-            })
-        end,
-        settings = {
-            Lua = {},
-        },
-    })
-    setup_lsp("powershell_es", { bundle_path = mason_dir .. "/packages/powershell-editor-services" })
-    setup_lsp("tailwindcss")
-    setup_lsp("taplo")
-    setup_lsp("ts_ls")
-    setup_lsp("yamlls")
-    setup_lsp("roslyn_ls")
+      client.config.settings.Lua =
+        vim.tbl_deep_extend('force', client.config.settings.Lua, {
+          runtime = {
+            -- Tell the language server which version of Lua you're using (most
+            -- likely LuaJIT in the case of Neovim)
+            version = 'LuaJIT',
+            -- Tell the language server how to find Lua modules same way as Neovim
+            -- (see `:h lua-module-load`)
+            path = {
+              'lua/?.lua',
+              'lua/?/init.lua',
+            },
+          },
+          -- Make the server aware of Neovim runtime files
+          workspace = {
+            checkThirdParty = false,
+            library = {
+              vim.env.VIMRUNTIME,
+              -- Depending on the usage, you might want to add additional paths
+              -- here.
+              -- '${3rd}/luv/library',
+              -- '${3rd}/busted/library',
+            },
+            -- Or pull in all of 'runtimepath'.
+            -- NOTE: this is a lot slower and will cause issues when working on
+            -- your own configuration.
+            -- See https://github.com/neovim/nvim-lspconfig/issues/3189
+            -- library = vim.api.nvim_get_runtime_file('', true),
+          },
+        })
+    end,
+    settings = {
+      Lua = {},
+    },
+  })
+  setup_lsp(
+    'powershell_es',
+    { bundle_path = mason_dir .. '/packages/powershell-editor-services' }
+  )
+  setup_lsp('tailwindcss')
+  setup_lsp('taplo')
+  setup_lsp('ts_ls')
+  setup_lsp('yamlls')
+  setup_lsp('roslyn_ls')
 end)
 
 -- Debugging
 later(function()
-    add({
-        gh("nvim-lua/plenary.nvim"),
-        gh("GustavEikaas/easy-dotnet.nvim"),
-        gh("mfussenegger/nvim-dap"),
-    })
+  add({
+    gh('nvim-lua/plenary.nvim'),
+    gh('GustavEikaas/easy-dotnet.nvim'),
+    gh('mfussenegger/nvim-dap'),
+  })
 
-    local function get_secret_path(secret_guid)
-        local path = ""
-        local home_dir = vim.fn.expand("~")
-        if require("easy-dotnet.extensions").isWindows() then
-            local secret_path = home_dir
-                .. "\\AppData\\Roaming\\Microsoft\\UserSecrets\\"
-                .. secret_guid
-                .. "\\secrets.json"
-            path = secret_path
-        else
-            local secret_path = home_dir .. "/.microsoft/usersecrets/" .. secret_guid .. "/secrets.json"
-            path = secret_path
-        end
-        return path
+  local function get_secret_path(secret_guid)
+    local path = ''
+    local home_dir = vim.fn.expand('~')
+    if require('easy-dotnet.extensions').isWindows() then
+      local secret_path = home_dir
+        .. '\\AppData\\Roaming\\Microsoft\\UserSecrets\\'
+        .. secret_guid
+        .. '\\secrets.json'
+      path = secret_path
+    else
+      local secret_path = home_dir
+        .. '/.microsoft/usersecrets/'
+        .. secret_guid
+        .. '/secrets.json'
+      path = secret_path
     end
+    return path
+  end
 
-    local dotnet = require("easy-dotnet")
-    local mason_dir = require("mason.settings").current.install_root_dir
-    -- Options are not required
-    dotnet.setup({
-        lsp = {
-            enabled = false,
+  local dotnet = require('easy-dotnet')
+  local mason_dir = require('mason.settings').current.install_root_dir
+  -- Options are not required
+  dotnet.setup({
+    lsp = {
+      enabled = false,
+    },
+    debugger = {
+      -- The path to netcoredbg executable
+      bin_path = mason_dir .. 'bin/netcoredbg.cmd',
+      -- bin_path = vim.fn.expand("$MASON/packages/netcoredbg/netcoredbg/"),
+      auto_register_dap = true,
+      mappings = {
+        open_variable_viewer = { lhs = 'T', desc = 'open variable viewer' },
+      },
+    },
+    ---@type TestRunnerOptions
+    test_runner = {
+      ---@type "split" | "vsplit" | "float" | "buf"
+      viewmode = 'float',
+      ---@type number|nil
+      vsplit_width = nil,
+      ---@type string|nil "topleft" | "topright"
+      vsplit_pos = nil,
+      enable_buffer_test_execution = true, --Experimental, run tests directly from buffer
+      noBuild = true,
+      icons = {
+        passed = '',
+        skipped = '',
+        failed = '',
+        success = '',
+        reload = '',
+        test = '',
+        sln = '󰘐',
+        project = '󰘐',
+        dir = '',
+        package = '',
+      },
+      mappings = {
+        run_test_from_buffer = { lhs = '<leader>nr', desc = 'run test from buffer' },
+        peek_stack_trace_from_buffer = {
+          lhs = '<leader>np',
+          desc = 'peek stack trace from buffer',
         },
-        debugger = {
-            -- The path to netcoredbg executable
-            bin_path = mason_dir .. "bin/netcoredbg.cmd",
-            -- bin_path = vim.fn.expand("$MASON/packages/netcoredbg/netcoredbg/"),
-            auto_register_dap = true,
-            mappings = {
-                open_variable_viewer = { lhs = "T", desc = "open variable viewer" },
-            },
+        filter_failed_tests = { lhs = '<leader>nfe', desc = 'filter failed tests' },
+        debug_test = { lhs = '<leader>nd', desc = 'debug test' },
+        debug_test_from_buffer = {
+          lhs = '<leader>nb',
+          desc = 'debug test from buffer',
         },
-        ---@type TestRunnerOptions
-        test_runner = {
-            ---@type "split" | "vsplit" | "float" | "buf"
-            viewmode = "float",
-            ---@type number|nil
-            vsplit_width = nil,
-            ---@type string|nil "topleft" | "topright"
-            vsplit_pos = nil,
-            enable_buffer_test_execution = true, --Experimental, run tests directly from buffer
-            noBuild = true,
-            icons = {
-                passed = "",
-                skipped = "",
-                failed = "",
-                success = "",
-                reload = "",
-                test = "",
-                sln = "󰘐",
-                project = "󰘐",
-                dir = "",
-                package = "",
-            },
-            mappings = {
-                run_test_from_buffer = { lhs = "<leader>nr", desc = "run test from buffer" },
-                peek_stack_trace_from_buffer = {
-                    lhs = "<leader>np",
-                    desc = "peek stack trace from buffer",
-                },
-                filter_failed_tests = { lhs = "<leader>nfe", desc = "filter failed tests" },
-                debug_test = { lhs = "<leader>nd", desc = "debug test" },
-                debug_test_from_buffer = {
-                    lhs = "<leader>nb",
-                    desc = "debug test from buffer",
-                },
-                go_to_file = { lhs = "g", desc = "go to file" },
-                run_all = { lhs = "<leader>nR", desc = "run all tests" },
-                run = { lhs = "<leader>nr", desc = "run test" },
-                peek_stacktrace = {
-                    lhs = "<leader>np",
-                    desc = "peek stacktrace of failed test",
-                },
-                expand = { lhs = "o", desc = "expand" },
-                expand_node = { lhs = "E", desc = "expand node" },
-                expand_all = { lhs = "-", desc = "expand all" },
-                collapse_all = { lhs = "W", desc = "collapse all" },
-                close = { lhs = "q", desc = "close testrunner" },
-                refresh_testrunner = { lhs = "<C-r>", desc = "refresh testrunner" },
-            },
-            --- Optional table of extra args e.g "--blame crash"
-            additional_args = {},
+        go_to_file = { lhs = 'g', desc = 'go to file' },
+        run_all = { lhs = '<leader>nR', desc = 'run all tests' },
+        run = { lhs = '<leader>nr', desc = 'run test' },
+        peek_stacktrace = {
+          lhs = '<leader>np',
+          desc = 'peek stacktrace of failed test',
         },
-        new = {
-            project = {
-                prefix = "sln", -- "sln" | "none"
-            },
-        },
-        ---@param action "test" | "restore" | "build" | "run"
-        terminal = function(path, action, args)
-            args = args or ""
-            local commands = {
-                run = function()
-                    return string.format("dotnet run --project %s %s", path, args)
-                end,
-                test = function()
-                    return string.format("dotnet test %s %s", path, args)
-                end,
-                restore = function()
-                    return string.format("dotnet restore %s %s", path, args)
-                end,
-                build = function()
-                    return string.format("dotnet build %s %s", path, args)
-                end,
-                watch = function()
-                    return string.format("dotnet watch --project %s %s", path, args)
-                end,
-            }
-            local command = commands[action]()
-            if require("easy-dotnet.extensions").isWindows() == true then
-                command = command .. "\r"
-            end
-            vim.cmd("vsplit")
-            vim.cmd("term " .. command)
+        expand = { lhs = 'o', desc = 'expand' },
+        expand_node = { lhs = 'E', desc = 'expand node' },
+        expand_all = { lhs = '-', desc = 'expand all' },
+        collapse_all = { lhs = 'W', desc = 'collapse all' },
+        close = { lhs = 'q', desc = 'close testrunner' },
+        refresh_testrunner = { lhs = '<C-r>', desc = 'refresh testrunner' },
+      },
+      --- Optional table of extra args e.g "--blame crash"
+      additional_args = {},
+    },
+    new = {
+      project = {
+        prefix = 'sln', -- "sln" | "none"
+      },
+    },
+    ---@param action "test" | "restore" | "build" | "run"
+    terminal = function(path, action, args)
+      args = args or ''
+      local commands = {
+        run = function()
+          return string.format('dotnet run --project %s %s', path, args)
         end,
-        secrets = {
-            path = get_secret_path,
-        },
-        csproj_mappings = true,
-        fsproj_mappings = true,
-        auto_bootstrap_namespace = {
-            --block_scoped, file_scoped
-            type = "block_scoped",
-            enabled = true,
-            use_clipboard_json = {
-                behavior = "prompt", --'auto' | 'prompt' | 'never',
-                register = "+", -- which register to check
-            },
-        },
-        server = {
-            ---@type nil | "Off" | "Critical" | "Error" | "Warning" | "Information" | "Verbose" | "All"
-            log_level = "Information",
-        },
-        -- choose which picker to use with the plugin
-        -- possible values are "telescope" | "fzf" | "snacks" | "basic"
-        -- if no picker is specified, the plugin will determine
-        -- the available one automatically with this priority:
-        -- telescope -> fzf -> snacks ->  basic
-        picker = "fzf",
-        background_scanning = true,
-        notifications = {
-            --Set this to false if you have configured lualine to avoid double logging
-            handler = false,
-        },
-        diagnostics = {
-            default_severity = "error",
-            setqflist = false,
-        },
-    })
+        test = function() return string.format('dotnet test %s %s', path, args) end,
+        restore = function()
+          return string.format('dotnet restore %s %s', path, args)
+        end,
+        build = function() return string.format('dotnet build %s %s', path, args) end,
+        watch = function()
+          return string.format('dotnet watch --project %s %s', path, args)
+        end,
+      }
+      local command = commands[action]()
+      if require('easy-dotnet.extensions').isWindows() == true then
+        command = command .. '\r'
+      end
+      vim.cmd('vsplit')
+      vim.cmd('term ' .. command)
+    end,
+    secrets = {
+      path = get_secret_path,
+    },
+    csproj_mappings = true,
+    fsproj_mappings = true,
+    auto_bootstrap_namespace = {
+      --block_scoped, file_scoped
+      type = 'block_scoped',
+      enabled = true,
+      use_clipboard_json = {
+        behavior = 'prompt', --'auto' | 'prompt' | 'never',
+        register = '+', -- which register to check
+      },
+    },
+    server = {
+      ---@type nil | "Off" | "Critical" | "Error" | "Warning" | "Information" | "Verbose" | "All"
+      log_level = 'Information',
+    },
+    -- choose which picker to use with the plugin
+    -- possible values are "telescope" | "fzf" | "snacks" | "basic"
+    -- if no picker is specified, the plugin will determine
+    -- the available one automatically with this priority:
+    -- telescope -> fzf -> snacks ->  basic
+    picker = 'fzf',
+    background_scanning = true,
+    notifications = {
+      --Set this to false if you have configured lualine to avoid double logging
+      handler = false,
+    },
+    diagnostics = {
+      default_severity = 'error',
+      setqflist = false,
+    },
+  })
 
-    vim.api.nvim_create_user_command("Secrets", function()
-        dotnet.secrets()
-    end, {})
+  vim.api.nvim_create_user_command('Secrets', function() dotnet.secrets() end, {})
 
-    require("easy-dotnet.netcoredbg").register_dap_variables_viewer()
+  require('easy-dotnet.netcoredbg').register_dap_variables_viewer()
 end)
 
 later(function()
-    add({
-        gh("mfussenegger/nvim-dap"),
-        gh("nvim-neotest/nvim-nio"),
-        gh("rcarriga/nvim-dap-ui"),
-    })
-    local dapui = require("dapui")
-    local dap = require("dap")
+  add({
+    gh('mfussenegger/nvim-dap'),
+    gh('nvim-neotest/nvim-nio'),
+    gh('rcarriga/nvim-dap-ui'),
+  })
+  local dapui = require('dapui')
+  local dap = require('dap')
 
-    --- open ui immediately when debugging starts
-    dap.listeners.after.event_initialized["dapui_config"] = function()
-        dapui.open()
-    end
-    dap.listeners.before.event_terminated["dapui_config"] = function()
-        dapui.close()
-    end
-    dap.listeners.before.event_exited["dapui_config"] = function()
-        dapui.close()
-    end
-    -- https://emojipedia.org/en/stickers/search?q=circle
-    vim.fn.sign_define("DapBreakpoint", {
-        text = "⚪",
-        texthl = "DapBreakpointSymbol",
-        linehl = "DapBreakpoint",
-        numhl = "DapBreakpoint",
-    })
+  --- open ui immediately when debugging starts
+  dap.listeners.after.event_initialized['dapui_config'] = function() dapui.open() end
+  dap.listeners.before.event_terminated['dapui_config'] = function() dapui.close() end
+  dap.listeners.before.event_exited['dapui_config'] = function() dapui.close() end
+  -- https://emojipedia.org/en/stickers/search?q=circle
+  vim.fn.sign_define('DapBreakpoint', {
+    text = '⚪',
+    texthl = 'DapBreakpointSymbol',
+    linehl = 'DapBreakpoint',
+    numhl = 'DapBreakpoint',
+  })
 
-    vim.fn.sign_define("DapStopped", {
-        text = "🔴",
-        texthl = "yellow",
-        linehl = "DapBreakpoint",
-        numhl = "DapBreakpoint",
-    })
-    vim.fn.sign_define("DapBreakpointRejected", {
-        text = "⭕",
-        texthl = "DapStoppedSymbol",
-        linehl = "DapBreakpoint",
-        numhl = "DapBreakpoint",
-    })
-    -- default configuration
-    dapui.setup()
+  vim.fn.sign_define('DapStopped', {
+    text = '🔴',
+    texthl = 'yellow',
+    linehl = 'DapBreakpoint',
+    numhl = 'DapBreakpoint',
+  })
+  vim.fn.sign_define('DapBreakpointRejected', {
+    text = '⭕',
+    texthl = 'DapStoppedSymbol',
+    linehl = 'DapBreakpoint',
+    numhl = 'DapBreakpoint',
+  })
+  -- default configuration
+  dapui.setup()
 end)
 
 -- REST client
 now(function()
-    add(gh("mistweaverco/kulala.nvim"))
-    require("kulala").setup({
-        global_keymaps = true,
-        global_keymaps_prefix = "<leader>R",
-        kulala_keymaps_prefix = "",
-        additional_curl_options = { "-k" },
-        default_env = "",
-    })
-    -- { "<leader>Rs", desc = "Send request" },
-    -- { "<leader>Ra", desc = "Send all requests" },
-    -- { "<leader>Rb", desc = "Open scratchpad" },
+  add(gh('mistweaverco/kulala.nvim'))
+  require('kulala').setup({
+    global_keymaps = true,
+    global_keymaps_prefix = '<leader>R',
+    kulala_keymaps_prefix = '',
+    additional_curl_options = { '-k' },
+    default_env = '',
+  })
+  -- { "<leader>Rs", desc = "Send request" },
+  -- { "<leader>Ra", desc = "Send all requests" },
+  -- { "<leader>Rb", desc = "Open scratchpad" },
 end)
 -- vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
 --   pattern = { '*.http', '*.rest' }, -- Add specific file types here
@@ -633,171 +618,173 @@ end)
 -- have full support of its highlight groups. Use if you don't like 'miniwinter'
 -- enabled in 'plugin/30_mini.lua' or other suggested 'mini.hues' based ones.
 now(function()
-    -- Install only those that you need
-    add({
-        gh("folke/tokyonight.nvim"),
-        -- gh('sainnhe/everforest'),
-        -- gh('Shatur/neovim-ayu'),
-        -- gh('catppuccin/nvim'),
-        -- gh('ellisonleao/gruvbox.nvim'),
-        -- gh('rose-pine/neovim'),
-    })
-    -- require('ayu').setup({
-    --   overrides = {
-    --     -- To see the available highlight groups, run :source $VIMRUNTIME/syntax/hitest.vim
-    --     -- Search = { bg = "#ff00ff"}
-    --   },
-    -- })
+  -- Install only those that you need
+  add({
+    gh('folke/tokyonight.nvim'),
+    -- gh('sainnhe/everforest'),
+    -- gh('Shatur/neovim-ayu'),
+    -- gh('catppuccin/nvim'),
+    -- gh('ellisonleao/gruvbox.nvim'),
+    -- gh('rose-pine/neovim'),
+  })
+  -- require('ayu').setup({
+  --   overrides = {
+  --     -- To see the available highlight groups, run :source $VIMRUNTIME/syntax/hitest.vim
+  --     -- Search = { bg = "#ff00ff"}
+  --   },
+  -- })
 
-    -- Enable only one
-    vim.cmd("color tokyonight")
+  -- Enable only one
+  vim.cmd('color tokyonight')
 end)
 
 -- Statusline
 now(function()
-    add({
-        gh("nvim-tree/nvim-web-devicons"),
-        gh("smiteshp/nvim-navic"),
-        gh("yavorski/lualine-macro-recording.nvim"),
-        gh("dokwork/lualine-ex"),
-        gh("nvim-lualine/lualine.nvim"),
-    })
-    require("lualine").setup({
-        options = {
-            icons_enabled = true,
-            theme = "auto",
-            component_separators = { left = "", right = "" },
-            section_separators = { left = "", right = "" },
-            disabled_filetypes = {
-                statusline = { "nvim-undotree" },
-                winbar = {},
-            },
-            ignore_focus = {},
-            always_divide_middle = true,
-            always_show_tabline = true,
-            globalstatus = false,
-            refresh = {
-                statusline = 1000,
-                tabline = 1000,
-                winbar = 1000,
-                refresh_time = 16, -- ~60fps
-                events = {
-                    "WinEnter",
-                    "BufEnter",
-                    "BufWritePost",
-                    "SessionLoadPost",
-                    "FileChangedShellPost",
-                    "VimResized",
-                    "Filetype",
-                    "CursorMoved",
-                    "CursorMovedI",
-                    "ModeChanged",
-                },
-            },
-        },
-        sections = {
-            lualine_a = {
-                {
-                    "mode",
-                    fmt = function(str)
-                        return str:sub(1, 1)
-                    end,
-                },
-                function()
-                    if vim.o.autowriteall then
-                        return "AWA"
-                    elseif vim.o.autowrite then
-                        return "AW"
-                    else
-                        return ""
-                    end
-                end,
-            },
-            lualine_b = {
-                {
-                    "require'salesforce.org_manager':get_default_alias()",
-                    icon = "󰢎",
-                },
-                {
-                    "require'easy-dotnet.ui-modules.jobs':lualine()",
-                },
-                {
-                    "require'easy-dotnet.actions.run':get_info()",
-                },
-                "branch",
-                "diff",
-                "diagnostics",
-                {
-                    "require'kulala':get_selected_env()",
-                    color = { fg = "#ffcc00" },
-                },
-            },
-            lualine_c = {
-                { "filename", color = { fg = "#ffffff" }, path = 1 },
-                { "navic", color_correction = "dynamic" },
-            },
-            lualine_x = {},
-            lualine_y = {
-                {
-                    "ex.lsp.single",
-
-                    icons = {
-                        -- Default icon for any unknow server:
-                        unknown = "?",
-
-                        -- Default icon for a case, when no one server is run:
-                        lsp_is_off = "󰚦",
-
-                        -- Example of the icon for a client, which doesn't have an icon in `nvim-web-devicons`:
-                        ["null-ls"] = { "N", color = "magenta" },
-                    },
-
-                    { "macro_recording", "%S" },
-                    {
-                        "encoding",
-                        fmt = function(str)
-                            if str == "utf-8" then
-                                return ""
-                            else
-                                return str
-                            end
-                        end,
-                    },
-                },
-                "fileformat",
-                "filetype",
-            },
-            lualine_z = { "location" },
-        },
-        inactive_sections = {
-            lualine_a = {},
-            lualine_b = {},
-            lualine_c = { "filename" },
-            lualine_x = { "location" },
-            lualine_y = {},
-            lualine_z = {},
-        },
-        tabline = {},
+  add({
+    gh('nvim-tree/nvim-web-devicons'),
+    gh('smiteshp/nvim-navic'),
+    gh('yavorski/lualine-macro-recording.nvim'),
+    gh('dokwork/lualine-ex'),
+    gh('nvim-lualine/lualine.nvim'),
+  })
+  require('lualine').setup({
+    options = {
+      icons_enabled = true,
+      theme = 'auto',
+      component_separators = { left = '', right = '' },
+      section_separators = { left = '', right = '' },
+      disabled_filetypes = {
+        statusline = { 'nvim-undotree' },
         winbar = {},
-        inactive_winbar = {},
-        extensions = {},
-    })
+      },
+      ignore_focus = {},
+      always_divide_middle = true,
+      always_show_tabline = true,
+      globalstatus = false,
+      refresh = {
+        statusline = 1000,
+        tabline = 1000,
+        winbar = 1000,
+        refresh_time = 16, -- ~60fps
+        events = {
+          'WinEnter',
+          'BufEnter',
+          'BufWritePost',
+          'SessionLoadPost',
+          'FileChangedShellPost',
+          'VimResized',
+          'Filetype',
+          'CursorMoved',
+          'CursorMovedI',
+          'ModeChanged',
+        },
+      },
+    },
+    sections = {
+      lualine_a = {
+        {
+          'mode',
+          fmt = function(str) return str:sub(1, 1) end,
+        },
+        function()
+          if vim.o.autowriteall then
+            return 'AWA'
+          elseif vim.o.autowrite then
+            return 'AW'
+          else
+            return ''
+          end
+        end,
+      },
+      lualine_b = {
+        {
+          "require'salesforce.org_manager':get_default_alias()",
+          icon = '󰢎',
+        },
+        {
+          "require'easy-dotnet.ui-modules.jobs':lualine()",
+        },
+        {
+          "require'easy-dotnet.actions.run':get_info()",
+        },
+        'branch',
+        'diff',
+        'diagnostics',
+        {
+          "require'kulala':get_selected_env()",
+          color = { fg = '#ffcc00' },
+        },
+      },
+      lualine_c = {
+        { 'filename', color = { fg = '#ffffff' }, path = 1 },
+        { 'navic', color_correction = 'dynamic' },
+      },
+      lualine_x = {},
+      lualine_y = {
+        {
+          'ex.lsp.single',
+
+          icons = {
+            -- Default icon for any unknow server:
+            unknown = '?',
+
+            -- Default icon for a case, when no one server is run:
+            lsp_is_off = '󰚦',
+
+            -- Example of the icon for a client, which doesn't have an icon in `nvim-web-devicons`:
+            ['null-ls'] = { 'N', color = 'magenta' },
+          },
+
+          { 'macro_recording', '%S' },
+          {
+            'encoding',
+            fmt = function(str)
+              if str == 'utf-8' then
+                return ''
+              else
+                return str
+              end
+            end,
+          },
+        },
+        'fileformat',
+        'filetype',
+      },
+      lualine_z = { 'location' },
+    },
+    inactive_sections = {
+      lualine_a = {},
+      lualine_b = {},
+      lualine_c = { 'filename' },
+      lualine_x = { 'location' },
+      lualine_y = {},
+      lualine_z = {},
+    },
+    tabline = {},
+    winbar = {},
+    inactive_winbar = {},
+    extensions = {},
+  })
 end)
 
-later(function()
+later(
+  function()
     add({
-        gh("nvim-lua/plenary.nvim"),
-        treesitter_package,
-        gh("ThePrimeagen/refactoring.nvim"),
+      gh('nvim-lua/plenary.nvim'),
+      treesitter_package,
+      gh('ThePrimeagen/refactoring.nvim'),
     })
-end)
-later(function()
+  end
+)
+later(
+  function()
     add({
-        gh("nvim-lua/plenary.nvim"),
-        gh("kdheepak/lazygit.nvim"),
+      gh('nvim-lua/plenary.nvim'),
+      gh('kdheepak/lazygit.nvim'),
     })
-end)
+  end
+)
 now(function()
-    add(gh("xTacobaco/cursor-agent.nvim"))
-    vim.g.cursor_agent_mapped = true
+  add(gh('xTacobaco/cursor-agent.nvim'))
+  vim.g.cursor_agent_mapped = true
 end)
