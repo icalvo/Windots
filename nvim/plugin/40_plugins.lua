@@ -702,6 +702,15 @@ now(function()
                         return str:sub(1, 1)
                     end,
                 },
+                function()
+                    if vim.o.autowriteall then
+                        return "AWA"
+                    elseif vim.o.autowrite then
+                        return "AW"
+                    else
+                        return ""
+                    end
+                end,
             },
             lualine_b = {
                 {
