@@ -199,7 +199,7 @@ if has('ide')
 
     " Explore/Edit commands
     map <leader>ef :NERDTree<CR>
-    map <leader>es :e ~/.ideavimrc<cr>
+    map <leader>ei :e ~/.ideavimrc<cr>
     
     " Folding
     map <leader>zc :action CollapseAllRegions<CR>
