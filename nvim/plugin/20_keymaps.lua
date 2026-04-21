@@ -285,6 +285,10 @@ nmap_leader('or', '<Cmd>lua MiniMisc.resize_window()<CR>', 'Resize to default wi
 nmap_leader('ot', '<Cmd>lua MiniTrailspace.trim()<CR>',    'Trim trailspace')
 nmap_leader('oz', '<Cmd>lua MiniMisc.zoom()<CR>',          'Zoom toggle')
 
+-- Pack
+add_group  { mode = 'n', keys = '<Leader>p', desc = 'Pack' }
+nmap_leader('pu', '<Cmd>lua vim.pack.update()<CR>', 'Update')
+
 -- Refactoring
 add_group  { mode = 'n', keys = '<Leader>r', desc = 'Refactor...' }
 add_group  { mode = 'x', keys = '<Leader>r', desc = 'Refactor...' }
