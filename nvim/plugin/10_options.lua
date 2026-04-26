@@ -64,6 +64,8 @@ vim.o.foldmethod  = 'indent' -- Fold based on indent level
 vim.o.foldnestmax = 10       -- Limit number of fold levels
 vim.o.foldtext    = ''       -- Show text under fold with its highlighting
 
+vim.o.autowriteall = true
+vim.o.autoread     = true
 -- Editing ====================================================================
 vim.o.autoindent    = true    -- Use auto indent
 vim.o.clipboard     = 'unnamedplus'

@@ -10,8 +10,8 @@
 
 -- Helper to create a Normal mode mapping
 local nmap = function(lhs, rhs, desc)
-	-- See `:h vim.keymap.set()
-	vim.keymap.set("n", lhs, rhs, { desc = desc })
+  -- See `:h vim.keymap.set()
+  vim.keymap.set('n', lhs, rhs, { desc = desc })
 end
 
 --- Map a key combination to a command
@@ -20,63 +20,57 @@ end
 ---@param rhs string|function: The command to run when the key combination is pressed
 ---@param opts table|string: Options to pass to the keymap
 local map = function(modes, lhs, rhs, opts)
-	if type(opts) == "string" then
-		opts = { desc = opts }
-	end
-	local options = { silent = true }
-	if opts then
-		options = vim.tbl_extend("force", options, opts)
-	end
-	if type(modes) == "string" then
-		modes = { modes }
-	end
-	for _, mode in ipairs(modes) do
-		vim.keymap.set(mode, lhs, rhs, options)
-	end
+  if type(opts) == 'string' then opts = { desc = opts } end
+  local options = { silent = true }
+  if opts then options = vim.tbl_extend('force', options, opts) end
+  if type(modes) == 'string' then modes = { modes } end
+  for _, mode in ipairs(modes) do
+    vim.keymap.set(mode, lhs, rhs, options)
+  end
 end
 
 -- better up/down
-map({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", { desc = "Down", expr = true })
-map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true })
+map({ 'n', 'x' }, 'j', "v:count == 0 ? 'gj' : 'j'", { desc = 'Down', expr = true })
+map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true })
 
 -- shift doesn't leave visual mode
-map("x", ">", ">gv", { desc = "Shift right and stay visual" })
-map("x", "<", "<gv", { desc = "Shift left and stay visual" })
+map('x', '>', '>gv', { desc = 'Shift right and stay visual' })
+map('x', '<', '<gv', { desc = 'Shift left and stay visual' })
 
 -- Clear search highlight with <esc>
-nmap("<esc>", ":noh<cr><esc>", "Escape and clear hlsearch")
+nmap('<esc>', ':noh<cr><esc>', 'Escape and clear hlsearch')
 
-nmap("[<Space>", "i<C-m><Esc>", "Break line")
-nmap("]<Space>", 'mzo<Esc>0"_D`z', "Insert line below")
+nmap('[<Space>', 'i<C-m><Esc>', 'Break line')
+nmap(']<Space>', 'mzo<Esc>0"_D`z', 'Insert line below')
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
-nmap("[p", '<Cmd>exe "put! " . v:register<CR>', "Paste Above")
-nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
+nmap('[p', '<Cmd>exe "put! " . v:register<CR>', 'Paste Above')
+nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 
-nmap("\\p", "<Cmd>lua MiniHipatterns.toggle()", "MiniHipatterns")
+nmap('\\p', '<Cmd>lua MiniHipatterns.toggle()', 'MiniHipatterns')
 -- keymaps
 -- You can use the capture groups defined in `textobjects.scm`
 local xomap = function(lhs, rhs, desc)
-	-- See `:h vim.keymap.set()`
-	vim.keymap.set({ "x", "o" }, lhs, rhs, { desc = desc })
+  -- See `:h vim.keymap.set()`
+  vim.keymap.set({ 'x', 'o' }, lhs, rhs, { desc = desc })
 end
 local select = function(capture)
-	return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("'
-		.. capture
-		.. '", "textobjects")<CR>'
+  return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("'
+    .. capture
+    .. '", "textobjects")<CR>'
 end
-xomap("af", select("@function.outer"), "Around Function")
-xomap("af", select("@function.outer"), "Inside Function")
-xomap("ac", select("@class.outer"), "Around Class")
-xomap("ic", select("@class.inner"), "Inside Class")
-xomap("aa", select("@parameter.outer"), "Around Parameter")
-xomap("ia", select("@parameter.inner"), "Inside Parameter")
-xomap("al", select("@loop.outer"), "Around Loop")
-xomap("il", select("@loop.inner"), "Inside Loop")
-xomap("ai", select("@conditional.outer"), "Around Conditional")
-xomap("ii", select("@conditional.inner"), "Inside Conditional")
-xomap("ab", select("@block.outer"), "Around Block")
-xomap("ib", select("@block.inner"), "Inside Block")
+xomap('af', select('@function.outer'), 'Around Function')
+xomap('af', select('@function.outer'), 'Inside Function')
+xomap('ac', select('@class.outer'), 'Around Class')
+xomap('ic', select('@class.inner'), 'Inside Class')
+xomap('aa', select('@parameter.outer'), 'Around Parameter')
+xomap('ia', select('@parameter.inner'), 'Inside Parameter')
+xomap('al', select('@loop.outer'), 'Around Loop')
+xomap('il', select('@loop.inner'), 'Inside Loop')
+xomap('ai', select('@conditional.outer'), 'Around Conditional')
+xomap('ii', select('@conditional.inner'), 'Inside Conditional')
+xomap('ab', select('@block.outer'), 'Around Block')
+xomap('ib', select('@block.inner'), 'Inside Block')
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
 -- stylua: ignore start
@@ -289,6 +283,10 @@ add_group  { mode = 'n', keys = '<Leader>o', desc = 'Other...' }
 nmap_leader('or', '<Cmd>lua MiniMisc.resize_window()<CR>', 'Resize to default width')
 nmap_leader('ot', '<Cmd>lua MiniTrailspace.trim()<CR>',    'Trim trailspace')
 nmap_leader('oz', '<Cmd>lua MiniMisc.zoom()<CR>',          'Zoom toggle')
+
+-- Pack
+add_group  { mode = 'n', keys = '<Leader>p', desc = 'Pack' }
+nmap_leader('pu', '<Cmd>lua vim.pack.update()<CR>', 'Update')
 
 -- Refactoring
 add_group  { mode = 'n', keys = '<Leader>r', desc = 'Refactor...' }
