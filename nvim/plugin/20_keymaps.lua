@@ -124,7 +124,11 @@ local xmap_leader = function(suffix, rhs, desc)
   vim.keymap.set('x', '<Leader>' .. suffix, rhs, { desc = desc })
 end
 
-nmap_leader('a', 'ggVG',                    'Select all the buffer')
+add_group  { mode = 'n', keys = '<Leader>a', desc = 'Actions...' }
+nmap_leader('aa', 'ggVG',                              'Select all the buffer')
+nmap_leader('aw', '<Cmd>write<CR>',                    'Write')
+nmap_leader('ar', '<Cmd>writeall<CR><CMD>restart<CR>', 'Write')
+
 add_group  { mode = 'n', keys = '<Leader>b', desc = 'Buffer...' }
 -- b is for 'Buffer'. Common usage:
 -- - `<Leader>bs` - create scratch (temporary) buffer
@@ -159,6 +163,7 @@ nmap_leader("c?", function() vim.diagnostic.open_float({border = 'rounded'}) end
 nmap_leader("ca", '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
 nmap_leader('cd', '<Cmd>FzfLua lsp_definitions<CR>',                              'Source definition')
 nmap_leader("cD", '<Cmd>FzfLua lsp_declarations<CR>',                             "Goto Declaration")
+nmap_leader("cc", '<Cmd>lua vim.lsp.codelens.run()<CR>',                          "Codelens")
 xmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>',  'Format selection')
 nmap_leader('ci', '<Cmd>FzfLua lsp_implementations<CR>',                          'Implementation')
 nmap_leader('ch', vim.lsp.buf.hover,                                              'Hover')
