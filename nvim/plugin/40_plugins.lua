@@ -82,7 +82,7 @@ now(function()
   })
 end)
 
-later(function()
+now(function()
   add({
     gh('nvim-mini/mini.icons'),
     gh('ibhagwan/fzf-lua'),
@@ -280,6 +280,7 @@ local function setup_lsp(name, config)
   end
   vim.lsp.enable(name)
 end
+
 later(function()
   vim.filetype.add({
     extension = {
@@ -353,7 +354,7 @@ later(function()
   setup_lsp('taplo')
   setup_lsp('ts_ls')
   setup_lsp('yamlls')
-  setup_lsp('roslyn_ls')
+  setup_lsp('kulala_ls')
 end)
 
 -- Debugging
@@ -365,6 +366,7 @@ later(function()
   })
 
   local dotnet = require('easy-dotnet')
+  -- Options are not required
   dotnet.setup({
     test_runner = {
       icons = {
@@ -482,7 +484,9 @@ now(function()
   -- { "<leader>Rs", desc = "Send request" },
   -- { "<leader>Ra", desc = "Send all requests" },
   -- { "<leader>Rb", desc = "Open scratchpad" },
+  -- vim.treesitter.language.register('kulala_http', 'http')
 end)
+
 -- vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
 --   pattern = { '*.http', '*.rest' }, -- Add specific file types here
 --   once = true,
