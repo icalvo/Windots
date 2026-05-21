@@ -173,18 +173,20 @@ if has('ide')
     nmap <leader>cU :action ReSharperGotoContainingDeclaration<cr>:action ShowUsages<cr>
 
     " Git windows
-    map gtc <Action>(CheckinProject)
-    map gtw <Action>(ActivateVersionControlToolWindow)
-    map gtb :action Git.Branches<cr>
-    map gtp <Action>(Vcs.Push)
-    map gtn <Action>(Git.CreateNewBranch)
-    map gtf <Action>(Git.Fetch)
     map gta <Action>(Vcs.ToggleAmendCommitMode)
-    map gtu <Action>(Vcs.UpdateProject)Returns expected results
+    map gtb :action Git.Branches<cr>
+    map gtc <Action>(CheckinProject)
+    map gtf <Action>(Git.Fetch)
+    map gth <Action>(Vcs.ShowTabbedFileHistory)
+    map gtn <Action>(Git.CreateNewBranch)
+    map gtp <Action>(Vcs.Push)
+    map gtu <Action>(Vcs.UpdateProject)
+    map gtw <Action>(ActivateVersionControlToolWindow)
     map <C-H> :action Vcs.ShowMessageHistory<cr>
     imap <C-H> <Esc>:action Vcs.ShowMessageHistory<cr>
     map <C-S-Enter> :action Git.Commit.And.Push.Executor<cr>:action HideAllWindows<cr>
     imap <C-S-Enter> <Esc>:action Git.Commit.And.Push.Executor<cr>:action HideAllWindows<cr>
+    map <C-S-P> :action GotoAction<cr>
 endif
 
 "" Leader commands
@@ -197,27 +199,6 @@ if has('ide')
     " Comment lines
     map gcc :action CommentByLineComment<CR><Esc>
 
-    " Explore/Edit commands
-    map <leader>ef :NERDTree<CR>
-    map <leader>ei :e ~/.ideavimrc<cr>
-    
-    " Folding
-    map <leader>zc :action CollapseAllRegions<CR>
-    map <leader>zo :action ExpandAllRegions<CR>
-    map <leader>zz <action>(ExpandCollapseToggleAction)
-
-    " Window splits
-    map <leader>wv <Action>(SplitVertically)
-    map <leader>ws <Action>(SplitHorizontally)
-    map <leader>wu <Action>(Unsplit)
-    map <leader>wm <Action>(MoveEditorToOppositeTabGroup)
-
-    " View options
-    map <leader>vd <action>(ToggleDistractionFreeMode)
-    map <leader>vz <action>(ToggleZenMode)
-    map <leader>vf <action>(ToggleFullScreen)
-    map <leader>vv <Action>(HideAllWindows)
-
     " Actions
     nnoremap <Leader>aa ggVG
     map <leader>ai <action>(ActivateAIAssistantToolWindow)
@@ -229,37 +210,8 @@ if has('ide')
     map <leader>ass <action>(Replace)
     map <leader>asf <action>(ReplaceInPath)
 
+    " DB commands
     map <leader>bm :action EfCore.Features.Migrations.AddMigrationAction<cr>
-    " Find
-    map <leader>fa :action SearchEverywhere<cr>
-    map <leader>ff <action>(GotoFile)
-    map <leader>fg :action FindInPath<cr>
-    map <leader>fl :action RecentLocations<cr>
-    map <leader>fp :action RiderManageRecentProjects<cr>
-    map <leader>fr :action RecentFiles<cr>
-    nmap <leader>fs :action FileStructurePopup<cr>
-    " Close active tab
-    map <leader>q <action>(CloseContent)
-
-    " Refactoring
-    map <leader>rn <Action>(RenameElement)
-    map <leader>rm <Action>(ExtractMethod)
-    map <leader>rv <Action>(IntroduceVariable)
-    map <leader>rf <Action>(IntroduceField)
-    map <leader>rs <Action>(ChangeSignature)
-    map <leader>rr :action Refactorings.QuickListPopupAction<cr>
-    map <leader>ri <Action>(Inline)
-    map <leader>rp <Action>(IntroduceParameter)
-
-    " Errors
-    map ]e <Action>(ReSharperGotoNextErrorInSolution)
-    map [e <Action>(ReSharperGotoPrevErrorInSolution)
-    map ]d <Action>(GotoNextError)
-    map [d <Action>(GotoPreviousError)
-
-    " Settings and configuration
-    map <leader>sq :action IdeaVim.ReloadVimRc.reload<cr>:wq<cr>
-    map <leader>sr <Action>(IdeaVim.ReloadVimRc.reload)
 
     " Debug commands
     nmap <leader>dd <Action>(Debug)
@@ -274,8 +226,62 @@ if has('ide')
     nmap <leader>dw <Action>(ActivateDebugToolWindow)
     map  <leader>dbb <Action>(ToggleLineBreakpoint)
 
+    " Explore/Edit commands
+    map <leader>ef :NERDTree<CR>
+    map <leader>ei :e ~/.ideavimrc<cr>
+    
+    " Find
+    map <leader>fa :action SearchEverywhere<cr>
+    map <leader>ff <action>(GotoFile)
+    map <leader>fg :action FindInPath<cr>
+    map <leader>fl :action RecentLocations<cr>
+    map <leader>fp :action RiderManageRecentProjects<cr>
+    map <leader>fr :action RecentFiles<cr>
+    nmap <leader>fs :action FileStructurePopup<cr>
+    " Close active tab
+    map <leader>q <action>(CloseContent)
+
+    " Errors
+    map ]e <Action>(ReSharperGotoNextErrorInSolution)
+    map [e <Action>(ReSharperGotoPrevErrorInSolution)
+    map ]d <Action>(GotoNextError)
+    map [d <Action>(GotoPreviousError)
+
+    " Settings and configuration
+    map <leader>sq :action IdeaVim.ReloadVimRc.reload<cr>:wq<cr>
+    map <leader>sr <Action>(IdeaVim.ReloadVimRc.reload)
+
+    " Refactoring
+    map <leader>rn <Action>(RenameElement)
+    map <leader>rm <Action>(ExtractMethod)
+    map <leader>rv <Action>(IntroduceVariable)
+    map <leader>rf <Action>(IntroduceField)
+    map <leader>rs <Action>(ChangeSignature)
+    map <leader>rr :action Refactorings.QuickListPopupAction<cr>
+    map <leader>ri <Action>(Inline)
+    map <leader>rp <Action>(IntroduceParameter)
+
     " Testing
     nmap <leader>tl <Action>(RiderUnitTestRunSolutionAction)
+    nmap <leader>tt <Action>(RiderUnitTestRepeatPreviousRunAction)
+    
+    " View options
+    map <leader>vd <action>(ToggleDistractionFreeMode)
+    map <leader>vz <action>(ToggleZenMode)
+    map <leader>vf <action>(ToggleFullScreen)
+    map <leader>vv <Action>(HideAllWindows)
+
+    " Window splits
+    map <leader>wv <Action>(SplitVertically)
+    map <leader>ws <Action>(SplitHorizontally)
+    map <leader>wu <Action>(Unsplit)
+    map <leader>wm <Action>(MoveEditorToOppositeTabGroup)
+
+    " Folding
+    map <leader>zc :action CollapseAllRegions<CR>
+    map <leader>zo :action ExpandAllRegions<CR>
+    map <leader>zz <action>(ExpandCollapseToggleAction)
+
 else
     " Settings and configuration
     map <leader>sq :w<cr>:source $MYVIMRC<cr>:q<cr>
