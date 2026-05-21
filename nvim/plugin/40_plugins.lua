@@ -524,7 +524,29 @@ now(function()
   -- Enable only one
   vim.cmd('color tokyonight')
 end)
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if not client or client.name ~= 'roslyn' then return end
+    if vim.lsp.diagnostic and vim.lsp.diagnostic.enable then
+      vim.lsp.diagnostic.enable(true, { client_id = client.id })
+    end
+  end,
+})
 
+local function dotnet_global_diagnostics()
+  local sev = vim.diagnostic.severity
+  local counts = vim.diagnostic.count(nil)
+  local e = counts[sev.ERROR] or 0
+  local w = counts[sev.WARN] or 0
+  local i = counts[sev.INFO] or 0
+  local h = counts[sev.HINT] or 0
+  if e + w + i + h == 0 then return '' end
+  return string.format(' E%dW%dI%dH%d', e, w, i, h)
+end
+-- vim.api.nvim_create_autocmd("", {
+--   callback = function() require("lualine").refresh() end,
+-- })
 -- Statusline
 now(function()
   add({
@@ -564,6 +586,7 @@ now(function()
           'CursorMoved',
           'CursorMovedI',
           'ModeChanged',
+          'DiagnosticChanged',
         },
       },
     },
@@ -584,15 +607,13 @@ now(function()
         end,
       },
       lualine_b = {
+        dotnet_global_diagnostics,
         {
           "require'salesforce.org_manager':get_default_alias()",
           icon = '󰢎',
         },
         {
-          "require'easy-dotnet.ui-modules.jobs':lualine()",
-        },
-        {
-          "require'easy-dotnet.actions.run':get_info()",
+          "require'easy-dotnet'.lualine.jobs()",
         },
         'branch',
         'diff',
@@ -637,7 +658,10 @@ now(function()
         'fileformat',
         'filetype',
       },
-      lualine_z = { 'location' },
+      lualine_z = {
+        'searchcount',
+        'location',
+      },
     },
     inactive_sections = {
       lualine_a = {},
@@ -648,7 +672,14 @@ now(function()
       lualine_z = {},
     },
     tabline = {},
-    winbar = {},
+    winbar = {
+      lualine_a = {},
+      lualine_b = {},
+      lualine_c = {},
+      lualine_x = {},
+      lualine_y = { "require'easy-dotnet'.lualine.run_status()" },
+      lualine_z = {},
+    },
     inactive_winbar = {},
     extensions = {},
   })
