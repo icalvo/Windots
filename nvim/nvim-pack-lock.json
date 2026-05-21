@@ -1,5 +1,13 @@
 {
   "plugins": {
+    "FixCursorHold.nvim": {
+      "rev": "1900f89dc17c603eec29960f57c00bd9ae696495",
+      "src": "https://github.com/antoinemadec/FixCursorHold.nvim"
+    },
+    "arborist.nvim": {
+      "rev": "fdeef56c2840c6772b9f68c5774ed87e9340ec7d",
+      "src": "https://github.com/arborist-ts/arborist.nvim"
+    },
     "conform.nvim": {
       "rev": "dca1a190aa85f9065979ef35802fb77131911106",
       "src": "https://github.com/stevearc/conform.nvim"
@@ -93,9 +101,17 @@
       "rev": "74b06c6c75e4eeb3108ec01852001636d85a932b",
       "src": "https://github.com/nvim-lua/plenary.nvim"
     },
+    "project.nvim": {
+      "rev": "39a135c377e1a1dd69c5d55a13b55e3cfb43c0fb",
+      "src": "https://github.com/DrKJeff16/project.nvim"
+    },
     "refactoring.nvim": {
       "rev": "f06ac3d457128f9d512103399b367c4be49a2421",
       "src": "https://github.com/ThePrimeagen/refactoring.nvim"
+    },
+    "render-latex.nvim": {
+      "rev": "1287dd2ead0b420a2fcbde7c98d503c778a9bdef",
+      "src": "https://github.com/techwizrd/render-latex.nvim"
     },
     "tokyonight.nvim": {
       "rev": "cdc07ac78467a233fd62c493de29a17e0cf2b2b6",

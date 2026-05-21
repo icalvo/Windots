@@ -38,54 +38,20 @@ vim.cmd.packadd('nvim.undotree')
 --   textobjects (see `:h text-objects`, `:h MiniAi.gen_spec.treesitter()`).
 --
 -- Add these plugins now if file (and not 'mini.starter') is shown after startup.
-local treesitter_package =
-  { src = gh('nvim-treesitter/nvim-treesitter'), version = 'main' }
 now_if_args(function()
-  -- Define hook to update tree-sitter parsers after plugin is updated
-  local ts_update = function() vim.cmd('TSUpdate') end
-  Config.on_packchanged('nvim-treesitter', { 'update' }, ts_update, ':TSUpdate')
-
   add({
-    treesitter_package,
+    gh('arborist-ts/arborist.nvim'),
+  })
+  require('arborist').setup({
+    overrides = {
+      c_sharp = { url = gh('tree-sitter/tree-sitter-c-sharp') },
+    },
+  })
+end)
+now(function()
+  add({
     gh('nvim-treesitter/nvim-treesitter-textobjects'),
   })
-  local install_directory = vim.fn.stdpath('data') .. '\\site'
-  require('nvim-treesitter').setup({
-    -- Directory to install parsers and queries to (prepended to `runtimepath` to have priority)
-    install_dir = install_directory,
-  })
-  vim.opt.runtimepath:append(install_directory)
-  local languages = { 'html', 'javascript', 'sql' }
-  local isnt_installed = function(lang)
-    return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
-  end
-  local to_install = vim.tbl_filter(isnt_installed, languages)
-  if #to_install > 0 then require('nvim-treesitter').install(to_install) end
-
-  -- Enable tree-sitter after opening a file for a target language
-  local filetypes = {}
-  for _, lang in ipairs(languages) do
-    for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
-      table.insert(filetypes, ft)
-    end
-  end
-  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
-  vim.api.nvim_create_autocmd('FileType', {
-    callback = function(args)
-      local filetype = args.match
-      local lang = vim.treesitter.language.get_lang(filetype)
-      if
-        vim.tbl_contains(require('nvim-treesitter.config').get_available(), lang)
-      then
-        require('nvim-treesitter').install(lang):await(function()
-          vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-          vim.treesitter.start()
-        end)
-      end
-    end,
-  })
-  -- Config.new_autocmd("FileType", filetypes, ts_start, "Start tree-sitter")
   require('nvim-treesitter-textobjects').setup({
     select = {
       -- Automatically jump forward to textobj, similar to targets.vim
@@ -97,11 +63,11 @@ now_if_args(function()
       -- * method: eg 'v' or 'o'
       -- and should return the mode ('v', 'V', or '<c-v>') or a table
       -- mapping query_strings to modes.
-      -- selection_modes = {
-      --   ['@parameter.outer'] = 'v', -- charwise
-      --   ['@function.outer'] = 'V', -- linewise
-      --   ['@class.outer'] = '<c-v>', -- blockwise
-      -- },
+      selection_modes = {
+        ['@parameter.outer'] = 'v', -- charwise
+        ['@function.outer'] = 'V', -- linewise
+        --   ['@class.outer'] = '<c-v>', -- blockwise
+      },
       -- If you set this to `true` (default is `false`) then any textobject is
       -- extended to include preceding or succeeding whitespace. Succeeding
       -- whitespace has priority in order to act similarly to eg the built-in
@@ -160,7 +126,7 @@ later(function()
   add({
     gh('nvim-neotest/nvim-nio'),
     gh('nvim-lua/plenary.nvim'),
-    treesitter_package,
+    -- treesitter_package,
     -- gh("marilari88/neotest-vitest"),
     gh('nvim-neotest/neotest'),
   })
@@ -767,15 +733,13 @@ now(function()
   })
 end)
 
-later(
-  function()
-    add({
-      gh('nvim-lua/plenary.nvim'),
-      treesitter_package,
-      gh('ThePrimeagen/refactoring.nvim'),
-    })
-  end
-)
+later(function()
+  add({
+    gh('nvim-lua/plenary.nvim'),
+    -- treesitter_package,
+    gh('ThePrimeagen/refactoring.nvim'),
+  })
+end)
 later(
   function()
     add({

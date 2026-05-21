@@ -49,15 +49,20 @@ nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 
 nmap('\\p', '<Cmd>lua MiniHipatterns.toggle()', 'MiniHipatterns')
 -- keymaps
--- You can use the capture groups defined in `textobjects.scm`
 local xomap = function(lhs, rhs, desc)
   -- See `:h vim.keymap.set()`
   vim.keymap.set({ 'x', 'o' }, lhs, rhs, { desc = desc })
 end
-local select = function(capture)
-  return '<Cmd>lua require("nvim-treesitter-textobjects.select").select_textobject("'
+
+local tsto = function(module, capture)
+  return '<Cmd>lua require("nvim-treesitter-textobjects.'
+    .. module
+    .. '").'
     .. capture
-    .. '", "textobjects")<CR>'
+    .. '<CR>'
+end
+local select = function(capture)
+  return tsto('select', 'select_textobject("' .. capture .. '", "textobjects")')
 end
 xomap('af', select('@function.outer'), 'Around Function')
 xomap('af', select('@function.outer'), 'Inside Function')
@@ -300,6 +305,8 @@ nmap_leader("ri",  ":Refactor inline_var<CR>",            "Inline variable")
 nmap_leader("rI",  ":Refactor inline_func<CR>",           "Inline function")
 nmap_leader("rn",  vim.lsp.buf.rename,                    "Rename")
 xmap_leader("rv",  ":Refactor extract_var<CR>",           "Extract variable")
+nmap_leader("ra", tsto('swap', "swap_next('@function.outer')"), "Move function up")
+nmap_leader("rA", tsto('swap', "swap_previous('@function.outer'"), "Move function down")
 
 add_group  { mode = 'n', keys = '<Leader>R', desc = 'REST...' }
 -- REST Client (lookup Kulala plugin configuration)
