@@ -174,10 +174,11 @@ nmap_leader("cU", usagesContainingMethod,                                       
 nmap_leader('ct', '<Cmd>FzfLua lsp_typedefs<CR>',                                 'Type definition')
 
 add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
-nmap_leader('dd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>",   'Run default profile')
+nmap_leader('dd', "<Cmd>lua require('easy-dotnet').debug_profile_default()<cr>", 'Run default profile')
 nmap_leader('dp', "<Cmd>lua require('dap').repl.open()<cr>",                     'Open REPL')
 nmap_leader('dl', "<Cmd>lua require('dap').run_last()<cr>",                      'Run last debug config')
 nmap_leader('dt', "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", 'Debug nearest test')
+nmap_leader('ds', "<Cmd>lua require('dap').terminate()<cr>",                     'Stop debugging')
 nmap('<F5>',      "<Cmd>lua require('dap').continue()<cr>",                      'Continue')
 nmap('<F6>',      "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", 'Debug nearest test')
 nmap('<F9>',      "<Cmd>lua require('dap').toggle_breakpoint()<cr>",             'Toggle breakpoint')
@@ -273,14 +274,68 @@ add_group  { mode = 'x', keys = '<Leader>g', desc = 'Git...' }
 nmap_leader('g', '<Cmd>LazyGitCurrentFile<CR>',            'LazyGit')
 
 add_group  { mode = 'n', keys = '<Leader>m', desc = 'Map...' }
--- m is for 'Map'. Common usage:
--- - `<Leader>mt` - toggle map from 'mini.map' (closed by default)
--- - `<Leader>mf` - focus on the map for fast navigation
--- - `<Leader>ms` - change map's side (if it covers something underneath)
 nmap_leader('mf', '<Cmd>lua MiniMap.toggle_focus()<CR>', 'Focus (toggle)')
 nmap_leader('mr', '<Cmd>lua MiniMap.refresh()<CR>',      'Refresh')
 nmap_leader('ms', '<Cmd>lua MiniMap.toggle_side()<CR>',  'Side (toggle)')
 nmap_leader('mt', '<Cmd>lua MiniMap.toggle()<CR>',       'Toggle')
+add_group  { mode = 'n', keys = '<Leader>n', desc = 'Dotnet...' }
+add_group  { mode = 'n', keys = '<Leader>nl', desc = 'LSP...' }
+add_group  { mode = 'n', keys = '<Leader>nt', desc = 'Test...' }
+add_group  { mode = 'n', keys = '<Leader>nb', desc = 'Build...' }
+add_group  { mode = 'n', keys = '<Leader>ne', desc = 'EF...' }
+add_group  { mode = 'n', keys = '<Leader>np', desc = 'Nuget...' }
+add_group  { mode = 'n', keys = '<Leader>nr', desc = 'Run...' }
+add_group  { mode = 'n', keys = '<Leader>nd', desc = 'Diagnostics...' }
+-- local dotnet = require('easy-dotnet')
+-- local diagnostics = require('easy-dotnet.actions.diagnostics')
+nmap_leader('nll', "<Cmd>lua require('easy-dotnet').lsp_start()<cr>", 'Start lsp server')
+nmap_leader('nlr', "<Cmd>lua require('easy-dotnet').lsp_restart()<cr>", 'Restart lsp server')
+nmap_leader('nls', "<Cmd>lua require('easy-dotnet').lsp_stop()<cr>", 'Stop lsp server')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').get_environment_variables(project_name, project_path, use_default_launch_profile: boolean)
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').is_dotnet_project()<cr>", 'Returns true if a csproj or sln is present in CWD or subdirs')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').try_get_selected_solution()<cr>", 'Returns currently selected solution')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').get_debug_dll()<cr>", '')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').reset()<cr>", '')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').test()<cr>", '')
+nmap_leader('ntl', "<Cmd>lua require('easy-dotnet').test_solution()<cr>", 'Runs tests on solution')
+nmap_leader('ntt', "<Cmd>lua require('easy-dotnet').test_default()<cr>", 'Runs test default')
+
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').testrunner()<cr>", '')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').testrunner_refresh()<cr>", '')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').testrunner_refresh_build()<cr>", '')
+nmap_leader('nn', "<Cmd>lua require('easy-dotnet').new()<cr>", 'Creates files/projects')
+nmap_leader('no', "<Cmd>lua require('easy-dotnet').outdated()<cr>", 'Outdated')
+nmap_leader('npa', "<Cmd>lua require('easy-dotnet').add_package()<cr>", 'Adds a Nuget package')
+nmap_leader('npd', "<Cmd>lua require('easy-dotnet').remove_package()<cr>", 'Removes a Nuget package')
+nmap_leader('npp', "<Cmd>lua require('easy-dotnet').pack()<cr>", 'Pack')
+nmap_leader('nps', "<Cmd>lua require('easy-dotnet').push()<cr>", 'Push')
+nmap_leader('npr', "<Cmd>lua require('easy-dotnet').restore()<cr>", 'Restore')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').solution_select(path: string)
+nmap_leader('ner', "<Cmd>lua require('easy-dotnet').ef_migrations_remove()<cr>", 'EF: remove migration')
+-- nmap_leader('nea', "<Cmd>lua require('easy-dotnet').ef_migrations_add(name: string)
+nmap_leader('nel', "<Cmd>lua require('easy-dotnet').ef_migrations_list()<cr>", 'EF: Migrations list')
+nmap_leader('ned', "<Cmd>lua require('easy-dotnet').ef_database_drop()<cr>", 'EF: drop database')
+nmap_leader('neu', "<Cmd>lua require('easy-dotnet').ef_database_update()<cr>", 'EF: update database')
+nmap_leader('nep', "<Cmd>lua require('easy-dotnet').ef_database_update_pick()<cr>", 'EF: Update database (pick)')
+-- nmap_leader('', '<Cmd>lua require('easy-dotnet').createfile(path: string)
+nmap_leader('nbb', "<Cmd>lua require('easy-dotnet').build()<cr>", 'Build')
+nmap_leader('nbss', "<Cmd>lua require('easy-dotnet').build_solution()<cr>", 'Build sln')
+nmap_leader('nbsq', "<Cmd>lua require('easy-dotnet').build_solution_quickfix()<cr>", 'Build sln qf')
+nmap_leader('nbq', "<Cmd>lua require('easy-dotnet').build_quickfix()<cr>", 'Build qf')
+nmap_leader('nbdq', "<Cmd>lua require('easy-dotnet').build_default()<cr>", 'Build default')
+nmap_leader('nbdq', "<Cmd>lua require('easy-dotnet').build_default_quickfix()<cr>", 'Build default qf')
+nmap_leader('nbc', "<Cmd>lua require('easy-dotnet').clean()<cr>", 'Clean')
+nmap_leader('nrr', "<Cmd>lua require('easy-dotnet').run()<cr>", 'Run')
+nmap_leader('nrpp', "<Cmd>lua require('easy-dotnet').run_profile()<cr>", 'Run profile')
+nmap_leader('nrpd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>", 'Run default profile')
+nmap_leader('nrd', "<Cmd>lua require('easy-dotnet').run_default()<cr>", 'Run default')
+nmap_leader('nww', "<Cmd>lua require('easy-dotnet').watch()<cr>", 'Watch')
+nmap_leader('nwd', "<Cmd>lua require('easy-dotnet').watch_default()<cr>", 'Watch default')
+nmap_leader('ns', "<Cmd>lua require('easy-dotnet').secrets()<cr>", 'Secrets')
+
+nmap_leader('ndd', "<Cmd>lua require('easy-dotnet.actions.diagnostics').get_workspace_diagnostics()<cr>", '')
+nmap_leader('nde', "<Cmd>lua require('easy-dotnet.actions.diagnostics').get_workspace_diagnostics('error')<cr>", '')
+nmap_leader('ndw', "<Cmd>lua require('easy-dotnet.actions.diagnostics').get_workspace_diagnostics('warning')<cr>", '')
 
 add_group  { mode = 'n', keys = '<Leader>o', desc = 'Other...' }
 -- o is for 'Other'. Common usage:

@@ -17,7 +17,7 @@
       "src": "https://github.com/xTacobaco/cursor-agent.nvim"
     },
     "easy-dotnet.nvim": {
-      "rev": "8ae591fd0f3bf7b688c802918bd64f7956f939b9",
+      "rev": "9549333f231ec918500cd5033c646e390c932e9c",
       "src": "https://github.com/GustavEikaas/easy-dotnet.nvim"
     },
     "friendly-snippets": {

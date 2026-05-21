@@ -364,51 +364,9 @@ later(function()
     gh('mfussenegger/nvim-dap'),
   })
 
-  local function get_secret_path(secret_guid)
-    local path = ''
-    local home_dir = vim.fn.expand('~')
-    if require('easy-dotnet.extensions').isWindows() then
-      local secret_path = home_dir
-        .. '\\AppData\\Roaming\\Microsoft\\UserSecrets\\'
-        .. secret_guid
-        .. '\\secrets.json'
-      path = secret_path
-    else
-      local secret_path = home_dir
-        .. '/.microsoft/usersecrets/'
-        .. secret_guid
-        .. '/secrets.json'
-      path = secret_path
-    end
-    return path
-  end
-
   local dotnet = require('easy-dotnet')
-  local mason_dir = require('mason.settings').current.install_root_dir
-  -- Options are not required
   dotnet.setup({
-    lsp = {
-      enabled = false,
-    },
-    debugger = {
-      -- The path to netcoredbg executable
-      bin_path = mason_dir .. 'bin/netcoredbg.cmd',
-      -- bin_path = vim.fn.expand("$MASON/packages/netcoredbg/netcoredbg/"),
-      auto_register_dap = true,
-      mappings = {
-        open_variable_viewer = { lhs = 'T', desc = 'open variable viewer' },
-      },
-    },
-    ---@type TestRunnerOptions
     test_runner = {
-      ---@type "split" | "vsplit" | "float" | "buf"
-      viewmode = 'float',
-      ---@type number|nil
-      vsplit_width = nil,
-      ---@type string|nil "topleft" | "topright"
-      vsplit_pos = nil,
-      enable_buffer_test_execution = true, --Experimental, run tests directly from buffer
-      noBuild = true,
       icons = {
         passed = '',
         skipped = '',
@@ -422,18 +380,22 @@ later(function()
         package = '',
       },
       mappings = {
-        run_test_from_buffer = { lhs = '<leader>nr', desc = 'run test from buffer' },
+        run_test_from_buffer = { lhs = '<leader>ntb', desc = 'run test from buffer' },
+        run_test_all_tests_from_buffer = {
+          lhs = '<leader>nta',
+          desc = 'run all tests from buffer',
+        },
+        get_build_errors = { lhs = '<leader>nbe', desc = 'get build errors' },
         peek_stack_trace_from_buffer = {
           lhs = '<leader>np',
           desc = 'peek stack trace from buffer',
         },
-        filter_failed_tests = { lhs = '<leader>nfe', desc = 'filter failed tests' },
         debug_test = { lhs = '<leader>nd', desc = 'debug test' },
         debug_test_from_buffer = {
           lhs = '<leader>nb',
           desc = 'debug test from buffer',
         },
-        go_to_file = { lhs = 'g', desc = 'go to file' },
+        go_to_file = { lhs = '<leader>ng', desc = 'go to file' },
         run_all = { lhs = '<leader>nR', desc = 'run all tests' },
         run = { lhs = '<leader>nr', desc = 'run test' },
         peek_stacktrace = {
@@ -447,81 +409,23 @@ later(function()
         close = { lhs = 'q', desc = 'close testrunner' },
         refresh_testrunner = { lhs = '<C-r>', desc = 'refresh testrunner' },
       },
-      --- Optional table of extra args e.g "--blame crash"
-      additional_args = {},
-    },
-    new = {
-      project = {
-        prefix = 'sln', -- "sln" | "none"
-      },
-    },
-    ---@param action "test" | "restore" | "build" | "run"
-    terminal = function(path, action, args)
-      args = args or ''
-      local commands = {
-        run = function()
-          return string.format('dotnet run --project %s %s', path, args)
-        end,
-        test = function() return string.format('dotnet test %s %s', path, args) end,
-        restore = function()
-          return string.format('dotnet restore %s %s', path, args)
-        end,
-        build = function() return string.format('dotnet build %s %s', path, args) end,
-        watch = function()
-          return string.format('dotnet watch --project %s %s', path, args)
-        end,
-      }
-      local command = commands[action]()
-      if require('easy-dotnet.extensions').isWindows() == true then
-        command = command .. '\r'
-      end
-      vim.cmd('vsplit')
-      vim.cmd('term ' .. command)
-    end,
-    secrets = {
-      path = get_secret_path,
-    },
-    csproj_mappings = true,
-    fsproj_mappings = true,
-    auto_bootstrap_namespace = {
-      --block_scoped, file_scoped
-      type = 'block_scoped',
-      enabled = true,
-      use_clipboard_json = {
-        behavior = 'prompt', --'auto' | 'prompt' | 'never',
-        register = '+', -- which register to check
-      },
     },
     server = {
       ---@type nil | "Off" | "Critical" | "Error" | "Warning" | "Information" | "Verbose" | "All"
       log_level = 'Information',
     },
-    -- choose which picker to use with the plugin
-    -- possible values are "telescope" | "fzf" | "snacks" | "basic"
-    -- if no picker is specified, the plugin will determine
-    -- the available one automatically with this priority:
-    -- telescope -> fzf -> snacks ->  basic
     picker = 'fzf',
-    background_scanning = true,
     notifications = {
       --Set this to false if you have configured lualine to avoid double logging
       handler = false,
     },
-    diagnostics = {
-      default_severity = 'error',
-      setqflist = false,
-    },
   })
-
-  vim.api.nvim_create_user_command('Secrets', function() dotnet.secrets() end, {})
-
-  require('easy-dotnet.netcoredbg').register_dap_variables_viewer()
 end)
 
 later(function()
   add({
     gh('mfussenegger/nvim-dap'),
-    gh('nvim-neotest/nvim-nio'),
+    -- gh('nvim-neotest/nvim-nio'),
     gh('rcarriga/nvim-dap-ui'),
   })
   local dapui = require('dapui')
@@ -538,9 +442,8 @@ later(function()
     linehl = 'DapBreakpoint',
     numhl = 'DapBreakpoint',
   })
-
   vim.fn.sign_define('DapStopped', {
-    text = '🔴',
+    text = '➡️',
     texthl = 'yellow',
     linehl = 'DapBreakpoint',
     numhl = 'DapBreakpoint',
@@ -552,7 +455,18 @@ later(function()
     numhl = 'DapBreakpoint',
   })
   -- default configuration
-  dapui.setup()
+  dapui.setup({
+    layouts = {
+      {
+        elements = {
+          { id = 'easy-dotnet_cpu', size = 0.5 }, -- CPU usage panel (50% of layout)
+          { id = 'easy-dotnet_mem', size = 0.5 }, -- Memory usage panel (50% of layout)
+        },
+        size = 35, -- Width of the sidebar
+        position = 'right',
+      },
+    },
+  })
 end)
 
 -- REST client
