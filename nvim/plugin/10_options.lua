@@ -17,7 +17,9 @@
 
 -- General ====================================================================
 vim.g.mapleader = ' ' -- Use `<Space>` as <Leader> key
-
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_node_provider = 0
 vim.o.mouse       = 'a'            -- Enable mouse
 vim.o.mousescroll = 'ver:25,hor:6' -- Customize mouse scroll
 vim.o.switchbuf   = 'usetab'       -- Use already opened buffers when switching
