@@ -121,6 +121,13 @@ later(function()
   )
 end)
 
+now(function()
+  add(gh('DrKJeff16/project.nvim'))
+  require('project').setup({
+    fzf_lua = { enabled = true },
+    log = { enabled = true },
+  })
+end)
 -- Testing
 later(function()
   add({
