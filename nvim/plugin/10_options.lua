@@ -126,7 +126,15 @@ local diagnostic_opts = {
   -- Don't update diagnostics when typing
   update_in_insert = false,
 }
-
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  group = vim.api.nvim_create_augroup("help_left", { clear = true }),
+  pattern = "*",
+  callback = function(event)
+    if vim.bo[event.buf].filetype == "help" then
+      vim.cmd("wincmd H")
+    end
+  end,
+})
 -- Use `later()` to avoid sourcing `vim.diagnostic` on startup
 Config.later(function() vim.diagnostic.config(diagnostic_opts) end)
 -- stylua: ignore end

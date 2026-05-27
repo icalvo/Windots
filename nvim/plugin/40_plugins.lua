@@ -538,19 +538,52 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
 })
 
-local function dotnet_global_diagnostics()
-  local sev = vim.diagnostic.severity
-  local counts = vim.diagnostic.count(nil)
-  local e = counts[sev.ERROR] or 0
-  local w = counts[sev.WARN] or 0
-  local i = counts[sev.INFO] or 0
-  local h = counts[sev.HINT] or 0
-  if e + w + i + h == 0 then return '' end
-  return string.format(' E%dW%dI%dH%d', e, w, i, h)
+-- Icons match lualine.nvim defaults so the dotnet component blends in
+-- with the built-in `diagnostics` one.
+local dotnet_diagnostic_severities = {
+  { sev = vim.diagnostic.severity.ERROR, hl = 'DiagnosticError', icon = ' ' },
+  { sev = vim.diagnostic.severity.WARN, hl = 'DiagnosticWarn', icon = ' ' },
+  { sev = vim.diagnostic.severity.INFO, hl = 'DiagnosticInfo', icon = ' ' },
+  { sev = vim.diagnostic.severity.HINT, hl = 'DiagnosticHint', icon = '󰌶 ' },
+}
+
+local function buf_has_roslyn()
+  for _, c in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
+    if c.name == 'roslyn_ls' or c.name == 'easy_dotnet' then return true end
+  end
+  return false
 end
--- vim.api.nvim_create_autocmd("", {
---   callback = function() require("lualine").refresh() end,
--- })
+
+local function dotnet_diagnostic_counts()
+  local totals = {}
+  for _, s in ipairs(dotnet_diagnostic_severities) do
+    totals[s.sev] = 0
+  end
+  local counts = vim.diagnostic.count(nil)
+  for _, s in ipairs(dotnet_diagnostic_severities) do
+    totals[s.sev] = totals[s.sev] + (counts[s.sev] or 0)
+  end
+  return totals
+end
+
+local function dotnet_global_diagnostics()
+  local counts = dotnet_diagnostic_counts()
+  local parts = {}
+  for _, s in ipairs(dotnet_diagnostic_severities) do
+    local count = counts[s.sev] or 0
+    if count > 0 then
+      parts[#parts + 1] = string.format('%%#%s#%s%d', s.hl, s.icon, count)
+    end
+  end
+  if #parts == 0 then return 'NORL' end
+  return table.concat(parts, ' ') .. '%*'
+end
+local function neg(f)
+  return function(...) return not f(...) end
+end
+vim.api.nvim_create_autocmd('DiagnosticChanged', {
+  callback = function() require('lualine').refresh() end,
+})
 -- Statusline
 now(function()
   add({
@@ -611,7 +644,6 @@ now(function()
         end,
       },
       lualine_b = {
-        dotnet_global_diagnostics,
         {
           "require'salesforce.org_manager':get_default_alias()",
           icon = '󰢎',
@@ -621,7 +653,14 @@ now(function()
         },
         'branch',
         'diff',
-        'diagnostics',
+        {
+          dotnet_global_diagnostics,
+          cond = buf_has_roslyn,
+        },
+        {
+          'diagnostics',
+          cond = neg(buf_has_roslyn),
+        },
         {
           "require'kulala':get_selected_env()",
           color = { fg = '#ffcc00' },
