@@ -41,7 +41,7 @@ map('x', '>', '>gv', { desc = 'Shift right and stay visual' })
 map('x', '<', '<gv', { desc = 'Shift left and stay visual' })
 
 -- Clear search highlight with <esc>
-nmap('<esc>', ':noh<cr><esc>', 'Escape and clear hlsearch')
+nmap('<esc>', ':silent noh<cr><esc>', 'Escape and clear hlsearch')
 
 nmap('[<Space>', 'i<C-m><Esc>', 'Break line')
 nmap(']<Space>', 'mzo<Esc>0"_D`z', 'Insert line below')
@@ -129,7 +129,7 @@ end
 add_group  { mode = 'n', keys = '<Leader>a', desc = 'Actions...' }
 nmap_leader('aa', 'ggVG',                              'Select all the buffer')
 nmap_leader('aw', '<Cmd>write<CR>',                    'Write')
-nmap_leader('ar', '<Cmd>writeall<CR><CMD>restart<CR>', 'Write')
+nmap_leader('ar', '<Cmd>restart<CR>', 'Restart')
 
 add_group  { mode = 'n', keys = '<Leader>b', desc = 'Buffer...' }
 -- b is for 'Buffer'. Common usage:
