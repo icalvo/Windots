@@ -88,6 +88,18 @@ now(function()
     gh('ibhagwan/fzf-lua'),
   })
   local fzf_lua = require('fzf-lua')
+  fzf_lua.setup({
+    fzf_opts = {
+      ['--scheme'] = 'path',
+      ['--tiebreak'] = 'begin,length,index',
+    },
+    files = {
+      fzf_opts = {
+        ['--scheme'] = 'path',
+        ['--tiebreak'] = 'begin,length,index',
+      },
+    },
+  })
   vim.cmd('FzfLua register_ui_select')
 
   -- Register mini.visits extension
