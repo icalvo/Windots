@@ -364,6 +364,14 @@ later(function()
     -- `initializationOptions`, otherwise it never responds to `initialize`
     -- on stdio clients and the LSP stays uninitialized forever.
     init_options = { enableProfileLoading = false },
+    -- PSES requests the `powershell.rename` config section over
+    -- `workspace/configuration` and otherwise prompts a "disclaimer" dialog
+    -- once per session before enabling rename. Pre-accept it here.
+    settings = {
+      powershell = {
+        rename = { acceptDisclaimer = true },
+      },
+    },
   })
   setup_lsp('tailwindcss')
   setup_lsp('taplo')
