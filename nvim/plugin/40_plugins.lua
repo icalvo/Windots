@@ -346,10 +346,13 @@ later(function()
       Lua = {},
     },
   })
-  setup_lsp(
-    'powershell_es',
-    { bundle_path = mason_dir .. '/packages/powershell-editor-services' }
-  )
+  setup_lsp('powershell_es', {
+    bundle_path = mason_dir .. '/packages/powershell-editor-services',
+    -- PSES >= 2.x (PR #1801) requires `enableProfileLoading` in
+    -- `initializationOptions`, otherwise it never responds to `initialize`
+    -- on stdio clients and the LSP stays uninitialized forever.
+    init_options = { enableProfileLoading = false },
+  })
   setup_lsp('tailwindcss')
   setup_lsp('taplo')
   setup_lsp('ts_ls')
