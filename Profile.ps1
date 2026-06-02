@@ -18,14 +18,21 @@ Set-Alias -Name vi -Value nvim
 Set-Alias -Name vim -Value nvim
 Set-Alias -Name vid -Value neovide
 Set-Alias -Name which -Value Show-Command
+Set-Alias -Name wt -Value Set-Location-WorkTree
 
 # Putting the FUN in Functions 🎉
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-function ask {
+function ask
+{
     & agent --mode ask @args
 }
+function Set-Location-WorkTree
+{
+    git worktree list | fzf --preview-window=hidden | awk '{print $1}' | ForEach-Object { Set-Location $_ }
+}
 
-function Find-WindotsRepository {
+function Find-WindotsRepository
+{
     <#
     .SYNOPSIS
         Finds the local Windots repository.
@@ -41,7 +48,8 @@ function Find-WindotsRepository {
     return Split-Path $profileSymbolicLink.Target
 }
 
-function Update-Profile {
+function Update-Profile
+{
     <#
     .SYNOPSIS
         Gets the latest changes from git, reruns the setup script and reloads the profile.
@@ -57,10 +65,11 @@ function Update-Profile {
     git stash pop | Out-Null
 
     Write-Verbose "Rerunning setup script to capture any new dependencies."
-    if (Get-Command -Name sudo -ErrorAction SilentlyContinue) {
+    if (Get-Command -Name sudo -ErrorAction SilentlyContinue)
+    {
         sudo pwsh ./Setup.ps1
-    }
-    else {
+    } else
+    {
         Start-Process wezterm -Verb runAs -WindowStyle Hidden -ArgumentList "start --cwd $PWD pwsh -NonInteractive -Command ./Setup.ps1"
     }
 
@@ -71,7 +80,8 @@ function Update-Profile {
     .$PROFILE.CurrentUserAllHosts
 }
 
-function Update-Software {
+function Update-Software
+{
     <#
     .SYNOPSIS
         Updates all software installed via Winget & Chocolatey. Alias: us
@@ -82,7 +92,8 @@ function Update-Software {
     $ENV:SOFTWARE_UPDATE_AVAILABLE = ""
 }
 
-function Find-File {
+function Find-File
+{
     <#
     .SYNOPSIS
         Finds a file in the current directory and all subdirectories. Alias: ff
@@ -100,7 +111,8 @@ function Find-File {
     $result | Format-Table -AutoSize
 }
 
-function Update-ShellElevation {
+function Update-ShellElevation
+{
     <#
     .SYNOPSIS
         Elevates the current shell to run as an administrator. Alias: su
@@ -109,7 +121,8 @@ function Update-ShellElevation {
     sudo -E pwsh -NoLogo -Interactive -NoExit -c "Clear-Host"
 }
 
-function Find-String {
+function Find-String
+{
     <#
     .SYNOPSIS
         Searches for a string in a file or directory. Alias: grep
@@ -125,8 +138,10 @@ function Find-String {
     )
 
     Write-Verbose "Searching for '$SearchTerm' in '$Directory'"
-    if ($Directory) {
-        if ($Recurse) {
+    if ($Directory)
+    {
+        if ($Recurse)
+        {
             Write-Verbose "Searching for '$SearchTerm' in '$Directory' and subdirectories"
             Get-ChildItem -Recurse $Directory | Select-String $SearchTerm
             return
@@ -137,7 +152,8 @@ function Find-String {
         return
     }
 
-    if ($Recurse) {
+    if ($Recurse)
+    {
         Write-Verbose "Searching for '$SearchTerm' in current directory and subdirectories"
         Get-ChildItem -Recurse | Select-String $SearchTerm
         return
@@ -147,7 +163,8 @@ function Find-String {
     Get-ChildItem | Select-String $SearchTerm
 }
 
-function New-File {
+function New-File
+{
     <#
     .SYNOPSIS
         Creates a new file with the specified name and extension. Alias: touch
@@ -162,7 +179,8 @@ function New-File {
     New-Item -ItemType File -Name $Name -Path $PWD | Out-Null
 }
 
-function Show-Command {
+function Show-Command
+{
     <#
     .SYNOPSIS
         Displays the definition of a command. Alias: which
@@ -176,7 +194,8 @@ function Show-Command {
     Get-Command $Name | Select-Object -ExpandProperty Definition
 }
 
-function Get-OrCreateSecret {
+function Get-OrCreateSecret
+{
     <#
     .SYNOPSIS
         Gets secret from local vault or creates it if it does not exist. Requires SecretManagement and SecretStore modules and a local vault to be created.
@@ -210,22 +229,25 @@ function Get-OrCreateSecret {
     Write-Verbose "Getting secret $secretName"
     $secretValue = Get-Secret $secretName -AsPlainText -ErrorAction SilentlyContinue
 
-    if (!$secretValue) {
+    if (!$secretValue)
+    {
         $createSecret = Read-Host "No secret found matching $secretName, create one? Y/N"
 
-        if ($createSecret.ToUpper() -eq "Y") {
+        if ($createSecret.ToUpper() -eq "Y")
+        {
             $secretValue = Read-Host -Prompt "Enter secret value for ($secretName)" -AsSecureString
             Set-Secret -Name $secretName -SecureStringSecret $secretValue
             $secretValue = Get-Secret $secretName -AsPlainText
-        }
-        else {
+        } else
+        {
             throw "Secret not found and not created, exiting"
         }
     }
     return $secretValue
 }
 
-function Get-ChildItemPretty {
+function Get-ChildItemPretty
+{
     <#
     .SYNOPSIS
         Runs eza with a specific set of arguments. Plus some line breaks before and after the output.
@@ -242,7 +264,8 @@ function Get-ChildItemPretty {
     Write-Host ""
 }
 
-function Remove-ItemExtended {
+function Remove-ItemExtended
+{
     <#
     .SYNOPSIS
         Removes an item and (optionally) all its children. Alias: rm
@@ -275,10 +298,11 @@ $ENV:PAGER = 'bat'
 Start-ThreadJob -ScriptBlock {
     Set-Location -Path $ENV:WindotsLocalRepo
     $gitUpdates = git fetch && git status
-    if ($gitUpdates -match "behind") {
+    if ($gitUpdates -match "behind")
+    {
         $ENV:DOTFILES_UPDATE_AVAILABLE = "󱤛 "
-    }
-    else {
+    } else
+    {
         $ENV:DOTFILES_UPDATE_AVAILABLE = ""
     }
 } | Out-Null
@@ -293,10 +317,11 @@ Start-ThreadJob -ScriptBlock {
     $ENV:SOFTWARE_UPDATE_AVAILABLE = "⌛"
     $wingetUpdatesString = Start-Job -ScriptBlock { winget list --upgrade-available | Out-String } | Wait-Job | Receive-Job
     $chocoUpdatesString = Start-Job -ScriptBlock { choco outdated --limit-output | Out-String } | Wait-Job | Receive-Job
-    if ($wingetUpdatesString -match "upgrades available" -or -not [string]::IsNullOrWhiteSpace($chocoUpdatesString)) {
+    if ($wingetUpdatesString -match "upgrades available" -or -not [string]::IsNullOrWhiteSpace($chocoUpdatesString))
+    {
         $ENV:SOFTWARE_UPDATE_AVAILABLE = "📦 "
-    }
-    else {
+    } else
+    {
         $ENV:SOFTWARE_UPDATE_AVAILABLE = ""
     }
 } | Out-Null
@@ -314,23 +339,27 @@ $colors = @{
 }
 
 Set-PSReadLineOption -Colors $colors
-if (-not [Console]::IsOutputRedirected) {
+if (-not [Console]::IsOutputRedirected)
+{
     Set-PSReadLineOption -PredictionSource HistoryAndPlugin
     Set-PSReadLineOption -PredictionViewStyle InlineView
     Set-PSReadLineKeyHandler -Function AcceptSuggestion -Key Alt+l
     Import-Module -Name CompletionPredictor
 }
-if (-not (Get-Module PSReadLine -ErrorAction SilentlyContinue)) {
+if (-not (Get-Module PSReadLine -ErrorAction SilentlyContinue))
+{
     Import-Module PSReadLine -ErrorAction Stop
 }
 
 # Things only for interactive shells
-if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
+if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive"))
+{
     oh-my-posh init pwsh --config "$ENV:WindotsLocalRepo\ohmyposh\spaceship.omp.yaml" | Invoke-Expression
     # oh-my-posh init pwsh --config "spaceship" | Invoke-Expression
 
     # dotnet suggest shell start
-    if (Get-Command "dotnet-suggest" -errorAction SilentlyContinue) {
+    if (Get-Command "dotnet-suggest" -errorAction SilentlyContinue)
+    {
         $availableToComplete = (dotnet-suggest list) | Out-String
         $availableToCompleteArray = $availableToComplete.Split([Environment]::NewLine, [System.StringSplitOptions]::RemoveEmptyEntries)
 
@@ -343,19 +372,22 @@ if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
                 [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
             }
         }
-    }
-    else {
+    } else
+    {
         "Unable to provide System.CommandLine tab completion support unless the [dotnet-suggest] tool is first installed."
         "See the following for tool installation: https://www.nuget.org/packages/dotnet-suggest"
     }
 
     $env:DOTNET_SUGGEST_SCRIPT_VERSION = "1.0.2"
     # dotnet suggest script end
-    function OnViModeChange {
-        if ($args[0] -eq 'Command') {
+    function OnViModeChange
+    {
+        if ($args[0] -eq 'Command')
+        {
             # Set the cursor to a steady block.
             Write-Host -NoNewline "`e[2 q"
-        } else {
+        } else
+        {
             # Set the cursor to a steady line.
             Write-Host -NoNewline "`e[6 q"
         }
@@ -367,20 +399,22 @@ if (-not [Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
 
 function Set-EnvVars
 {
-  $p = $executionContext.SessionState.Path.CurrentLocation
-  $osc7 = ""
-  if ($p.Provider.Name -eq "FileSystem")
-  {
-    $ansi_escape = [char]27
-    $provider_path = $p.ProviderPath -Replace "\\", "/"
-    $osc7 = "$ansi_escape]7;file://${env:COMPUTERNAME}/${provider_path}${ansi_escape}\"
-  }
-  $env:OSC7=$osc7
+    $p = $executionContext.SessionState.Path.CurrentLocation
+    $osc7 = ""
+    if ($p.Provider.Name -eq "FileSystem")
+    {
+        $ansi_escape = [char]27
+        $provider_path = $p.ProviderPath -Replace "\\", "/"
+        $osc7 = "$ansi_escape]7;file://${env:COMPUTERNAME}/${provider_path}${ansi_escape}\"
+    }
+    $env:OSC7=$osc7
     $repo = git rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -eq 0) {
+    if ($LASTEXITCODE -eq 0)
+    {
         $repo = Split-Path -Leaf $repo
         $repo = "🧰 $repo"
-    } else {
+    } else
+    {
         $repo = Split-Path -Leaf (Get-Location)
     }
     $env:GITREPO = $repo
