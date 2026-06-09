@@ -37,6 +37,7 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
 
 ## ✅ Pre-requisites
 
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) - required to run the `Setup.cs` installer
 - [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3#install-powershell-using-winget-recommended)
 - [Git](https://winget.run/pkg/Git/Git)
 - [Sudo](https://learn.microsoft.com/en-us/windows/sudo/) (Optional) - With the **Inline** option to support automatic Windots & software updates.
@@ -47,7 +48,7 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
 > Under _**active development**_, expect changes. Existing configuration files will be overwritten. Please make a backup of any files you wish to keep before proceeding.
 
 1. Clone the repository to your preferred location.
-2. Run `Setup.ps1` from an elevated PowerShell prompt.
+2. Run `dotnet run Setup.cs` from an elevated terminal. Use `dotnet run Setup.cs -- --dry-run` to preview the changes first (no elevation required).
 
 ## 🤝 Contributing
 
