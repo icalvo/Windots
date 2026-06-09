@@ -89,6 +89,9 @@ now(function()
   })
   local fzf_lua = require('fzf-lua')
   fzf_lua.setup({
+    defaults = {
+      formatter = 'path.filename_first',
+    },
     fzf_opts = {
       ['--scheme'] = 'path',
       ['--tiebreak'] = 'begin,length,index',
@@ -100,7 +103,7 @@ now(function()
       },
     },
   })
-  vim.cmd('FzfLua register_ui_select')
+  fzf_lua.register_ui_select()
 
   -- Register mini.visits extension
   fzf_lua.register_extension(
@@ -133,13 +136,6 @@ now(function()
   )
 end)
 
-now(function()
-  add(gh('DrKJeff16/project.nvim'))
-  require('project').setup({
-    fzf_lua = { enabled = true },
-    log = { enabled = true },
-  })
-end)
 -- Testing
 later(function()
   add({
