@@ -28,7 +28,11 @@ local map = function(modes, lhs, rhs, opts)
     vim.keymap.set(mode, lhs, rhs, options)
   end
 end
-
+local cmd = function(cmdexp) return '<Cmd>' .. cmdexp .. '<CR>' end
+local lua = function(luaexp) return cmd('lua ' .. luaexp) end
+local call = function(module, callexp)
+  return lua("require('" .. module .. "')." .. callexp)
+end
 -- better up/down
 map({ 'n', 'x' }, 'j', "v:count == 0 ? 'gj' : 'j'", { desc = 'Down', expr = true })
 map({ 'n', 'x' }, 'k', "v:count == 0 ? 'gk' : 'k'", { desc = 'Up', expr = true })
@@ -41,16 +45,16 @@ map('x', '>', '>gv', { desc = 'Shift right and stay visual' })
 map('x', '<', '<gv', { desc = 'Shift left and stay visual' })
 
 -- Clear search highlight with <esc>
-nmap('<esc>', ':silent noh<cr><esc>', 'Escape and clear hlsearch')
+nmap('<esc>', cmd('noh') .. '<esc>', 'Escape and clear hlsearch')
 
 nmap('[<Space>', 'i<C-m><Esc>', 'Break line')
 nmap(']<Space>', 'mzo<Esc>0"_D`z', 'Insert line below')
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
-nmap('[p', '<Cmd>exe "put! " . v:register<CR>', 'Paste Above')
-nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
+nmap('[p', cmd('exe "put! " . v:register'), 'Paste Above')
+nmap(']p', cmd('exe "put "  . v:register'), 'Paste Below')
 
-nmap('\\p', '<Cmd>lua MiniHipatterns.toggle()<cr>', 'MiniHipatterns')
+nmap('\\p', lua('MiniHipatterns.toggle()'), 'MiniHipatterns')
 -- keymaps
 local xomap = function(lhs, rhs, desc)
   -- See `:h vim.keymap.set()`
@@ -58,11 +62,7 @@ local xomap = function(lhs, rhs, desc)
 end
 
 local tsto = function(module, capture)
-  return '<Cmd>lua require("nvim-treesitter-textobjects.'
-    .. module
-    .. '").'
-    .. capture
-    .. '<CR>'
+  return call('nvim-treesitter-textobjects.' .. module, capture)
 end
 local select = function(capture)
   return tsto('select', 'select_textobject("' .. capture .. '", "textobjects")')
@@ -128,8 +128,8 @@ end
 
 add_group  { mode = 'n', keys = '<Leader>a', desc = 'Actions...' }
 nmap_leader('aa', 'ggVG',                              'Select all the buffer')
-nmap_leader('aw', '<Cmd>write<CR>',                    'Write')
-nmap_leader('ar', '<Cmd>restart<CR>', 'Restart')
+nmap_leader('aw', cmd 'write',                    'Write')
+nmap_leader('ar', cmd 'restart', 'Restart')
 
 add_group  { mode = 'n', keys = '<Leader>b', desc = 'Buffer...' }
 -- b is for 'Buffer'. Common usage:
@@ -139,12 +139,12 @@ add_group  { mode = 'n', keys = '<Leader>b', desc = 'Buffer...' }
 local new_scratch_buffer = function()
   vim.api.nvim_win_set_buf(0, vim.api.nvim_create_buf(true, true))
 end
-nmap_leader('bb', '<Cmd>b#<CR>',                                 'Alternate')
-nmap_leader('bd', '<Cmd>lua MiniBufremove.delete()<CR>',         'Delete')
-nmap_leader('bD', '<Cmd>lua MiniBufremove.delete(0, true)<CR>',  'Delete!')
-nmap_leader('bs', new_scratch_buffer,                            'Scratch')
-nmap_leader('bw', '<Cmd>lua MiniBufremove.wipeout()<CR>',        'Wipeout')
-nmap_leader('bW', '<Cmd>lua MiniBufremove.wipeout(0, true)<CR>', 'Wipeout!')
+nmap_leader('bb', cmd 'b#',                              'Alternate')
+nmap_leader('bd', lua 'MiniBufremove.delete()',         'Delete')
+nmap_leader('bD', lua 'MiniBufremove.delete(0, true)',  'Delete!')
+nmap_leader('bs', new_scratch_buffer,                   'Scratch')
+nmap_leader('bw', lua 'MiniBufremove.wipeout()',        'Wipeout')
+nmap_leader('bW', lua 'MiniBufremove.wipeout(0, true)', 'Wipeout!')
 
 -- c is for 'Code'. Common usage:
 -- - `<Leader>cd` - show more diagnostic details in a floating window
@@ -158,37 +158,38 @@ add_group  { mode = 'n', keys = '<Leader>c', desc = 'Code...' }
 add_group  { mode = 'x', keys = '<Leader>c', desc = 'Code...' }
 local betterReferences = 'require("fzf-lua").lsp_references({ ignore_current_line = true, jump1 = true })'
 local usagesContainingMethod =
-  '<Cmd>lua require("nvim-treesitter-textobjects.move").goto_previous_start("@function.name", "textobjects"); ' .. betterReferences .. '<CR>'
+  lua('require("nvim-treesitter-textobjects.move").goto_previous_start("@function.name", "textobjects"); ' .. betterReferences)
 
-nmap("<C-.>",     '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
+nmap("<C-.>",     cmd 'FzfLua lsp_code_actions',                                  "Code Action")
 nmap_leader("c?", function() vim.diagnostic.open_float({border = 'rounded'}) end, "Line Diagnostics")
-nmap_leader("ca", '<Cmd>FzfLua lsp_code_actions<CR>',                             "Code Action")
-nmap_leader('cd', '<Cmd>FzfLua lsp_definitions<CR>',                              'Source definition')
-nmap_leader("cD", '<Cmd>FzfLua lsp_declarations<CR>',                             "Goto Declaration")
-nmap_leader("cc", '<Cmd>lua vim.lsp.codelens.run()<CR>',                          "Codelens")
-xmap_leader('cf', '<Cmd>lua require("conform").format({lsp_fallback=true})<CR>',  'Format selection')
-nmap_leader('ci', '<Cmd>FzfLua lsp_implementations<CR>',                          'Implementation')
+nmap_leader("ca", cmd 'FzfLua lsp_code_actions',                                  "Code Action")
+nmap_leader('cd', cmd 'FzfLua lsp_definitions',                                   'Source definition')
+nmap_leader("cD", cmd 'FzfLua lsp_declarations',                                  "Goto Declaration")
+nmap_leader("cc", lua 'vim.lsp.codelens.run()',                                   "Codelens")
+nmap_leader("cC", call('nvim-treesitter-textobjects.move', 'goto_previous_start("@function.name", "textobjects")'), "Containing method")
+xmap_leader('cf', call('conform', 'format({lsp_fallback=true})'),                 'Format selection')
+nmap_leader('ci', cmd 'FzfLua lsp_implementations',                               'Implementation')
 nmap_leader('ch', vim.lsp.buf.hover,                                              'Hover')
-nmap_leader("cl", "<Cmd>check lsp<cr>",                                           "LSP Info")
+nmap_leader("cl", cmd 'check lsp',                                                "LSP Info")
 nmap_leader('cr', vim.lsp.buf.rename,                                             'Rename')
 nmap_leader("cs", vim.lsp.buf.signature_help,                                     "Signature Help")
-nmap_leader('cu', '<Cmd>lua ' .. betterReferences .. '<CR>',                      'Usages')
+nmap_leader('cu', lua(betterReferences),                                          'Usages')
 nmap_leader("cU", usagesContainingMethod,                                         "Goto Usages of containing method")
-nmap_leader('ct', '<Cmd>FzfLua lsp_typedefs<CR>',                                 'Type definition')
+nmap_leader('ct', cmd 'FzfLua lsp_typedefs',                                      'Type definition')
 
 add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
-nmap_leader('dd', "<Cmd>lua require('easy-dotnet').debug_profile_default()<cr>", 'Run default profile')
-nmap_leader('dp', "<Cmd>lua require('dap').repl.open()<cr>",                     'Open REPL')
-nmap_leader('dl', "<Cmd>lua require('dap').run_last()<cr>",                      'Run last debug config')
-nmap_leader('dt', "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", 'Debug nearest test')
-nmap_leader('ds', "<Cmd>lua require('dap').terminate()<cr>",                     'Stop debugging')
-nmap('<F5>',      "<Cmd>lua require('dap').continue()<cr>",                      'Continue')
-nmap('<F6>',      "<Cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>", 'Debug nearest test')
-nmap('<F9>',      "<Cmd>lua require('dap').toggle_breakpoint()<cr>",             'Toggle breakpoint')
-nmap('<F10>',     "<Cmd>lua require('dap').step_over()<cr>",                     'Step over')
-nmap('<F11>',     "<Cmd>lua require('dap').step_into()<cr>",                     'Step into')
-nmap('<F8>',      "<Cmd>lua require('dap').step_out()<cr>",                      'Step out')
-nmap('<F12>',     "<Cmd>lua require('dap').step_out()<cr>",                      'Step out')
+nmap_leader('dd', call('easy-dotnet', 'debug_profile_default()'),  'Run default profile')
+nmap_leader('dp', call('dap', 'repl.open()'),                      'Open REPL')
+nmap_leader('dl', call('dap', 'run_last()'),                       'Run last debug config')
+nmap_leader('dt', call('neotest', "run.run({strategy = 'dap'})"),  'Debug nearest test')
+nmap_leader('ds', call('dap', 'terminate()'),                      'Stop debugging')
+nmap('<F5>',      call('dap', 'continue()'),                       'Continue')
+nmap('<F6>',      call('neotest', "run.run({strategy = 'dap'})"),  'Debug nearest test')
+nmap('<F9>',      call('dap', 'toggle_breakpoint()'),              'Toggle breakpoint')
+nmap('<F10>',     call('dap', 'step_over()'),                      'Step over')
+nmap('<F11>',     call('dap', 'step_into()'),                      'Step into')
+nmap('<F8>',      call('dap', 'step_out()'),                       'Step out')
+nmap('<F12>',     call('dap', 'step_out()'),                       'Step out')
 
 add_group  { mode = 'n', keys = '<Leader>e', desc = 'Explore/Edit...' }
 -- e is for 'Explore' and 'Edit'. Common usage:
@@ -197,9 +198,9 @@ add_group  { mode = 'n', keys = '<Leader>e', desc = 'Explore/Edit...' }
 -- - `<Leader>ei` - edit 'init.lua'
 -- - All mappings that use `edit_plugin_file` - edit 'plugin/' config files
 local edit_plugin_file = function(filename)
-  return string.format('<Cmd>edit %s/plugin/%s<CR>', vim.fn.stdpath('config'), filename)
+  return cmd(string.format('edit %s/plugin/%s', vim.fn.stdpath('config'), filename))
 end
-local explore_at_file = '<Cmd>lua MiniFiles.open(vim.api.nvim_buf_get_name(0))<CR>'
+local explore_at_file = lua 'MiniFiles.open(vim.api.nvim_buf_get_name(0))'
 local explore_quickfix = function()
   for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     if vim.fn.getwininfo(win_id)[1].quickfix == 1 then return vim.cmd('cclose') end
@@ -207,135 +208,167 @@ local explore_quickfix = function()
   vim.cmd('copen')
 end
 
-nmap_leader('ed', '<Cmd>lua MiniFiles.open()<CR>',          'Directory')
-nmap_leader('ef', explore_at_file,                          'Current file directory')
-nmap_leader('ei', '<Cmd>edit $MYVIMRC<CR>',                 'init.lua')
-nmap_leader('ek', edit_plugin_file('20_keymaps.lua'),       'Keymaps config')
-nmap_leader('em', edit_plugin_file('30_mini.lua'),          'MINI config')
-nmap_leader('en', '<Cmd>lua MiniNotify.show_history()<CR>', 'Notifications')
-nmap_leader('eo', edit_plugin_file('10_options.lua'),       'Options config')
-nmap_leader('ep', edit_plugin_file('40_plugins.lua'),       'Plugins config')
-nmap_leader('eq', explore_quickfix,                         'Quickfix')
+nmap_leader('ed', lua 'MiniFiles.open()',             'Directory')
+nmap_leader('ef', explore_at_file,                    'Current file directory')
+nmap_leader('ei', cmd 'edit $MYVIMRC',                'init.lua')
+nmap_leader('ek', edit_plugin_file('20_keymaps.lua'), 'Keymaps config')
+nmap_leader('em', edit_plugin_file('30_mini.lua'),    'MINI config')
+nmap_leader('en', lua 'MiniNotify.show_history()',    'Notifications')
+nmap_leader('eo', edit_plugin_file('10_options.lua'), 'Options config')
+nmap_leader('ep', edit_plugin_file('40_plugins.lua'), 'Plugins config')
+nmap_leader('eq', explore_quickfix,                   'Quickfix')
 
 add_group  { mode = 'n', keys = '<Leader>f', desc = 'Find...' }
-local pick_added_hunks_buf = '<Cmd>Pick git_hunks path="%"<CR>'
-
-nmap_leader('f/', '<Cmd>FzfLua search_history<CR>'            , '"/" history')
-nmap_leader('f:', '<Cmd>FzfLua command_history<CR>'           , '":" history')
-nmap_leader('fa', '<Cmd>FzfLua git_hunks<CR>'                 , 'Added hunks (all)')
-nmap_leader('fA', pick_added_hunks_buf                        , 'Added hunks (buf)')
-nmap_leader('fb', '<Cmd>FzfLua buffers<CR>'                   , 'Buffers')
-nmap_leader('fc', '<Cmd>FzfLua git_commits<CR>'               , 'Commits (all)')
-nmap_leader('fC', '<Cmd>FzfLua git_bcommits<CR>'              , 'Commits (buf)')
-nmap_leader('fd', '<Cmd>FzfLua diagnostics_workspace<CR>'     , 'Diagnostic workspace')
-nmap_leader('fD', '<Cmd>FzfLua diagnostics_document<CR>'      , 'Diagnostic buffer')
-nmap_leader('ff', '<Cmd>FzfLua files<CR>'                     , 'Files')
-nmap_leader('fg', '<Cmd>FzfLua live_grep<CR>'                 , 'Grep live')
-nmap_leader('fG', '<Cmd>FzfLua grep_cword<CR>'                , 'Grep current word')
-nmap_leader('fh', '<Cmd>FzfLua help<CR>'                      , 'Help tags')
-nmap_leader('fH', '<Cmd>FzfLua hl_groups<CR>'                 , 'Highlight groups')
-nmap_leader('fl', '<Cmd>FzfLua lines<CR>'                     , 'Lines (buf)')
-nmap_leader('fo', '<Cmd>FzfLua oldfiles<CR>'                  , 'Old files')
-nmap_leader('fm', '<Cmd>FzfLua git_hunks<CR>'                 , 'Modified hunks (all)')
-nmap_leader('fM', '<Cmd>FzfLua git_hunks path="%"<CR>'        , 'Modified hunks (buf)')
-nmap_leader('fy', '<Cmd>FzfLua registers<CR>'                 , 'Registers')
-nmap_leader('fr', '<Cmd>FzfLua resume<CR>'                    , 'Resume')
-nmap_leader('fs', '<Cmd>FzfLua lsp_workspace_symbols<CR>'     , 'Symbols workspace')
-nmap_leader('fS', '<Cmd>FzfLua lsp_document_symbols<CR>'      , 'Symbols document')
-nmap_leader('fv', '<Cmd>FzfLua visit_paths cwd=""<CR>'        , 'Visit paths (all)')
-nmap_leader('fV', '<Cmd>FzfLua visit_paths<CR>'               , 'Visit paths (cwd)')
+local pick_added_hunks_buf = cmd 'Pick git_hunks path="%"'
+local lsp_live_workspace_symbols_classes_first = function(opts)  
+  opts = opts or {}  
+    
+  -- Define priority order (lower number = higher priority)  
+  local kind_priority = {  
+    Class = 1,  
+    Interface = 2,  
+    Struct = 3,  
+    Enum = 4,  
+    -- Other kinds will get priority 99  
+  }  
+    
+  opts.symbol_fmt = function(s, _)  
+    local priority = kind_priority[s] or 99  
+    -- Add numeric prefix for sorting, will be hidden by fzf  
+    return string.format("%02d [%s]", priority, s)  
+  end  
+    
+  -- Configure fzf to sort by the prefix  
+  opts.fzf_opts = opts.fzf_opts or {}  
+  opts.fzf_opts["--tiebreak"] = "index"  -- Sort by input order  
+    
+  return require('fzf-lua').lsp_live_workspace_symbols(opts)  
+end
+nmap_leader('f/', cmd 'FzfLua search_history'        , '"/" history')
+nmap_leader('f:', cmd 'FzfLua command_history'       , '":" history')
+nmap_leader('fa', cmd 'FzfLua git_hunks'             , 'Added hunks (all)')
+nmap_leader('fA', pick_added_hunks_buf               , 'Added hunks (buf)')
+nmap_leader('fb', cmd 'FzfLua buffers'               , 'Buffers')
+nmap_leader('fc', cmd 'FzfLua git_commits'           , 'Commits (all)')
+nmap_leader('fC', cmd 'FzfLua git_bcommits'          , 'Commits (buf)')
+nmap_leader('fd', cmd 'FzfLua diagnostics_workspace' , 'Diagnostic workspace')
+nmap_leader('fD', cmd 'FzfLua diagnostics_document'  , 'Diagnostic buffer')
+nmap_leader('ff', cmd 'FzfLua files'                 , 'Files')
+nmap_leader('fg', cmd 'FzfLua live_grep'             , 'Grep live')
+nmap_leader('fG', cmd 'FzfLua grep_cword'            , 'Grep current word')
+nmap_leader('fh', cmd 'FzfLua helptags'                  , 'Help tags')
+nmap('<F1>', cmd 'FzfLua helptags', 'Help')
+nmap_leader('fH', cmd 'FzfLua hl_groups'             , 'Highlight groups')
+nmap_leader('fl', cmd 'FzfLua lines'                 , 'Lines (buf)')
+nmap_leader('fo', cmd 'FzfLua oldfiles'              , 'Old files')
+nmap_leader('fm', cmd 'FzfLua git_hunks'             , 'Modified hunks (all)')
+nmap_leader('fM', cmd 'FzfLua git_hunks path="%"'    , 'Modified hunks (buf)')
+nmap_leader('fy', cmd 'FzfLua registers'             , 'Registers')
+nmap_leader('fr', cmd 'FzfLua resume'                , 'Resume')
+nmap_leader('fs', lsp_live_workspace_symbols_classes_first, 'Symbols workspace')
+nmap_leader('fS', cmd 'FzfLua lsp_document_symbols'  , 'Symbols document')
+nmap_leader('fv', cmd 'FzfLua visit_paths cwd=""'    , 'Visit paths (all)')
+nmap_leader('fV', cmd 'FzfLua visit_paths'           , 'Visit paths (cwd)')
 
 add_group  { mode = 'n', keys = '<Leader>g', desc = 'Git...' }
 add_group  { mode = 'x', keys = '<Leader>g', desc = 'Git...' }
-nmap_leader('g', '<Cmd>LazyGitCurrentFile<CR>',            'LazyGit')
+nmap_leader('g', cmd 'LazyGitCurrentFile', 'LazyGit')
 
 add_group  { mode = 'n', keys = '<Leader>m', desc = 'Map...' }
-nmap_leader('mf', '<Cmd>lua MiniMap.toggle_focus()<CR>', 'Focus (toggle)')
-nmap_leader('mr', '<Cmd>lua MiniMap.refresh()<CR>',      'Refresh')
-nmap_leader('ms', '<Cmd>lua MiniMap.toggle_side()<CR>',  'Side (toggle)')
-nmap_leader('mt', '<Cmd>lua MiniMap.toggle()<CR>',       'Toggle')
+nmap_leader('mf', lua 'MiniMap.toggle_focus()', 'Focus (toggle)')
+nmap_leader('mr', lua 'MiniMap.refresh()',      'Refresh')
+nmap_leader('ms', lua 'MiniMap.toggle_side()',  'Side (toggle)')
+nmap_leader('mt', lua 'MiniMap.toggle()',       'Toggle')
 add_group  { mode = 'n', keys = '<Leader>n', desc = 'Dotnet...' }
-add_group  { mode = 'n', keys = '<Leader>nl', desc = 'LSP...' }
-add_group  { mode = 'n', keys = '<Leader>nt', desc = 'Test...' }
-add_group  { mode = 'n', keys = '<Leader>nb', desc = 'Build...' }
-add_group  { mode = 'n', keys = '<Leader>ne', desc = 'EF...' }
-add_group  { mode = 'n', keys = '<Leader>np', desc = 'Nuget...' }
-add_group  { mode = 'n', keys = '<Leader>nr', desc = 'Run...' }
-add_group  { mode = 'n', keys = '<Leader>nd', desc = 'Diagnostics...' }
 -- local dotnet = require('easy-dotnet')
 -- local diagnostics = require('easy-dotnet.actions.diagnostics')
-nmap_leader('nll', "<Cmd>lua require('easy-dotnet').lsp_start()<cr>", 'Start lsp server')
-nmap_leader('nlr', "<Cmd>lua require('easy-dotnet').lsp_restart()<cr>", 'Restart lsp server')
-nmap_leader('nls', "<Cmd>lua require('easy-dotnet').lsp_stop()<cr>", 'Stop lsp server')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').get_environment_variables(project_name, project_path, use_default_launch_profile: boolean)
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').is_dotnet_project()<cr>", 'Returns true if a csproj or sln is present in CWD or subdirs')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').try_get_selected_solution()<cr>", 'Returns currently selected solution')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').get_debug_dll()<cr>", '')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').reset()<cr>", '')
--- nmap_leader('', "<Cmd>lua require('easy-dotnet').test()<cr>", '')
-nmap_leader('ntl', "<Cmd>lua require('easy-dotnet').test_solution()<cr>", 'Runs tests on solution')
-nmap_leader('ntt', "<Cmd>lua require('easy-dotnet').test_default()<cr>", 'Runs test default')
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').solution_select(path: string)
+-- nmap_leader('', '<Cmd>lua require('easy-dotnet').createfile(path: string)
 
+add_group  { mode = 'n', keys = '<Leader>nb', desc = 'Build...' }
+nmap_leader('nbb', call('easy-dotnet', 'build()'), 'Build')
+nmap_leader('nbss', call('easy-dotnet', 'build_solution()'), 'Build sln')
+nmap_leader('nbsq', call('easy-dotnet', 'build_solution_quickfix()'), 'Build sln qf')
+nmap_leader('nbq', call('easy-dotnet', 'build_quickfix()'), 'Build qf')
+nmap_leader('nbdq', call('easy-dotnet', 'build_default()'), 'Build default')
+nmap_leader('nbdq', call('easy-dotnet', 'build_default_quickfix()'), 'Build default qf')
+nmap_leader('nbc', call('easy-dotnet', 'clean()'), 'Clean')
+
+add_group  { mode = 'n', keys = '<Leader>nd', desc = 'Diagnostics...' }
+nmap_leader('ndd', call('easy-dotnet.actions.diagnostics', 'get_workspace_diagnostics()'), '')
+nmap_leader('nde', call('easy-dotnet.actions.diagnostics', "get_workspace_diagnostics('error')"), '')
+nmap_leader('ndw', call('easy-dotnet.actions.diagnostics', "get_workspace_diagnostics('warning')"), '')
+
+add_group  { mode = 'n', keys = '<Leader>ne', desc = 'EF...' }
+-- nmap_leader('nea', "<Cmd>lua require('easy-dotnet').ef_migrations_add(name: string)
+nmap_leader('nel', call('easy-dotnet', 'ef_migrations_list()'), 'EF: Migrations list')
+nmap_leader('ned', call('easy-dotnet', 'ef_database_drop()'), 'EF: drop database')
+nmap_leader('neu', call('easy-dotnet', 'ef_database_update()'), 'EF: update database')
+nmap_leader('nep', call('easy-dotnet', 'ef_database_update_pick()'), 'EF: Update database (pick)')
+nmap_leader('ner', call('easy-dotnet', 'ef_migrations_remove()'), 'EF: remove migration')
+
+add_group  { mode = 'n', keys = '<Leader>nl', desc = 'LSP...' }
+nmap_leader('nll', call('easy-dotnet', 'lsp_start()'), 'Start lsp server')
+nmap_leader('nlr', call('easy-dotnet', 'lsp_restart()'), 'Restart lsp server')
+nmap_leader('nls', call('easy-dotnet', 'lsp_stop()'), 'Stop lsp server')
+
+nmap_leader('nn', call('easy-dotnet', 'new()'), 'Creates files/projects')
+
+nmap_leader('no', call('easy-dotnet', 'outdated()'), 'Outdated')
+
+add_group  { mode = 'n', keys = '<Leader>np', desc = 'Nuget...' }
+nmap_leader('npa', call('easy-dotnet', 'add_package()'), 'Adds a Nuget package')
+nmap_leader('npd', call('easy-dotnet', 'remove_package()'), 'Removes a Nuget package')
+nmap_leader('npp', call('easy-dotnet', 'pack()'), 'Pack')
+nmap_leader('nps', call('easy-dotnet', 'push()'), 'Push')
+nmap_leader('npr', call('easy-dotnet', 'restore()'), 'Restore')
+
+add_group  { mode = 'n', keys = '<Leader>nr', desc = 'Run...' }
+nmap_leader('nrr', call('easy-dotnet', 'run()'), 'Run')
+nmap_leader('nrpp', call('easy-dotnet', 'run_profile()'), 'Run profile')
+nmap_leader('nrpd', call('easy-dotnet', 'run_profile_default()'), 'Run default profile')
+nmap_leader('nrd', call('easy-dotnet', 'run_default()'), 'Run default')
+
+nmap_leader('ns', call('easy-dotnet', 'secrets()'), 'Secrets')
+
+add_group  { mode = 'n', keys = '<Leader>nt', desc = 'Test...' }
+-- nmap_leader('', "<Cmd>lua require('easy-dotnet').test()<cr>", '')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').testrunner()<cr>", '')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').testrunner_refresh()<cr>", '')
 -- nmap_leader('', "<Cmd>lua require('easy-dotnet').testrunner_refresh_build()<cr>", '')
-nmap_leader('nn', "<Cmd>lua require('easy-dotnet').new()<cr>", 'Creates files/projects')
-nmap_leader('no', "<Cmd>lua require('easy-dotnet').outdated()<cr>", 'Outdated')
-nmap_leader('npa', "<Cmd>lua require('easy-dotnet').add_package()<cr>", 'Adds a Nuget package')
-nmap_leader('npd', "<Cmd>lua require('easy-dotnet').remove_package()<cr>", 'Removes a Nuget package')
-nmap_leader('npp', "<Cmd>lua require('easy-dotnet').pack()<cr>", 'Pack')
-nmap_leader('nps', "<Cmd>lua require('easy-dotnet').push()<cr>", 'Push')
-nmap_leader('npr', "<Cmd>lua require('easy-dotnet').restore()<cr>", 'Restore')
--- nmap_leader('', "<Cmd>lua require('easy-dotnet').solution_select(path: string)
-nmap_leader('ner', "<Cmd>lua require('easy-dotnet').ef_migrations_remove()<cr>", 'EF: remove migration')
--- nmap_leader('nea', "<Cmd>lua require('easy-dotnet').ef_migrations_add(name: string)
-nmap_leader('nel', "<Cmd>lua require('easy-dotnet').ef_migrations_list()<cr>", 'EF: Migrations list')
-nmap_leader('ned', "<Cmd>lua require('easy-dotnet').ef_database_drop()<cr>", 'EF: drop database')
-nmap_leader('neu', "<Cmd>lua require('easy-dotnet').ef_database_update()<cr>", 'EF: update database')
-nmap_leader('nep', "<Cmd>lua require('easy-dotnet').ef_database_update_pick()<cr>", 'EF: Update database (pick)')
--- nmap_leader('', '<Cmd>lua require('easy-dotnet').createfile(path: string)
-nmap_leader('nbb', "<Cmd>lua require('easy-dotnet').build()<cr>", 'Build')
-nmap_leader('nbss', "<Cmd>lua require('easy-dotnet').build_solution()<cr>", 'Build sln')
-nmap_leader('nbsq', "<Cmd>lua require('easy-dotnet').build_solution_quickfix()<cr>", 'Build sln qf')
-nmap_leader('nbq', "<Cmd>lua require('easy-dotnet').build_quickfix()<cr>", 'Build qf')
-nmap_leader('nbdq', "<Cmd>lua require('easy-dotnet').build_default()<cr>", 'Build default')
-nmap_leader('nbdq', "<Cmd>lua require('easy-dotnet').build_default_quickfix()<cr>", 'Build default qf')
-nmap_leader('nbc', "<Cmd>lua require('easy-dotnet').clean()<cr>", 'Clean')
-nmap_leader('nrr', "<Cmd>lua require('easy-dotnet').run()<cr>", 'Run')
-nmap_leader('nrpp', "<Cmd>lua require('easy-dotnet').run_profile()<cr>", 'Run profile')
-nmap_leader('nrpd', "<Cmd>lua require('easy-dotnet').run_profile_default()<cr>", 'Run default profile')
-nmap_leader('nrd', "<Cmd>lua require('easy-dotnet').run_default()<cr>", 'Run default')
-nmap_leader('nww', "<Cmd>lua require('easy-dotnet').watch()<cr>", 'Watch')
-nmap_leader('nwd', "<Cmd>lua require('easy-dotnet').watch_default()<cr>", 'Watch default')
-nmap_leader('ns', "<Cmd>lua require('easy-dotnet').secrets()<cr>", 'Secrets')
-
-nmap_leader('ndd', "<Cmd>lua require('easy-dotnet.actions.diagnostics').get_workspace_diagnostics()<cr>", '')
-nmap_leader('nde', "<Cmd>lua require('easy-dotnet.actions.diagnostics').get_workspace_diagnostics('error')<cr>", '')
-nmap_leader('ndw', "<Cmd>lua require('easy-dotnet.actions.diagnostics').get_workspace_diagnostics('warning')<cr>", '')
+nmap_leader('ntl', call('easy-dotnet', 'test_solution()'), 'Runs tests on solution')
+nmap_leader('ntt', call('easy-dotnet', 'test_default()'), 'Runs test default')
+nmap_leader('nww', call('easy-dotnet', 'watch()'), 'Watch')
+nmap_leader('nwd', call('easy-dotnet', 'watch_default()'), 'Watch default')
 
 add_group  { mode = 'n', keys = '<Leader>o', desc = 'Other...' }
 -- o is for 'Other'. Common usage:
 -- - `<Leader>oz` - toggle between "zoomed" and regular view of current buffer
-nmap_leader('or', '<Cmd>lua MiniMisc.resize_window()<CR>', 'Resize to default width')
-nmap_leader('ot', '<Cmd>lua MiniTrailspace.trim()<CR>',    'Trim trailspace')
-nmap_leader('oz', '<Cmd>lua MiniMisc.zoom()<CR>',          'Zoom toggle')
+nmap_leader('or', lua 'MiniMisc.resize_window()', 'Resize to default width')
+nmap_leader('ot', lua 'MiniTrailspace.trim()',    'Trim trailspace')
+nmap_leader('oz', lua 'MiniMisc.zoom()',          'Zoom toggle')
 
 -- Pack
 add_group  { mode = 'n', keys = '<Leader>p', desc = 'Pack' }
-nmap_leader('pu', '<Cmd>lua vim.pack.update()<CR>', 'Update')
+nmap_leader('pu', lua 'vim.pack.update()', 'Update')
 
 -- Refactoring
 add_group  { mode = 'n', keys = '<Leader>r', desc = 'Refactor...' }
 add_group  { mode = 'x', keys = '<Leader>r', desc = 'Refactor...' }
 
-nmap_leader("rb",  ":Refactor extract_block<CR>",         "Extract block")
-nmap_leader("rbf", ":Refactor extract_block_to_file<CR>", "Extract block to file")
-xmap_leader("re",  ":Refactor extract<CR>",               "Extract function")
-xmap_leader("rf",  ":Refactor extract_to_file<CR>",       "Extract function to file")
-nmap_leader("ri",  ":Refactor inline_var<CR>",            "Inline variable")
-nmap_leader("rI",  ":Refactor inline_func<CR>",           "Inline function")
+nmap_leader("rb",  cmd 'Refactor extract_block',         "Extract block")
+nmap_leader("rbf", cmd 'Refactor extract_block_to_file', "Extract block to file")
+xmap_leader("re",  cmd 'Refactor extract',               "Extract function")
+xmap_leader("rf",  cmd 'Refactor extract_to_file',       "Extract function to file")
+nmap_leader("ri",  cmd 'Refactor inline_var',            "Inline variable")
+nmap_leader("rI",  cmd 'Refactor inline_func',           "Inline function")
 nmap_leader("rn",  vim.lsp.buf.rename,                    "Rename")
-xmap_leader("rv",  ":Refactor extract_var<CR>",           "Extract variable")
+xmap_leader("rv",  cmd 'Refactor extract_var',           "Extract variable")
 nmap_leader("ra", tsto('swap', "swap_next('@function.outer')"), "Move function up")
 nmap_leader("rA", tsto('swap', "swap_previous('@function.outer'"), "Move function down")
 
@@ -346,11 +379,11 @@ add_group  { mode = 'n', keys = '<Leader>s', desc = 'Session...' }
 
 add_group  { mode = 'n', keys = '<Leader>t', desc = 'Terminal...' }
 -- t is for 'Terminal'
-nmap_leader('tT', '<Cmd>horizontal term<CR>', 'Terminal (horizontal)')
-nmap_leader('tt', '<Cmd>vertical term<CR>',   'Terminal (vertical)')
+nmap_leader('tT', cmd 'horizontal term', 'Terminal (horizontal)')
+nmap_leader('tt', cmd 'vertical term',   'Terminal (vertical)')
 
 add_group  { mode = 'n', keys = '<Leader>v', desc = 'Visits...' }
-nmap_leader('u', "<Cmd>lua require('undotree').open()<CR>", 'Undotree')
+nmap_leader('u', call('undotree', 'open()'), 'Undotree')
 -- v is for 'Visits'. Common usage:
 -- - `<Leader>vv` - add    "core" label to current file.
 -- - `<Leader>vV` - remove "core" label to current file.
@@ -367,8 +400,8 @@ end
 
 nmap_leader('vc', make_pick_core('',  'Core visits (all)'),       'Core visits (all)')
 nmap_leader('vC', make_pick_core(nil, 'Core visits (cwd)'),       'Core visits (cwd)')
-nmap_leader('vv', '<Cmd>lua MiniVisits.add_label("core")<CR>',    'Add "core" label')
-nmap_leader('vV', '<Cmd>lua MiniVisits.remove_label("core")<CR>', 'Remove "core" label')
-nmap_leader('vl', '<Cmd>lua MiniVisits.add_label()<CR>',          'Add label')
-nmap_leader('vL', '<Cmd>lua MiniVisits.remove_label()<CR>',       'Remove label')
+nmap_leader('vv', lua 'MiniVisits.add_label("core")',    'Add "core" label')
+nmap_leader('vV', lua 'MiniVisits.remove_label("core")', 'Remove "core" label')
+nmap_leader('vl', lua 'MiniVisits.add_label()',          'Add label')
+nmap_leader('vL', lua 'MiniVisits.remove_label()',       'Remove label')
 -- stylua: ignore end
