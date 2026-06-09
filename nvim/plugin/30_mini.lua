@@ -437,6 +437,7 @@ later(function()
       width_nofocus = 40,
     },
     mappings = {
+      show_help = '<F1>',
       close = '<Esc>',
       go_in = 'L',
       go_in_plus = 'l',
