@@ -27,3 +27,6 @@ gui:
 git:
     parseEmoji: true
 quitOnTopLevelReturn: true
+keybinding:
+    universal:
+        optionMenu: <f1>
