@@ -66,9 +66,7 @@ au(
 local start_terminal_insert = vim.schedule_wrap(function(data)
   -- Try to start terminal mode only if target terminal is current
   if
-    not (
-      vim.api.nvim_get_current_buf() == data.buf and vim.bo.buftype == 'terminal'
-    )
+    not (vim.api.nvim_get_current_buf() == data.buf and vim.bo.buftype == 'terminal')
   then
     return
   end
@@ -134,7 +132,7 @@ MiniMisc.setup_restore_cursor()
 -- - `:h MiniNotify.config` for some of common configuration examples.
 require('mini.notify').setup({
   lsp_progress = {
-    level = 'WARN',
+    enable = false,
   },
 })
 

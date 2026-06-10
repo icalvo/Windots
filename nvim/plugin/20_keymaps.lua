@@ -257,7 +257,7 @@ nmap_leader('ff', cmd 'FzfLua files'                 , 'Files')
 nmap_leader('fg', cmd 'FzfLua live_grep'             , 'Grep live')
 nmap_leader('fG', cmd 'FzfLua grep_cword'            , 'Grep current word')
 nmap_leader('fh', cmd 'FzfLua helptags'                  , 'Help tags')
-nmap('<F1>', cmd 'FzfLua help', 'Help')
+nmap('<F1>', cmd 'FzfLua helptags', 'Help')
 nmap_leader('fH', cmd 'FzfLua hl_groups'             , 'Highlight groups')
 nmap_leader('fl', cmd 'FzfLua lines'                 , 'Lines (buf)')
 nmap_leader('fo', cmd 'FzfLua oldfiles'              , 'Old files')
@@ -273,6 +273,28 @@ nmap_leader('fV', cmd 'FzfLua visit_paths'           , 'Visit paths (cwd)')
 add_group  { mode = 'n', keys = '<Leader>g', desc = 'Git...' }
 add_group  { mode = 'x', keys = '<Leader>g', desc = 'Git...' }
 nmap_leader('g', cmd 'LazyGitCurrentFile', 'LazyGit')
+
+-- h is for 'Harpoon'. Common usage:
+-- - `<Leader>hv` - add    "core" label to current file.
+-- - `<Leader>hV` - remove "core" label to current file.
+-- - `<Leader>hc` - pick among all files with "core" label.
+local make_pick_core = function(cwd, desc)
+  return function()
+        local MiniVisits = require("mini.visits")
+        local MiniExtra = require("mini.extra")
+    local sort_latest = MiniVisits.gen_sort.default({ recency_weight = 1 })
+    local local_opts = { cwd = cwd, filter = 'core', sort = sort_latest }
+    MiniExtra.pickers.visit_paths(local_opts, { source = { name = desc } })
+  end
+end
+
+add_group  { mode = 'n', keys = '<Leader>h', desc = 'Visits...' }
+nmap_leader('hc', make_pick_core('',  'Core visits (all)'),       'Core visits (all)')
+nmap_leader('hC', make_pick_core(nil, 'Core visits (cwd)'),       'Core visits (cwd)')
+nmap_leader('hh', lua 'MiniVisits.add_label("core")',    'Add "core" label')
+nmap_leader('hH', lua 'MiniVisits.remove_label("core")', 'Remove "core" label')
+nmap_leader('hl', lua 'MiniVisits.add_label()',          'Add label')
+nmap_leader('hL', lua 'MiniVisits.remove_label()',       'Remove label')
 
 add_group  { mode = 'n', keys = '<Leader>m', desc = 'Map...' }
 nmap_leader('mf', lua 'MiniMap.toggle_focus()', 'Focus (toggle)')
@@ -382,26 +404,11 @@ add_group  { mode = 'n', keys = '<Leader>t', desc = 'Terminal...' }
 nmap_leader('tT', cmd 'horizontal term', 'Terminal (horizontal)')
 nmap_leader('tt', cmd 'vertical term',   'Terminal (vertical)')
 
-add_group  { mode = 'n', keys = '<Leader>v', desc = 'Visits...' }
 nmap_leader('u', call('undotree', 'open()'), 'Undotree')
--- v is for 'Visits'. Common usage:
--- - `<Leader>vv` - add    "core" label to current file.
--- - `<Leader>vV` - remove "core" label to current file.
--- - `<Leader>vc` - pick among all files with "core" label.
-local make_pick_core = function(cwd, desc)
-  return function()
-        local MiniVisits = require("mini.visits")
-        local MiniExtra = require("mini.extra")
-    local sort_latest = MiniVisits.gen_sort.default({ recency_weight = 1 })
-    local local_opts = { cwd = cwd, filter = 'core', sort = sort_latest }
-    MiniExtra.pickers.visit_paths(local_opts, { source = { name = desc } })
-  end
-end
 
-nmap_leader('vc', make_pick_core('',  'Core visits (all)'),       'Core visits (all)')
-nmap_leader('vC', make_pick_core(nil, 'Core visits (cwd)'),       'Core visits (cwd)')
-nmap_leader('vv', lua 'MiniVisits.add_label("core")',    'Add "core" label')
-nmap_leader('vV', lua 'MiniVisits.remove_label("core")', 'Remove "core" label')
-nmap_leader('vl', lua 'MiniVisits.add_label()',          'Add label')
-nmap_leader('vL', lua 'MiniVisits.remove_label()',       'Remove label')
+-- View
+add_group  { mode = 'n', keys = '<Leader>v', desc = 'View...' }
+add_group  { mode = 'x', keys = '<Leader>v', desc = 'View...' }
+
+nmap_leader("vz",  cmd 'ZenMode',         "Zen mode")
 -- stylua: ignore end
