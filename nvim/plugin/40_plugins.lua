@@ -700,3 +700,30 @@ add({
 })
 add(gh('xTacobaco/cursor-agent.nvim'))
 vim.g.cursor_agent_mapped = true
+-- Run the current file
+vim.api.nvim_create_user_command('Run', function()
+  local filetype = vim.bo.filetype
+  local interpreters = {
+    python = 'python',
+    javascript = 'node',
+    ruby = 'ruby',
+    haskell = 'runghc',
+  }
+
+  local interpreter = interpreters[filetype]
+
+  if not interpreter then
+    print('File type not supported')
+    return
+  end
+
+  local file = vim.fn.expand('%:p')
+  local filename = vim.fn.fnamemodify(file, ':t')
+  local command = string.format('!%s ./%s', interpreter, filename)
+
+  vim.cmd('silent w')
+  vim.cmd(command)
+end, {})
+
+-- Shortcut to trigger file run
+vim.api.nvim_set_keymap('n', '<Leader>r', ':Run<CR>', { silent = true })
