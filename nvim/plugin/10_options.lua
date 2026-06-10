@@ -135,6 +135,5 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
     end
   end,
 })
--- Use `later()` to avoid sourcing `vim.diagnostic` on startup
-Config.later(function() vim.diagnostic.config(diagnostic_opts) end)
+vim.diagnostic.config(diagnostic_opts)
 -- stylua: ignore end
