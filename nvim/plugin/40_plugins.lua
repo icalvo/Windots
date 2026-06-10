@@ -840,30 +840,34 @@ local function run_execute()
     { interpreter, file },
     { text = true, cwd = vim.fn.fnamemodify(file, ':h') },
     function(obj)
-      if this_run ~= run_id then
-        return
-      end
-      run_job = nil
-
-      local lines = {}
-      if obj.stdout and obj.stdout ~= '' then
-        vim.list_extend(lines, vim.split(obj.stdout, '\n', { trimempty = false }))
-      end
-      if obj.stderr and obj.stderr ~= '' then
-        if #lines > 0 then
-          table.insert(lines, '')
+      -- The callback runs in a fast event context, where most API calls
+      -- (including buffer manipulation) are disallowed. Defer with schedule.
+      vim.schedule(function()
+        if this_run ~= run_id then
+          return
         end
-        vim.list_extend(lines, vim.split(obj.stderr, '\n', { trimempty = false }))
-      end
-      if #lines == 0 then
-        lines = { '(no output)' }
-      end
-      if obj.code ~= 0 then
-        table.insert(lines, '')
-        table.insert(lines, string.format('Process exited with code %d', obj.code))
-      end
+        run_job = nil
 
-      run_set_output(lines)
+        local lines = {}
+        if obj.stdout and obj.stdout ~= '' then
+          vim.list_extend(lines, vim.split(obj.stdout, '\n', { trimempty = false }))
+        end
+        if obj.stderr and obj.stderr ~= '' then
+          if #lines > 0 then
+            table.insert(lines, '')
+          end
+          vim.list_extend(lines, vim.split(obj.stderr, '\n', { trimempty = false }))
+        end
+        if #lines == 0 then
+          lines = { '(no output)' }
+        end
+        if obj.code ~= 0 then
+          table.insert(lines, '')
+          table.insert(lines, string.format('Process exited with code %d', obj.code))
+        end
+
+        run_set_output(lines)
+      end)
     end
   )
 end
