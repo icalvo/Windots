@@ -879,11 +879,10 @@ vim.api.nvim_create_user_command('Run', function()
   end
 
   local src_buf = vim.api.nvim_get_current_buf()
-  vim.cmd('silent write')
-  run_execute()
 
-  -- Re-run on every save of this file. `BufWritePost` fires after the write,
-  -- so `run_execute` does not write again (avoids recursion).
+  -- Re-run on every save of this file. `run_execute` never writes, so this
+  -- does not recurse. Register before writing so the initial `:Run` and later
+  -- saves share the single `BufWritePost` -> `run_execute` path.
   vim.api.nvim_clear_autocmds({ group = run_group })
   vim.api.nvim_create_autocmd('BufWritePost', {
     group = run_group,
@@ -891,6 +890,8 @@ vim.api.nvim_create_user_command('Run', function()
     callback = run_execute,
     desc = 'Re-run file on save (:Run)',
   })
+
+  vim.cmd('silent write')
 end, {})
 
 -- Shortcut to trigger file run
