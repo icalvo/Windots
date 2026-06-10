@@ -770,28 +770,123 @@ require('zen-mode').setup({
   },
 })
 vim.g.cursor_agent_mapped = true
--- Run the current file
-vim.api.nvim_create_user_command('Run', function()
-  local filetype = vim.bo.filetype
-  local interpreters = {
-    python = 'python',
-    javascript = 'node',
-    ruby = 'ruby',
-    haskell = 'runghc',
-  }
+-- Run the current file and show its output in a dedicated vsplit buffer.
+-- After `:Run`, saving the same file re-runs it and refreshes the output.
+local run_interpreters = {
+  python = 'python',
+  javascript = 'node',
+  ruby = 'ruby',
+  haskell = 'runghc',
+}
 
-  local interpreter = interpreters[filetype]
+local run_output_buf = nil
+local run_job = nil
+local run_id = 0
+local run_group = vim.api.nvim_create_augroup('custom-run-on-save', { clear = true })
 
+-- Ensure the dedicated output buffer exists and is shown in a vsplit.
+local function run_ensure_output_window()
+  if not (run_output_buf and vim.api.nvim_buf_is_valid(run_output_buf)) then
+    run_output_buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[run_output_buf].buftype = 'nofile'
+    vim.bo[run_output_buf].bufhidden = 'hide'
+    vim.bo[run_output_buf].swapfile = false
+    vim.api.nvim_buf_set_name(run_output_buf, '[Run Output]')
+  end
+
+  if vim.fn.bufwinid(run_output_buf) == -1 then
+    local src_win = vim.api.nvim_get_current_win()
+    vim.cmd('vsplit')
+    vim.api.nvim_win_set_buf(0, run_output_buf)
+    vim.api.nvim_set_current_win(src_win)
+  end
+
+  return run_output_buf
+end
+
+local function run_set_output(lines)
+  local buf = run_ensure_output_window()
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+end
+
+-- Run the current buffer's file and replace the output buffer's content.
+local function run_execute()
+  local interpreter = run_interpreters[vim.bo.filetype]
   if not interpreter then
-    print('File type not supported')
+    vim.notify('Run: file type not supported', vim.log.levels.WARN)
     return
   end
 
-  vim.cmd('silent w')
   local file = vim.fn.expand('%:p')
-  local command = string.format('!%s %s', interpreter, vim.fn.shellescape(file))
+  if file == '' then
+    return
+  end
 
-  vim.cmd(command)
+  run_id = run_id + 1
+  local this_run = run_id
+
+  if run_job then
+    pcall(function()
+      run_job:kill('sigterm')
+    end)
+    run_job = nil
+  end
+
+  run_set_output({ 'Running...' })
+
+  run_job = vim.system(
+    { interpreter, file },
+    { text = true, cwd = vim.fn.fnamemodify(file, ':h') },
+    function(obj)
+      if this_run ~= run_id then
+        return
+      end
+      run_job = nil
+
+      local lines = {}
+      if obj.stdout and obj.stdout ~= '' then
+        vim.list_extend(lines, vim.split(obj.stdout, '\n', { trimempty = false }))
+      end
+      if obj.stderr and obj.stderr ~= '' then
+        if #lines > 0 then
+          table.insert(lines, '')
+        end
+        vim.list_extend(lines, vim.split(obj.stderr, '\n', { trimempty = false }))
+      end
+      if #lines == 0 then
+        lines = { '(no output)' }
+      end
+      if obj.code ~= 0 then
+        table.insert(lines, '')
+        table.insert(lines, string.format('Process exited with code %d', obj.code))
+      end
+
+      run_set_output(lines)
+    end
+  )
+end
+
+vim.api.nvim_create_user_command('Run', function()
+  if not run_interpreters[vim.bo.filetype] then
+    vim.notify('Run: file type not supported', vim.log.levels.WARN)
+    return
+  end
+
+  local src_buf = vim.api.nvim_get_current_buf()
+  vim.cmd('silent write')
+  run_execute()
+
+  -- Re-run on every save of this file. `BufWritePost` fires after the write,
+  -- so `run_execute` does not write again (avoids recursion).
+  vim.api.nvim_clear_autocmds({ group = run_group })
+  vim.api.nvim_create_autocmd('BufWritePost', {
+    group = run_group,
+    buffer = src_buf,
+    callback = run_execute,
+    desc = 'Re-run file on save (:Run)',
+  })
 end, {})
 
 -- Shortcut to trigger file run
