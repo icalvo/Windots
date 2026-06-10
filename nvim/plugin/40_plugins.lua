@@ -301,7 +301,9 @@ later(function()
     gh('neovim/nvim-lspconfig'),
   })
   local mason_dir = require('mason.settings').current.install_root_dir
-
+  setup_lsp('hls', {
+    filetypes = { 'haskell', 'lhaskell', 'cabal' },
+  })
   setup_lsp('html')
   setup_lsp('jsonls')
   setup_lsp('lua_ls', {

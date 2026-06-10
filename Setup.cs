@@ -68,6 +68,7 @@ string[] chocoDeps =
     "fd",
     "fzf",
     "gawk",
+    "haskell-language-server",
     "jq",
     "lazygit",
     "mingw",
