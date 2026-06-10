@@ -787,11 +787,10 @@ vim.api.nvim_create_user_command('Run', function()
     return
   end
 
-  local file = vim.fn.expand('%:p')
-  local filename = vim.fn.fnamemodify(file, ':t')
-  local command = string.format('!%s ./%s', interpreter, filename)
-
   vim.cmd('silent w')
+  local file = vim.fn.expand('%:p')
+  local command = string.format('!%s %s', interpreter, vim.fn.shellescape(file))
+
   vim.cmd(command)
 end, {})
 

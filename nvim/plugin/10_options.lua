@@ -46,7 +46,13 @@ vim.o.pummaxwidth    = 100        -- Make popup menu not to wide
 vim.o.ruler          = false      -- Don't show cursor coordinates
 vim.o.shortmess      = 'CFOSWaco' -- Disable some built-in completion messages
 vim.o.showmode       = false      -- Don't show mode in command line
-vim.o.shell          = 'pwsh.exe --nologo'
+-- PowerShell as shell requires extra options for :! and :terminal.
+-- See :help shell-powershell
+vim.o.shell          = 'pwsh.exe'
+vim.o.shellcmdflag   = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();$PSDefaultParameterValues['Out-File:Encoding']='utf8';"
+vim.o.shellpipe      = '> %s 2>&1'
+vim.o.shellquote     = ''
+vim.o.shellxquote    = ''
 vim.o.signcolumn     = 'yes'      -- Always show signcolumn (less flicker)
 vim.o.splitbelow     = true       -- Horizontal splits will be below
 vim.o.splitkeep      = 'screen'   -- Reduce scroll during window split
