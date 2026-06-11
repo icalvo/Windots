@@ -86,13 +86,17 @@ fzf_lua.setup({
     formatter = 'path.filename_first',
   },
   fzf_opts = {
-    ['--scheme'] = 'path',
     ['--tiebreak'] = 'begin,length,index',
   },
   files = {
     fzf_opts = {
-      ['--scheme'] = 'path',
-      ['--tiebreak'] = 'begin,length,index',
+      -- `path.filename_first` lays each entry out as `<icon>U+2002<filename><Tab><dir>`.
+      -- Split on both the U+2002 (fzf-lua's field separator, bytes \226\128\130) and the
+      -- Tab so the filename is field 2; `--nth=2` then restricts the fuzzy search to the
+      -- filename only, and `--tiebreak=chunk` makes the shorter filename win on ties.
+      ['--delimiter'] = '[\t\226\128\130]',
+      ['--nth'] = '2',
+      ['--tiebreak'] = 'chunk',
     },
   },
 })
