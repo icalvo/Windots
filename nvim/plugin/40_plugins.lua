@@ -309,6 +309,13 @@ setup_lsp('fsautocomplete')
 -- end
 setup_lsp('hls', {
   filetypes = { 'haskell', 'lhaskell', 'cabal' },
+  settings = {
+    haskell = {
+      -- nvim-lspconfig defaults to cabal-fmt, which requires a separate
+      -- executable; cabal-gild is bundled with HLS.
+      cabalFormattingProvider = 'cabal-gild',
+    },
+  },
 })
 setup_lsp('html')
 setup_lsp('jsonls')
