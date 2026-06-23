@@ -22,9 +22,36 @@ Set-Alias -Name wt -Value Set-Location-WorkTree
 
 # Putting the FUN in Functions 🎉
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+function ag
+{
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Args
+    )
+    $updateStamp = Join-Path $env:LOCALAPPDATA 'cursor-agent\.last-bg-update'
+    $shouldUpdate = -not (Test-Path $updateStamp) -or
+    ((Get-Date) - (Get-Item $updateStamp).LastWriteTime).TotalHours -ge 24
+    if ($shouldUpdate)
+    {
+        $updateCmd = @"
+  `$ProgressPreference = 'SilentlyContinue'
+  `$uri = 'https://cursor.com/install?win32=true&update=true&channel=prod'
+  try { (Invoke-RestMethod -Uri `$uri) | Invoke-Expression } catch {}
+"@
+        Start-Process -WindowStyle Hidden -FilePath 'powershell.exe' -ArgumentList @(
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-Command',
+            $updateCmd
+        ) | Out-Null
+        New-Item -ItemType File -Path $updateStamp -Force | Out-Null
+    }
+    $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
+    & $cmdsrc @Args
+}
 function ask
 {
-    & agent --mode ask @args
+    & ag --mode ask @args
 }
 function Set-Location-WorkTree
 {
@@ -422,5 +449,7 @@ function Set-EnvVars
 
 New-Alias -Name 'Set-PoshContext' -Value 'Set-EnvVars' -Scope Global -Force
 $Env:CC="gcc"
+
+Invoke-Expression (& { ( zoxide init powershell | Out-String ) })
 
 Invoke-Expression (& { ( zoxide init powershell | Out-String ) })
