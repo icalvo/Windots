@@ -862,17 +862,13 @@ local function run_execute()
   end
 
   local file = vim.fn.expand('%:p')
-  if file == '' then
-    return
-  end
+  if file == '' then return end
 
   run_id = run_id + 1
   local this_run = run_id
 
   if run_job then
-    pcall(function()
-      run_job:kill('sigterm')
-    end)
+    pcall(function() run_job:kill('sigterm') end)
     run_job = nil
   end
 
@@ -885,9 +881,7 @@ local function run_execute()
       -- The callback runs in a fast event context, where most API calls
       -- (including buffer manipulation) are disallowed. Defer with schedule.
       vim.schedule(function()
-        if this_run ~= run_id then
-          return
-        end
+        if this_run ~= run_id then return end
         run_job = nil
 
         local lines = {}
@@ -895,14 +889,10 @@ local function run_execute()
           vim.list_extend(lines, vim.split(obj.stdout, '\n', { trimempty = false }))
         end
         if obj.stderr and obj.stderr ~= '' then
-          if #lines > 0 then
-            table.insert(lines, '')
-          end
+          if #lines > 0 then table.insert(lines, '') end
           vim.list_extend(lines, vim.split(obj.stderr, '\n', { trimempty = false }))
         end
-        if #lines == 0 then
-          lines = { '(no output)' }
-        end
+        if #lines == 0 then lines = { '(no output)' } end
         if obj.code ~= 0 then
           table.insert(lines, '')
           table.insert(lines, string.format('Process exited with code %d', obj.code))
