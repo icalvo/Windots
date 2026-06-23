@@ -29,6 +29,14 @@
             "keys": "alt+shift+d"
         },
         {
+            "id": "Terminal.DuplicatePaneDown",
+            "keys": "alt+shift+-"
+        },
+        {
+            "id": "Terminal.DuplicatePaneRight",
+            "keys": "alt+shift+plus"
+        },
+        {
             "id": null,
             "keys": "alt+enter"
         }
