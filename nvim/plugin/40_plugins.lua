@@ -270,14 +270,45 @@ else
 end
 
 -- LSPS ========================================================
-local function setup_lsp(name, config)
-  if config then
-    vim.lsp.config(name, config)
-  else
-    vim.lsp.config(name, {})
+local lsp_enabled = {}
+local lsp_by_filetype = {}
+
+local function enable_lsp_for_filetype(ft)
+  if ft == '' then
+    return
   end
-  vim.lsp.enable(name)
+  local servers = lsp_by_filetype[ft]
+  if not servers then
+    return
+  end
+  for _, name in ipairs(servers) do
+    if not lsp_enabled[name] then
+      vim.lsp.enable(name)
+      lsp_enabled[name] = true
+    end
+  end
 end
+
+local function setup_lsp(name, config)
+  vim.lsp.config(name, config or {})
+  for _, ft in ipairs(vim.lsp.config[name].filetypes or {}) do
+    lsp_by_filetype[ft] = lsp_by_filetype[ft] or {}
+    table.insert(lsp_by_filetype[ft], name)
+  end
+end
+
+Config.new_autocmd('FileType', '*', function(ev)
+  enable_lsp_for_filetype(vim.bo[ev.buf].filetype)
+end, 'Enable LSP servers for buffer filetype')
+
+-- Cover buffers that already have a filetype when this file is sourced
+vim.schedule(function()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) then
+      enable_lsp_for_filetype(vim.bo[buf].filetype)
+    end
+  end
+end)
 
 vim.filetype.add({
   extension = {
