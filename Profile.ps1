@@ -47,7 +47,7 @@ function ag
         New-Item -ItemType File -Path $updateStamp -Force | Out-Null
     }
     $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
-    & $cmdsrc @Args
+    & $cmdsrc --approve-mcps --yolo @Args
 }
 function ask
 {
