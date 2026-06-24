@@ -10,11 +10,14 @@
     "initialCols": 150,
     "initialPosition": ",",
     "initialRows": 38,
-    "keybindings": 
-    [
+    "keybindings": [
         {
             "id": "Terminal.CopyToClipboard",
             "keys": "ctrl+c"
+        },
+        {
+            "id": "Terminal.DuplicatePaneDown",
+            "keys": "alt+shift+minus"
         },
         {
             "id": "Terminal.PasteFromClipboard",
@@ -29,10 +32,6 @@
             "keys": "alt+shift+d"
         },
         {
-            "id": "Terminal.DuplicatePaneDown",
-            "keys": "alt+shift+-"
-        },
-        {
             "id": "Terminal.DuplicatePaneRight",
             "keys": "alt+shift+plus"
         },
@@ -42,30 +41,27 @@
         }
     ],
     "launchMode": "maximized",
-    "newTabMenu": 
-    [
+    "newTabMenu": [
         {
             "type": "remainingProfiles"
         }
     ],
-    "profiles": 
-    {
-        "defaults": 
-        {
-            "backgroundImage": "%USERPROFILE%\\Repos\\Windots\\wezterm\\bg-blurred.png",
+    "profiles": {
+        "defaults": {
             "colorScheme": "cyberdream",
-            "font": 
-            {
+            "font": {
                 "face": "JetBrainsMono Nerd Font",
                 "size": 12
             },
-            "opacity": 90,
+            "opacity": 40,
             "padding": "10",
             "scrollbarState": "hidden",
+            "unfocusedAppearance": {
+"experimental.pixelShaderPath": "InactivePane.hlsl"
+            },
             "useAcrylic": true
         },
-        "list": 
-        [
+        "list": [
             {
                 "commandline": "%SystemRoot%\\System32\\cmd.exe",
                 "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
@@ -92,8 +88,7 @@
             }
         ]
     },
-    "schemes": 
-    [
+    "schemes": [
         {
             "background": "#16181A",
             "black": "#16181A",
@@ -118,6 +113,7 @@
             "yellow": "#F1FF5E"
         }
     ],
+    "showTabsFullscreen": true,
     "showTabsInTitlebar": true,
     "theme": "dark",
     "themes": [],
