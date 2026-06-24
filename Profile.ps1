@@ -18,11 +18,13 @@ Set-Alias -Name vi -Value nvim
 Set-Alias -Name vim -Value nvim
 Set-Alias -Name vid -Value neovide
 Set-Alias -Name which -Value Show-Command
+Set-Alias -Name wtadd -Value New-Worktree
 Set-Alias -Name wt -Value Set-Location-WorkTree
+Set-Alias -Name ag -Value Invoke-Agent
 
 # Putting the FUN in Functions 🎉
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-function ag
+function Invoke-Agent
 {
     param(
         [Parameter(ValueFromRemainingArguments = $true)]
@@ -55,7 +57,67 @@ function ask
 }
 function Set-Location-WorkTree
 {
-    git worktree list | fzf --preview-window=hidden | awk '{print $1}' | ForEach-Object { Set-Location $_ }
+    param(
+        [Parameter(ValueFromRemainingArguments)]
+        [string[]]$Query
+    )
+
+    $filter = ($Query -join ' ').Trim()
+    $fzfArgs = @('--preview-window=hidden')
+    if ($filter)
+    {
+        $fzfArgs += '-q', $filter, '-1'
+    }
+
+    $path = git worktree list | fzf @fzfArgs | awk '{print $1}'
+    if ($path)
+    {
+        Set-Location $path
+    }
+}
+function New-Worktree
+{
+    $cwd = (Get-Location).ProviderPath
+    $root = [System.IO.Path]::GetPathRoot($cwd).TrimEnd('\')
+    if ($cwd.TrimEnd('\') -eq $root)
+    {
+        Write-Error 'wtadd: current directory is a drive root; cd into a repo folder first.'
+        return
+    }
+
+    git rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -ne 0)
+    {
+        Write-Error 'wtadd: not in a git repository.'
+        return
+    }
+
+    $branch = git branch -r | awk '!/HEAD/ { sub(/^[[:space:]]*origin\//, ""); print }' | fzf --preview-window=hidden
+    if ([string]::IsNullOrWhiteSpace($branch))
+    {
+        return
+    }
+    $branch = $branch.Trim()
+
+    $parent = Split-Path -Parent $cwd
+    $dirName = Split-Path -Leaf $cwd
+    $branchSegment = ($branch -replace '^feature/', '') -replace '[\\/:*?"<>|]', '-'
+    $worktreePath = Join-Path $parent "$dirName-$branchSegment"
+
+    git show-ref --verify --quiet "refs/heads/$branch" 2>$null
+    if ($LASTEXITCODE -eq 0)
+    {
+        git worktree add $worktreePath $branch
+    } else
+    {
+        git worktree add -b $branch $worktreePath "origin/$branch"
+    }
+    if ($LASTEXITCODE -ne 0)
+    {
+        return
+    }
+
+    Set-Location $worktreePath
 }
 
 function Find-WindotsRepository
