@@ -17,7 +17,7 @@
       "src": "https://github.com/xTacobaco/cursor-agent.nvim"
     },
     "easy-dotnet.nvim": {
-      "rev": "589dd5c09a7e1d5565431033d3c4c1a9bd41060a",
+      "rev": "07a41015af3bcbad7dff94191d5ad4b8a67fd202",
       "src": "https://github.com/GustavEikaas/easy-dotnet.nvim"
     },
     "friendly-snippets": {
@@ -25,11 +25,11 @@
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "fzf-lua": {
-      "rev": "267f5db2aa2202b9f6cc7a50783f0ccd2121766c",
+      "rev": "b6f0392fe1645973c795b5bbbd8d6db466a5a25a",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "kulala.nvim": {
-      "rev": "77df991c79a52230ac14b1613756179be9ec2fc8",
+      "rev": "4358d201df794ab72898bbee192baaa9c8f89495",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "lazygit.nvim": {
@@ -66,7 +66,7 @@
       "src": "https://github.com/nvim-mini/mini.icons"
     },
     "mini.nvim": {
-      "rev": "c594be5b095204e99473825ec2dee872e7409a4d",
+      "rev": "1599a473aa6f5290a5d740b1144846e6f0c3963d",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "neotest": {
@@ -82,7 +82,7 @@
       "src": "https://github.com/rcarriga/nvim-dap-ui"
     },
     "nvim-lspconfig": {
-      "rev": "bfcc0171a43f22afa61d927ffe9fcb6cb85dc99e",
+      "rev": "3371bf298c1f56efc26771ee961f461176958fb5",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-navic": {
@@ -111,7 +111,7 @@
       "src": "https://github.com/nvim-lua/plenary.nvim"
     },
     "project.nvim": {
-      "rev": "77bed60c1e8a29962985daddd46f6ed170e6f957",
+      "rev": "3402ac239bcf28be7eb78d47ccf9a74f45db2ceb",
       "src": "https://github.com/DrKJeff16/project.nvim"
     },
     "refactoring.nvim": {
