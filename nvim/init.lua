@@ -114,3 +114,19 @@ Config.on_packchanged = function(plugin_name, kinds, callback, desc)
   end
   Config.new_autocmd('PackChanged', '*', f, desc)
 end
+
+-- Restore Windows Terminal cursor shape after Neovim changes it (see #9081, #13420).
+local function restore_wt_cursor()
+  vim.o.guicursor = ''
+  vim.fn.chansend(vim.v.stderr, '\27[ q')
+end
+
+Config.new_autocmd('VimLeave', '*', restore_wt_cursor, 'Restore WT cursor shape on Neovim exit')
+
+-- WT resets cursor when switching panes/tabs; re-apply Neovim's shape on focus.
+Config.new_autocmd('FocusGained', '*', function()
+  local guicursor = vim.o.guicursor
+  if guicursor == '' then return end
+  vim.o.guicursor = ''
+  vim.schedule(function() vim.o.guicursor = guicursor end)
+end, 'Re-apply Neovim cursor shape after WT pane/tab focus')
