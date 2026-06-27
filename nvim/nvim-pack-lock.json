@@ -17,7 +17,7 @@
       "src": "https://github.com/xTacobaco/cursor-agent.nvim"
     },
     "easy-dotnet.nvim": {
-      "rev": "0321d7417db01500b2f0e4a37c06ba760e74b43f",
+      "rev": "589dd5c09a7e1d5565431033d3c4c1a9bd41060a",
       "src": "https://github.com/GustavEikaas/easy-dotnet.nvim"
     },
     "friendly-snippets": {
@@ -29,7 +29,7 @@
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "kulala.nvim": {
-      "rev": "a627ebcafe2d053fa395b2d324dc9f6cbb61495e",
+      "rev": "77df991c79a52230ac14b1613756179be9ec2fc8",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "lazygit.nvim": {
@@ -41,7 +41,7 @@
       "src": "https://github.com/linrongbin16/lsp-progress.nvim"
     },
     "lualine-ex": {
-      "rev": "249726e5512e02f319614959d1ae1c733a9bb622",
+      "rev": "69b3cb7fe1f2a283bf9cc7253c7ed4927ce6bf61",
       "src": "https://github.com/dokwork/lualine-ex"
     },
     "lualine-lsp-progress": {
@@ -66,7 +66,7 @@
       "src": "https://github.com/nvim-mini/mini.icons"
     },
     "mini.nvim": {
-      "rev": "1345d191bb3da9c7b0e977f4387c5761f9bff68d",
+      "rev": "c594be5b095204e99473825ec2dee872e7409a4d",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "neotest": {
@@ -111,7 +111,7 @@
       "src": "https://github.com/nvim-lua/plenary.nvim"
     },
     "project.nvim": {
-      "rev": "d0be92cca4c986199df172eafb9dda92b42fb10b",
+      "rev": "77bed60c1e8a29962985daddd46f6ed170e6f957",
       "src": "https://github.com/DrKJeff16/project.nvim"
     },
     "refactoring.nvim": {

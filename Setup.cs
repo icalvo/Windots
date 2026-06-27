@@ -33,6 +33,7 @@ var symlinks = new (string Destination, string Source)[]
     (Path.Combine(home, @"AppData\Local\nvim"),                                                         @".\nvim"),
     (Path.Combine(home, @"AppData\Local\k9s"),                                                          @".\k9s"),
     (Path.Combine(home, @"AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"), @".\windowsterminal\settings.json"),
+    (Path.Combine(home, @"AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\InactivePane.hlsl"), @".\windowsterminal\InactivePane.hlsl"),
     (Path.Combine(home, ".gitconfig"),                                                                  @".\.gitconfig"),
     (Path.Combine(home, @"AppData\Local\lazygit"),                                                      @".\lazygit"),
     (Path.Combine(home, @"AppData\Roaming\neovide"),                                                    @".\neovide"),
