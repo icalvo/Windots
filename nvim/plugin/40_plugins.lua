@@ -274,13 +274,9 @@ local lsp_enabled = {}
 local lsp_by_filetype = {}
 
 local function enable_lsp_for_filetype(ft)
-  if ft == '' then
-    return
-  end
+  if ft == '' then return end
   local servers = lsp_by_filetype[ft]
-  if not servers then
-    return
-  end
+  if not servers then return end
   for _, name in ipairs(servers) do
     if not lsp_enabled[name] then
       vim.lsp.enable(name)
@@ -297,9 +293,12 @@ local function setup_lsp(name, config)
   end
 end
 
-Config.new_autocmd('FileType', '*', function(ev)
-  enable_lsp_for_filetype(vim.bo[ev.buf].filetype)
-end, 'Enable LSP servers for buffer filetype')
+Config.new_autocmd(
+  'FileType',
+  '*',
+  function(ev) enable_lsp_for_filetype(vim.bo[ev.buf].filetype) end,
+  'Enable LSP servers for buffer filetype'
+)
 
 -- Cover buffers that already have a filetype when this file is sourced
 vim.schedule(function()
@@ -928,3 +927,15 @@ end, {})
 
 -- Shortcut to trigger file run
 vim.api.nvim_set_keymap('n', '<Leader>r', ':Run<CR>', { silent = true })
+
+add(gh('nvim-orgmode/orgmode'))
+require('orgmode').setup({
+  org_agenda_files = '~/Repos/Ignacio/orgfiles/**/*',
+  org_default_notes_file = '~/Repos/Ignacio/orgfiles/refile.org',
+})
+add(gh('chipsenkbeil/org-roam.nvim'))
+require('org-roam').setup({
+  directory = '~/Repos/Ignacio/org_roam_files',
+})
+-- Experimental LSP support
+vim.lsp.enable('org')
