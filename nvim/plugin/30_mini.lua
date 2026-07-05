@@ -681,9 +681,13 @@ require('mini.pairs').setup({ modes = { command = true } })
 -- - `:h MiniSnippets.gen_loader` - list of available loaders
 -- Define language patterns to work better with 'friendly-snippets'
 local latex_patterns = { 'latex/**/*.json', '**/latex.json' }
+local csharp_patterns = { 'csharp/**/*.json', '**/csharp.json' }
 local lang_patterns = {
   tex = latex_patterns,
   plaintex = latex_patterns,
+  -- Neovim/tree-sitter use 'cs'/'c_sharp'; friendly-snippets uses 'csharp'
+  cs = csharp_patterns,
+  c_sharp = csharp_patterns,
   -- Recognize special injected language of markdown tree-sitter parser
   markdown_inline = { 'markdown.json' },
 }
