@@ -1,0 +1,9 @@
+[[plugin.deps]]
+use = "Lil-Dank/lazygit"
+rev = "e73fd74"
+hash = "e467330cba1935c99c89c3cfb078389c"
+
+[[flavor.deps]]
+use = "malick-tammal/monokai"
+rev = "57be034"
+hash = "6f78183cf802d6730309eeac60c66ed0"

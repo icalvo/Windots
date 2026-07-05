@@ -40,6 +40,7 @@ var symlinks = new (string Destination, string Source)[]
     (Path.Combine(home, @"AppData\Roaming\AltSnap\AltSnap.ini"),                                        @".\altsnap\AltSnap.ini"),
     (Path.Combine(programFiles, @"WezTerm\wezterm_modules"),                                            @".\wezterm"),
     (Path.Combine(home, ".ideavimrc"),                                                                  @".\.ideavimrc"),
+    (Path.Combine(home, @"AppData\Roaming\yazi"),                                                       @".\yazi"),
 };
 
 // Winget dependencies
