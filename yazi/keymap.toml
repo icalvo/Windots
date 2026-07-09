@@ -1,4 +1,14 @@
 [[mgr.prepend_keymap]]
+on = "<Esc>"
+run = "plugin smart-escape"
+desc = "Cancel search/filter/selection, or quit"
+
+[[mgr.prepend_keymap]]
+on = "<C-[>"
+run = "plugin smart-escape"
+desc = "Cancel search/filter/selection, or quit"
+
+[[mgr.prepend_keymap]]
 on = ["g", "i"]
 run = "plugin lazygit"
 desc = "run lazygit"
