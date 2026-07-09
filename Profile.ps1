@@ -127,6 +127,12 @@ function New-Worktree
         return
     }
 
+    $mcpEnv = Join-Path $cwd ".cursor/mcp.local.env"
+    if (Test-Path $mcpEnv) {
+        $worktreeMcpEnv = Join-Path $worktreePath ".cursor"
+
+        Copy-Item $mcpEnv $worktreeMcpEnv
+    }
     Set-Location $worktreePath
 }
 
