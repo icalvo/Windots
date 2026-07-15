@@ -65,6 +65,7 @@ function ask
 {
     & ag --mode ask @args
 }
+function agc { & ag --continue @args }
 function Set-Location-WorkTree
 {
     param(
