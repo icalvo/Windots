@@ -137,7 +137,7 @@ nmap_leader('az', lua 'MiniMisc.zoom()',          'Zoom toggle')
 add_group  { mode = 'n', keys = '<Leader>b', desc = 'Buffer...' }
 -- b is for 'Buffer'. Common usage:
 -- - `<Leader>bs` - create scratch (temporary) buffer
--- - `<Leader>ba` - navigate to the alternative buffer
+-- - `<Leader>bb` - navigate to the alternative buffer
 -- - `<Leader>bw` - wipeout (fully delete) current buffer
 local new_scratch_buffer = function()
   vim.api.nvim_win_set_buf(0, vim.api.nvim_create_buf(true, true))
@@ -146,6 +146,7 @@ nmap_leader('bb', cmd 'b#',                              'Alternate')
 nmap_leader('bd', lua 'MiniBufremove.delete()',         'Delete')
 nmap_leader('bD', lua 'MiniBufremove.delete(0, true)',  'Delete!')
 nmap_leader('bs', new_scratch_buffer,                   'Scratch')
+nmap_leader('br', cmd '%bd|e#|bd#',                   'Delete others')
 nmap_leader('bw', lua 'MiniBufremove.wipeout()',        'Wipeout')
 nmap_leader('bW', lua 'MiniBufremove.wipeout(0, true)', 'Wipeout!')
 
