@@ -347,7 +347,9 @@ MiniCompletion.setup({
 })
 
 -- Set 'omnifunc' for LSP completion only when needed.
+-- Org buffers keep orgmode's omnifunc (link/tag completion); see after/ftplugin/org.lua.
 local on_attach = function(ev)
+  if vim.bo[ev.buf].filetype == 'org' then return end
   vim.bo[ev.buf].omnifunc = 'v:lua.MiniCompletion.completefunc_lsp'
 end
 _G.Config.new_autocmd('LspAttach', nil, on_attach, "Set 'omnifunc'")
