@@ -388,6 +388,51 @@ function Remove-ItemExtended
     Remove-Item $Path -Recurse:$rf -Force:$rf
 }
 
+function Add-Path
+{
+    <#
+    .SYNOPSIS
+        Permanently adds a directory to the current user's PATH environment variable.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+    Write-Verbose "Adding '$resolvedPath' to the current user's PATH"
+
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $entries = if ([string]::IsNullOrWhiteSpace($userPath))
+    {
+        @()
+    } else
+    {
+        $userPath -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    }
+
+    if ($entries | Where-Object { $_.TrimEnd('\') -ieq $resolvedPath.TrimEnd('\') })
+    {
+        Write-Host "Path already present in user PATH: $resolvedPath"
+        return
+    }
+
+    $newUserPath = if ($entries.Count -eq 0) { $resolvedPath } else { ($entries + $resolvedPath) -join ';' }
+    [Environment]::SetEnvironmentVariable('Path', $newUserPath, 'User')
+
+    if ($env:Path -split ';' | Where-Object { $_.TrimEnd('\') -ieq $resolvedPath.TrimEnd('\') })
+    {
+        Write-Verbose "Path already present in process PATH"
+    } else
+    {
+        $env:Path = "$env:Path;$resolvedPath"
+    }
+
+    Write-Host "Added to user PATH: $resolvedPath"
+}
+
 
 # Environment Variables 🌐
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
