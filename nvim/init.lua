@@ -66,6 +66,9 @@
 -- - `:h vim.pack-events` - available events and plugin hooks examples
 -- - `:h vim.pack.update()` - more details about confirmation step
 
+-- Startup timing reports: `:StartupLog`.
+require('startuplog')
+
 -- Define config table to be able to pass data between scripts
 -- It is a global variable which can be use both as `_G.Config` and `Config`
 _G.Config = {}
@@ -115,18 +118,26 @@ Config.on_packchanged = function(plugin_name, kinds, callback, desc)
   Config.new_autocmd('PackChanged', '*', f, desc)
 end
 
--- Restore Windows Terminal cursor shape after Neovim changes it (see #9081, #13420).
-local function restore_wt_cursor()
-  vim.o.guicursor = ''
-  vim.fn.chansend(vim.v.stderr, '\27[ q')
+-- Windows Terminal cursor workarounds (WT sets WT_SESSION). Skip elsewhere (neovide, etc.).
+if vim.env.WT_SESSION then
+  -- Restore cursor shape after Neovim changes it (see #9081, #13420).
+  Config.new_autocmd('VimLeave', '*', function()
+    vim.o.guicursor = ''
+    vim.fn.chansend(vim.v.stderr, '\27[ q')
+  end, 'Restore WT cursor shape on Neovim exit')
+
+  -- unfocusedAppearance resets DECSCUSR on focus return (microsoft/terminal#18174, #11990).
+  -- Clearing then restoring guicursor makes Neovim re-emit the mode shape.
+  -- Defer so we win the race against WT re-applying profile cursorShape.
+  local function reapply_cursor_shape()
+    local guicursor = vim.o.guicursor
+    if guicursor == '' then return end
+    vim.o.guicursor = ''
+    vim.o.guicursor = guicursor
+  end
+
+  Config.new_autocmd('FocusGained', '*', function()
+    reapply_cursor_shape()
+    vim.defer_fn(reapply_cursor_shape, 50)
+  end, 'Re-apply Neovim cursor shape after WT focus (unfocusedAppearance)')
 end
-
-Config.new_autocmd('VimLeave', '*', restore_wt_cursor, 'Restore WT cursor shape on Neovim exit')
-
--- WT resets cursor when switching panes/tabs; re-apply Neovim's shape on focus.
-Config.new_autocmd('FocusGained', '*', function()
-  local guicursor = vim.o.guicursor
-  if guicursor == '' then return end
-  vim.o.guicursor = ''
-  vim.schedule(function() vim.o.guicursor = guicursor end)
-end, 'Re-apply Neovim cursor shape after WT pane/tab focus')
