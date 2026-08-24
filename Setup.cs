@@ -26,8 +26,8 @@ string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
 // Linked Files (Destination => Source). Sources are relative to this script.
-var symlinks = new (string Destination, string Source)[]
-{
+(string Destination, string Source)[] symlinks =
+[
     (GetPowerShellProfile(),                                                                            @".\Profile.ps1"),
     (Path.Combine(home, "AutoHotKey"),                                                                  @".\AutoHotKey"),
     (Path.Combine(home, @"AppData\Local\nvim"),                                                         @".\nvim"),
@@ -41,11 +41,14 @@ var symlinks = new (string Destination, string Source)[]
     (Path.Combine(programFiles, @"WezTerm\wezterm_modules"),                                            @".\wezterm"),
     (Path.Combine(home, ".ideavimrc"),                                                                  @".\.ideavimrc"),
     (Path.Combine(home, @"AppData\Roaming\yazi"),                                                       @".\yazi"),
-};
+];
 
 // Winget dependencies
 string[] wingetDeps =
-{
+[
+    "7zip.7zip",
+    "agilebits.1password.cli",
+    "appest.ticktick",
     "autohotkey.autohotkey",
     "chocolatey.chocolatey",
     "eza-community.eza",
@@ -54,16 +57,18 @@ string[] wingetDeps =
     "github.cli",
     "kitware.cmake",
     "mbuilov.sed",
+    "microsoft.dotnet.sdk.10",
+    "microsoft.dotnet.sdk.preview",
     "microsoft.powershell",
     "openjs.nodejs.lts",
     "sst.opencode",
     "task.task",
-    "JanDeDobbeleer.OhMyPosh",
-};
+    "jandedobbeleer.ohmyposh",
+];
 
 // Chocolatey dependencies
 string[] chocoDeps =
-{
+[
     "altsnap",
     "bat",
     "caffeine",
@@ -84,23 +89,23 @@ string[] chocoDeps =
     "zig",
     "zoxide",
     "yt-dlp",
-};
+];
 
 // PowerShell Gallery modules (installed via pwsh - no BCL/NuGet equivalent exists)
 string[] psModules =
-{
+[
     "posh-git",
     "CompletionPredictor",
     "PSScriptAnalyzer",
     "ps-arch-wsl",
     "ps-color-scripts",
-};
+];
 
 // dotnet global tools
 string[] dotnetTools =
-{
+[
     "dotnet-suggest",
-};
+];
 
 // Set working directory
 Directory.SetCurrentDirectory(scriptRoot);
