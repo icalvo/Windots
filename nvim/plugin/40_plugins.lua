@@ -17,6 +17,30 @@ local add = function(spec, args)
     vim.pack.add(spec, args)
   end
 end
+-- Run `fn` once on the first matching FileType (including buffers already open).
+-- If that happens during startup, wait until UIEnter so the UI can paint first.
+local function on_filetypes(fts, fn, desc)
+  local done = false
+  local run = function()
+    if done then return end
+    done = true
+    if vim.v.vim_did_enter == 1 then
+      fn()
+    else
+      vim.api.nvim_create_autocmd('UIEnter', { once = true, callback = fn })
+    end
+  end
+  Config.new_autocmd('FileType', fts, run, desc)
+  vim.schedule(function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if
+        vim.api.nvim_buf_is_loaded(buf) and vim.tbl_contains(fts, vim.bo[buf].filetype)
+      then
+        run()
+      end
+    end
+  end)
+end
 local dbg = function(s) vim.notify(s, vim.log.levels.INFO, { title = 'IGNACIO' }) end
 
 vim.cmd.packadd('nvim.undotree')
@@ -40,6 +64,9 @@ add({
   gh('arborist-ts/arborist.nvim'),
 })
 require('arborist').setup({
+  -- Parsers still install on FileType; probing ~30 of them at startup is slow
+  -- on a cold Windows Defender cache.
+  install_popular = false,
   overrides = {
     c_sharp = { url = gh('tree-sitter/tree-sitter-c-sharp') },
   },
@@ -172,6 +199,7 @@ require('conform').setup({
     toml = { 'taplo' },
     typescript = { 'prettier' },
     yaml = { 'prettier' },
+    org = { 'orgmode' },
   },
 
   format_after_save = function(bufnr)
@@ -193,6 +221,20 @@ require('conform').setup({
     goimports_reviser = {
       command = 'goimports-reviser',
       args = { '-output', 'stdout', '$FILENAME' },
+    },
+    orgmode = {
+      fn = function(bufnr)
+        if not vim.bo[bufnr].modifiable then return end
+        -- autowriteall saves the source org buffer when capture opens; formatting
+        -- here bumps changedtick and org-roam cancels async link insertion.
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          if vim.b[buf].org_capture then return end
+        end
+        vim.api.nvim_buf_call(
+          bufnr,
+          function() vim.cmd('silent keepjumps normal! gggqG') end
+        )
+      end,
     },
   },
 })
@@ -256,59 +298,68 @@ local mason_packages = {
   'yaml-language-server',
 }
 
-local mr = require('mason-registry')
-local function ensure_installed()
-  for _, tool in ipairs(mason_packages) do
-    local p = mr.get_package(tool)
-    if not p:is_installed() then p:install() end
-  end
-end
-if mr.refresh then
-  mr.refresh(ensure_installed)
-else
-  ensure_installed()
-end
+-- Registry update hits GitHub; do it after the UI is up, at most once a day.
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = function()
+    vim.schedule(function()
+      local mr = require('mason-registry')
+      local function ensure_installed()
+        for _, tool in ipairs(mason_packages) do
+          local ok, p = pcall(mr.get_package, tool)
+          if ok and p and not p:is_installed() then p:install() end
+        end
+      end
+      local stamp = vim.fs.joinpath(vim.fn.stdpath('cache'), 'mason-registry-refresh')
+      local stat = vim.uv.fs_stat(stamp)
+      local refresh_due = not stat or (os.time() - stat.mtime.sec) >= 24 * 60 * 60
+      if refresh_due and mr.refresh then
+        mr.refresh(function()
+          ensure_installed()
+          vim.fn.writefile({}, stamp)
+        end)
+      else
+        ensure_installed()
+      end
+    end)
+  end,
+})
 
 -- LSPS ========================================================
-local lsp_enabled = {}
-local lsp_by_filetype = {}
-
-local function enable_lsp_for_filetype(ft)
-  if ft == '' then return end
-  local servers = lsp_by_filetype[ft]
-  if not servers then return end
-  for _, name in ipairs(servers) do
-    if not lsp_enabled[name] then
-      vim.lsp.enable(name)
-      lsp_enabled[name] = true
-    end
-  end
-end
-
+-- vim.lsp.enable() only auto-starts a client on matching FileType buffers.
 local function setup_lsp(name, config)
   vim.lsp.config(name, config or {})
-  for _, ft in ipairs(vim.lsp.config[name].filetypes or {}) do
-    lsp_by_filetype[ft] = lsp_by_filetype[ft] or {}
-    table.insert(lsp_by_filetype[ft], name)
-  end
+  vim.lsp.enable(name)
 end
 
-Config.new_autocmd(
-  'FileType',
-  '*',
-  function(ev) enable_lsp_for_filetype(vim.bo[ev.buf].filetype) end,
-  'Enable LSP servers for buffer filetype'
-)
+-- don't show parse errors in a separate window
+vim.g.zig_fmt_parse_errors = 0
+-- disable format-on-save from `ziglang/zig.vim`
+vim.g.zig_fmt_autosave = 0
+on_filetypes({ 'zig', 'zon' }, function()
+  add({ 'https://codeberg.org/ziglang/zig.vim' })
+end, 'Load zig.vim')
+-- Formatting with ZLS matches `zig fmt`.
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = { '*.zig', '*.zon' },
+  callback = function()
+    vim.lsp.buf.format()
+  end,
+})
 
--- Cover buffers that already have a filetype when this file is sourced
-vim.schedule(function()
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(buf) then
-      enable_lsp_for_filetype(vim.bo[buf].filetype)
-    end
-  end
-end)
-
+setup_lsp('zls', {
+  cmd = { 'zls' },
+  filetypes = { 'zig', 'zon' },
+  root_markers = { 'build.zig', 'build.zig.zon', '.git' },
+  -- Config options: project `zls.json` and/or `settings` below.
+  -- https://zigtools.org/zls/configure/
+  settings = {
+    zls = {
+      -- https://zigtools.org/zls/guides/build-on-save/
+      -- enable_build_on_save = true,
+    },
+  },
+})
 vim.filetype.add({
   extension = {
     razor = 'razor',
@@ -428,8 +479,13 @@ add({
 })
 
 local dotnet = require('easy-dotnet')
--- Options are not required
-dotnet.setup({
+-- Options are not required. Setup is deferred: lualine only needs `.lualine`,
+-- while FileType / other module keys run the rest.
+local dotnet_setup_done = false
+local function setup_dotnet()
+  if dotnet_setup_done then return end
+  dotnet_setup_done = true
+  dotnet.setup({
   test_runner = {
     icons = {
       passed = '',
@@ -483,7 +539,28 @@ dotnet.setup({
     --Set this to false if you have configured lualine to avoid double logging
     handler = false,
   },
+  lsp = {
+    -- Start Roslyn when a C# buffer attaches, not during every Neovim launch.
+    preload_roslyn = false,
+  },
+  })
+end
+-- lualine reads `.lualine` every refresh; don't run full setup for that.
+-- Keymaps and FileType still call the real module methods.
+package.loaded['easy-dotnet'] = setmetatable({}, {
+  __index = function(_, key)
+    if key == 'lualine' or key == 'diagnostics' or key == 'setup' then
+      return dotnet[key]
+    end
+    setup_dotnet()
+    return dotnet[key]
+  end,
 })
+on_filetypes(
+  { 'cs', 'fsharp', 'razor' },
+  setup_dotnet,
+  'Setup easy-dotnet on first .NET buffer'
+)
 
 add({
   gh('mfussenegger/nvim-dap'),
@@ -530,37 +607,18 @@ dapui.setup({
   },
 })
 
--- REST client
+-- REST client. Pack-add only at startup; setup can download kulala-core and
+-- the HTTP parser, so wait until an HTTP buffer is actually opened.
 add(gh('mistweaverco/kulala.nvim'))
-require('kulala').setup({
-  global_keymaps = true,
-  global_keymaps_prefix = '<leader>R',
-  kulala_keymaps_prefix = '',
-  additional_curl_options = { '-k' },
-  default_env = '',
-})
--- { "<leader>Rs", desc = "Send request" },
--- { "<leader>Ra", desc = "Send all requests" },
--- { "<leader>Rb", desc = "Open scratchpad" },
--- vim.treesitter.language.register('kulala_http', 'http')
-
--- vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
---   pattern = { '*.http', '*.rest' }, -- Add specific file types here
---   once = true,
---   callback = function()
---     add(gh('mistweaverco/kulala.nvim')
---     require('kulala').setup({
---       global_keymaps = true,
---       global_keymaps_prefix = '<leader>R',
---       kulala_keymaps_prefix = '',
---       additional_curl_options = { '-k' },
---       default_env = '',
---     })
---     -- { "<leader>Rs", desc = "Send request" },
---     -- { "<leader>Ra", desc = "Send all requests" },
---     -- { "<leader>Rb", desc = "Open scratchpad" },
---   end,
--- })
+on_filetypes({ 'http', 'rest' }, function()
+  require('kulala').setup({
+    global_keymaps = true,
+    global_keymaps_prefix = '<leader>R',
+    kulala_keymaps_prefix = '',
+    additional_curl_options = { '-k' },
+    default_env = '',
+  })
+end, 'Setup kulala on first HTTP buffer')
 
 -- Beautiful, usable, well maintained color schemes outside of 'mini.nvim' and
 -- have full support of its highlight groups. Use if you don't like 'miniwinter'
@@ -932,10 +990,61 @@ add(gh('nvim-orgmode/orgmode'))
 require('orgmode').setup({
   org_agenda_files = '~/Repos/Ignacio/orgfiles/**/*',
   org_default_notes_file = '~/Repos/Ignacio/orgfiles/refile.org',
+  org_startup_indented = true,
+  org_hide_emphasis_markers = true,
+  hyperlinks = {
+    sources = {
+      {
+        get_name = function() return 'org-roam' end,
+        autocomplete = function(_, context)
+          local ok, roam = pcall(require, 'org-roam')
+          if not ok then return {} end
+
+          local ids = roam.database:ids()
+          if vim.tbl_isempty(ids) then return {} end
+
+          local node_to_items = roam.config.ui.select.node_to_items
+          local items, seen = {}, {}
+
+          for _, id in ipairs(ids) do
+            local node = roam.database:get_sync(id)
+            if not node then goto continue end
+
+            for _, entry in ipairs(node_to_items(node)) do
+              local label = type(entry) == 'string' and entry or entry.label
+              local candidate = string.format('id:%s][%s', id, label)
+              if seen[candidate] then goto next_entry end
+
+              if
+                context.matcher(candidate, context.base)
+                or context.matcher(label, context.base)
+              then
+                seen[candidate] = true
+                items[#items + 1] = candidate
+              end
+              ::next_entry::
+            end
+            ::continue::
+          end
+
+          return items
+        end,
+      },
+    },
+  },
+  mappings = {
+    capture = {
+      -- Refile and close capture; also bound in insert mode via after/plugin/org-capture.lua
+      org_capture_finalize = '<Leader>ow',
+    },
+    note = {
+      org_note_finalize = '<Leader>ow',
+    },
+  },
 })
 add(gh('chipsenkbeil/org-roam.nvim'))
 require('org-roam').setup({
   directory = '~/Repos/Ignacio/org_roam_files',
 })
 -- Experimental LSP support
-vim.lsp.enable('org')
+setup_lsp('org')
