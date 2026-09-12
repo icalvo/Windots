@@ -61,6 +61,7 @@
             "opacity": 90,
             "padding": "4",
             "scrollbarState": "hidden",
+            "tabColor": "#B84C4C",
             "unfocusedAppearance": 
             {
                 "experimental.pixelShaderPath": "InactivePane.hlsl"
@@ -123,7 +124,26 @@
     ],
     "showTabsFullscreen": true,
     "showTabsInTitlebar": true,
-    "theme": "dark",
-    "themes": [],
+    "theme": "Subtle Tabs",
+    "themes": 
+    [
+        {
+            "name": "Subtle Tabs",
+            "tab": 
+            {
+                "background": "#A04040",
+                "unfocusedBackground": "#1A1C20"
+            },
+            "tabRow": 
+            {
+                "background": "#0E0F12",
+                "unfocusedBackground": "#08090A"
+            },
+            "window": 
+            {
+                "applicationTheme": "dark"
+            }
+        }
+    ],
     "windowingBehavior": "useAnyExisting"
 }
