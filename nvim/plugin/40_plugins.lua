@@ -316,7 +316,8 @@ vim.api.nvim_create_autocmd('UIEnter', {
           if ok and p and not p:is_installed() then p:install() end
         end
       end
-      local stamp = vim.fs.joinpath(vim.fn.stdpath('cache'), 'mason-registry-refresh')
+      local stamp =
+        vim.fs.joinpath(vim.fn.stdpath('cache'), 'mason-registry-refresh')
       local stat = vim.uv.fs_stat(stamp)
       local refresh_due = not stat or (os.time() - stat.mtime.sec) >= 24 * 60 * 60
       if refresh_due and mr.refresh then
@@ -342,15 +343,15 @@ end
 vim.g.zig_fmt_parse_errors = 0
 -- disable format-on-save from `ziglang/zig.vim`
 vim.g.zig_fmt_autosave = 0
-on_filetypes({ 'zig', 'zon' }, function()
-  add({ 'https://codeberg.org/ziglang/zig.vim' })
-end, 'Load zig.vim')
+on_filetypes(
+  { 'zig', 'zon' },
+  function() add({ 'https://codeberg.org/ziglang/zig.vim' }) end,
+  'Load zig.vim'
+)
 -- Formatting with ZLS matches `zig fmt`.
 vim.api.nvim_create_autocmd('BufWritePre', {
   pattern = { '*.zig', '*.zon' },
-  callback = function()
-    vim.lsp.buf.format()
-  end,
+  callback = function() vim.lsp.buf.format() end,
 })
 
 setup_lsp('zls', {
