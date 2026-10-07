@@ -28,6 +28,10 @@
       "rev": "05e44d38de0a79c11fba5f7bf8138791b1dbdd1e",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
+    "kitehost.nvim": {
+      "rev": "4cb5c94a84cc653e0b32e0c9aed95465a36fc94d",
+      "src": "https://github.com/selimacerbas/kitehost.nvim"
+    },
     "kulala.nvim": {
       "rev": "dcad056448773ae5b54cadbfdbd188a599cfebd3",
       "src": "https://github.com/mistweaverco/kulala.nvim"
@@ -60,6 +64,10 @@
     "mason.nvim": {
       "rev": "2a6940af80375532e5e9e7c1f2fc6319a1b7a69d",
       "src": "https://github.com/mason-org/mason.nvim"
+    },
+    "mdkite.nvim": {
+      "rev": "dded03dc6cce87364b48260b2ffbace575a6add7",
+      "src": "https://github.com/selimacerbas/mdkite.nvim"
     },
     "mini.icons": {
       "rev": "98faae31e9be1cc054ae63485e58ceb185efcad0",
