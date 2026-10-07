@@ -21,6 +21,7 @@ Set-Alias -Name which -Value Show-Command
 Set-Alias -Name wtadd -Value New-Worktree
 Set-Alias -Name wt -Value Set-Location-WorkTree
 Set-Alias -Name ag -Value Invoke-Agent
+Set-Alias -Name agp -Value Invoke-Trust-Agent
 
 # Putting the FUN in Functions 🎉
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -61,6 +62,12 @@ function Invoke-Agent
     $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
     & $cmdsrc --approve-mcps --yolo @Args
 }
+function Invoke-Trust-Agent
+{
+    $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
+    & $cmdsrc -p --trust
+}
+
 function ask
 {
     & ag --mode ask @args
