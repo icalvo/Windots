@@ -1,1 +1,2 @@
 --theme="cyberdream"
+--pager="less -RF --redraw-on-quit"
