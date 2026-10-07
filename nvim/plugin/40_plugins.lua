@@ -44,6 +44,12 @@ end
 local dbg = function(s) vim.notify(s, vim.log.levels.INFO, { title = 'IGNACIO' }) end
 
 vim.cmd.packadd('nvim.undotree')
+
+add({
+  gh('selimacerbas/kitehost.nvim'),
+  gh('selimacerbas/mdkite.nvim'),
+})
+
 -- Tree-sitter ================================================================
 
 -- Tree-sitter is a tool for fast incremental parsing. It converts text into
