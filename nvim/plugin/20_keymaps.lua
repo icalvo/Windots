@@ -182,19 +182,33 @@ nmap_leader("cU", usagesContainingMethod,                                       
 nmap_leader('ct', cmd 'FzfLua lsp_typedefs',                                      'Type definition')
 
 add_group({ mode = 'n', keys = '<Leader>d', desc = 'Debugging...' })
-nmap_leader('dd', call('easy-dotnet', 'debug_profile_default()'),  'Run default profile')
-nmap_leader('dp', call('dap', 'repl.open()'),                      'Open REPL')
-nmap_leader('dl', call('dap', 'run_last()'),                       'Run last debug config')
-nmap_leader('ds', call('dap', 'terminate()'),                      'Stop debugging')
-nmap_leader('dr', cmd 'Run',                                       'Run')
-nmap_leader('dt', call('neotest', "run.run({strategy = 'dap'})"),  'Debug nearest test')
-nmap('<F5>',      call('dap', 'continue()'),                       'Continue')
-nmap('<F6>',      call('neotest', "run.run({strategy = 'dap'})"),  'Debug nearest test')
-nmap('<F9>',      call('dap', 'toggle_breakpoint()'),              'Toggle breakpoint')
-nmap('<F10>',     call('dap', 'step_over()'),                      'Step over')
-nmap('<F11>',     call('dap', 'step_into()'),                      'Step into')
-nmap('<F8>',      call('dap', 'step_out()'),                       'Step out')
-nmap('<F12>',     call('dap', 'step_out()'),                       'Step out')
+local dap_do = function(fn)
+  return function()
+    Config.ensure_dap()
+    fn(require('dap'))
+  end
+end
+local neotest_dap = function()
+  Config.ensure_dap()
+  Config.ensure_neotest()
+  require('neotest').run.run({ strategy = 'dap' })
+end
+nmap_leader('dd', function()
+  Config.ensure_dap()
+  require('easy-dotnet').debug_profile_default()
+end, 'Run default profile')
+nmap_leader('dp', dap_do(function(dap) dap.repl.open() end), 'Open REPL')
+nmap_leader('dl', dap_do(function(dap) dap.run_last() end), 'Run last debug config')
+nmap_leader('ds', dap_do(function(dap) dap.terminate() end), 'Stop debugging')
+nmap_leader('dr', cmd 'Run', 'Run')
+nmap_leader('dt', neotest_dap, 'Debug nearest test')
+nmap('<F5>', dap_do(function(dap) dap.continue() end), 'Continue')
+nmap('<F6>', neotest_dap, 'Debug nearest test')
+nmap('<F9>', dap_do(function(dap) dap.toggle_breakpoint() end), 'Toggle breakpoint')
+nmap('<F10>', dap_do(function(dap) dap.step_over() end), 'Step over')
+nmap('<F11>', dap_do(function(dap) dap.step_into() end), 'Step into')
+nmap('<F8>', dap_do(function(dap) dap.step_out() end), 'Step out')
+nmap('<F12>', dap_do(function(dap) dap.step_out() end), 'Step out')
 
 add_group  { mode = 'n', keys = '<Leader>e', desc = 'Explore/Edit...' }
 -- e is for 'Explore' and 'Edit'. Common usage:
@@ -277,7 +291,10 @@ nmap_leader('fV', cmd 'FzfLua visit_paths'           , 'Visit paths (cwd)')
 
 add_group  { mode = 'n', keys = '<Leader>g', desc = 'Git...' }
 add_group  { mode = 'x', keys = '<Leader>g', desc = 'Git...' }
-nmap_leader('g', cmd 'LazyGitCurrentFile', 'LazyGit')
+nmap_leader('g', function()
+  Config.ensure_lazygit()
+  vim.cmd('LazyGitCurrentFile')
+end, 'LazyGit')
 
 -- h is for 'Harpoon'. Common usage:
 -- - `<Leader>hv` - add    "core" label to current file.
@@ -319,14 +336,20 @@ nmap_leader('pu', lua 'vim.pack.update()', 'Update')
 add_group  { mode = 'n', keys = '<Leader>r', desc = 'Refactor...' }
 add_group  { mode = 'x', keys = '<Leader>r', desc = 'Refactor...' }
 
-nmap_leader("rb",  cmd 'Refactor extract_block',         "Extract block")
-nmap_leader("rbf", cmd 'Refactor extract_block_to_file', "Extract block to file")
-xmap_leader("re",  cmd 'Refactor extract',               "Extract function")
-xmap_leader("rf",  cmd 'Refactor extract_to_file',       "Extract function to file")
-nmap_leader("ri",  cmd 'Refactor inline_var',            "Inline variable")
-nmap_leader("rI",  cmd 'Refactor inline_func',           "Inline function")
+local refactor = function(args)
+  return function()
+    Config.ensure_refactoring()
+    vim.cmd('Refactor ' .. args)
+  end
+end
+nmap_leader("rb",  refactor('extract_block'),         "Extract block")
+nmap_leader("rbf", refactor('extract_block_to_file'), "Extract block to file")
+xmap_leader("re",  refactor('extract'),               "Extract function")
+xmap_leader("rf",  refactor('extract_to_file'),       "Extract function to file")
+nmap_leader("ri",  refactor('inline_var'),            "Inline variable")
+nmap_leader("rI",  refactor('inline_func'),           "Inline function")
 nmap_leader("rn",  vim.lsp.buf.rename,                    "Rename")
-xmap_leader("rv",  cmd 'Refactor extract_var',           "Extract variable")
+xmap_leader("rv",  refactor('extract_var'),           "Extract variable")
 nmap_leader("ra", tsto('swap', "swap_next('@function.outer')"), "Move function up")
 nmap_leader("rA", tsto('swap', "swap_previous('@function.outer'"), "Move function down")
 
@@ -346,7 +369,10 @@ nmap_leader('u', call('undotree', 'open()'), 'Undotree')
 add_group  { mode = 'n', keys = '<Leader>v', desc = 'View...' }
 add_group  { mode = 'x', keys = '<Leader>v', desc = 'View...' }
 
-nmap_leader("vz",  cmd 'ZenMode',         "Zen mode")
+nmap_leader("vz",  function()
+  Config.ensure_zen_mode()
+  vim.cmd('ZenMode')
+end, "Zen mode")
 
 add_group  { mode = 'n', keys = '<Leader>z', desc = 'Dotnet...' }
 -- local dotnet = require('easy-dotnet')
