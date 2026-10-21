@@ -34,7 +34,8 @@ local function on_filetypes(fts, fn, desc)
   vim.schedule(function()
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
       if
-        vim.api.nvim_buf_is_loaded(buf) and vim.tbl_contains(fts, vim.bo[buf].filetype)
+        vim.api.nvim_buf_is_loaded(buf)
+        and vim.tbl_contains(fts, vim.bo[buf].filetype)
       then
         run()
       end
@@ -45,11 +46,27 @@ local dbg = function(s) vim.notify(s, vim.log.levels.INFO, { title = 'IGNACIO' }
 
 vim.cmd.packadd('nvim.undotree')
 
+-- Markdown preview
 add({
   gh('selimacerbas/kitehost.nvim'),
   gh('selimacerbas/mdkite.nvim'),
 })
 
+-- Enhanced search and replace
+add({
+  gh('nvim-pack/nvim-spectre'),
+})
+add({
+  {
+    src = vim.fn.expand('~/Repos/rif.nvim'),
+    name = 'rif.nvim',
+  },
+})
+require('rif').setup({})
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'rip-substitute',
+  callback = function() vim.b.minicompletion_disable = true end,
+})
 -- Tree-sitter ================================================================
 
 -- Tree-sitter is a tool for fast incremental parsing. It converts text into
@@ -65,20 +82,96 @@ add({
 --   these, while 'nvim-treesitter-textobjects' provides the ones for Neovim
 --   textobjects (see `:h text-objects`, `:h MiniAi.gen_spec.treesitter()`).
 --
--- Add these plugins now if file (and not 'mini.starter') is shown after startup.
+-- nvim-treesitter `main` (Neovim 0.12+) does not auto-enable highlight/indent and
+-- does not auto-install parsers. Mirror former arborist behavior: install on
+-- FileType (no eager popular set — cold Windows Defender cache), then enable.
 add({
-  gh('arborist-ts/arborist.nvim'),
+  { src = gh('nvim-treesitter/nvim-treesitter'), version = 'main' },
 })
-require('arborist').setup({
-  -- Parsers still install on FileType; probing ~30 of them at startup is slow
-  -- on a cold Windows Defender cache.
-  install_popular = false,
-  overrides = {
-    c_sharp = { url = gh('tree-sitter/tree-sitter-c-sharp') },
-  },
+require('nvim-treesitter').setup({})
+
+local ts_group = vim.api.nvim_create_augroup('ConfigTreesitter', { clear = true })
+local ts_ensuring = {} ---@type table<string, boolean>
+
+local function ts_parser_ready(lang)
+  local ok, result = pcall(vim.treesitter.language.add, lang)
+  return ok and result == true
+end
+
+local function ts_enable(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then return end
+  -- Skip special buffers (DAP REPL/terminal/prompt, help, qf, etc.).
+  if vim.bo[buf].buftype ~= '' then return end
+  pcall(vim.treesitter.start, buf)
+  local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
+  if lang then
+    local ok, query = pcall(vim.treesitter.query.get, lang, 'indents')
+    if ok and query and #query.captures > 0 then
+      vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+    end
+  end
+end
+
+local function ts_enable_bufs(lang)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == '' then
+      local ft = vim.bo[buf].filetype
+      if ft ~= '' and vim.treesitter.language.get_lang(ft) == lang then
+        ts_enable(buf)
+      end
+    end
+  end
+end
+
+local function ts_ensure(lang)
+  if not lang or ts_ensuring[lang] then return end
+  if ts_parser_ready(lang) then
+    ts_enable_bufs(lang)
+    return
+  end
+  -- Only install languages nvim-treesitter knows about.
+  if require('nvim-treesitter.parsers')[lang] == nil then return end
+
+  ts_ensuring[lang] = true
+  vim.notify('Installing treesitter parser: ' .. lang, vim.log.levels.INFO)
+  require('nvim-treesitter').install({ lang }):await(function(err)
+    ts_ensuring[lang] = nil
+    if err then
+      vim.notify('Treesitter install failed (' .. lang .. '): ' .. tostring(err), vim.log.levels.WARN)
+      return
+    end
+    vim.schedule(function() ts_enable_bufs(lang) end)
+  end)
+end
+
+local function ts_lang_for_buf(buf)
+  local ft = vim.bo[buf].filetype
+  if ft == '' then
+    local name = vim.api.nvim_buf_get_name(buf)
+    if name ~= '' then ft = vim.filetype.match({ filename = name, buf = buf }) or '' end
+  end
+  if ft == '' then return nil end
+  return vim.treesitter.language.get_lang(ft)
+end
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = ts_group,
+  callback = function(ev)
+    if vim.bo[ev.buf].buftype ~= '' then return end
+    ts_ensure(vim.treesitter.language.get_lang(ev.match))
+  end,
 })
+-- FileType only fires for the active buffer; BufReadPost covers background loads.
+vim.api.nvim_create_autocmd('BufReadPost', {
+  group = ts_group,
+  callback = function(ev)
+    if vim.bo[ev.buf].buftype ~= '' then return end
+    ts_ensure(ts_lang_for_buf(ev.buf))
+  end,
+})
+
 add({
-  gh('nvim-treesitter/nvim-treesitter-textobjects'),
+  { src = gh('nvim-treesitter/nvim-treesitter-textobjects'), version = 'main' },
 })
 require('nvim-treesitter-textobjects').setup({
   select = {
@@ -114,12 +207,47 @@ add({
   gh('ibhagwan/fzf-lua'),
 })
 local fzf_lua = require('fzf-lua')
+local fzf_actions = require('fzf-lua.actions')
+
+-- fzf-lua's default file_edit uses bufadd + nvim_set_current_buf (in pcall). That
+-- path mishandles swapfiles: E325 can abort the open, or the ATTENTION prompt can
+-- appear while fzf's UI/coroutine still owns input. Prefer scheduled `:edit` so
+-- behavior matches `:e` (including Neovim's default nvim.swapfile handler).
+local function fzf_edit_cmd(vimcmd)
+  return function(selected, opts)
+    vim.schedule(
+      function() pcall(fzf_actions.vimcmd_entry, vimcmd, selected, opts, false) end
+    )
+  end
+end
+
+local fzf_file_edit_or_qf = function(selected, opts)
+  if #selected > 1 then
+    vim.schedule(function() fzf_actions.file_sel_to_qf(selected, opts) end)
+    return
+  end
+  fzf_edit_cmd('edit')(selected, opts)
+end
+
 fzf_lua.setup({
   defaults = {
     formatter = 'path.filename_first',
   },
   fzf_opts = {
     ['--tiebreak'] = 'begin,length,index',
+  },
+  keymap = { fzf = { ['ctrl-q'] = 'select-all+accept' } },
+  actions = {
+    files = {
+      true,
+      ['enter'] = fzf_file_edit_or_qf,
+      ['ctrl-s'] = fzf_edit_cmd('split'),
+      ['ctrl-v'] = fzf_edit_cmd('vsplit'),
+      ['ctrl-t'] = fzf_edit_cmd('tabedit'),
+    },
+  },
+  lsp = {
+    jump1_action = fzf_edit_cmd('edit'),
   },
   files = {
     fzf_opts = {
@@ -155,9 +283,9 @@ fzf_lua.register_extension(
       cwd_prompt_shorten_val = 1, -- Length of shortened parts
       previewer = 'builtin',
       actions = {
-        ['default'] = fzf_lua.actions.file_edit,
-        ['ctrl-s'] = fzf_lua.actions.file_split,
-        ['ctrl-v'] = fzf_lua.actions.file_vsplit,
+        ['default'] = fzf_file_edit_or_qf,
+        ['ctrl-s'] = fzf_edit_cmd('split'),
+        ['ctrl-v'] = fzf_edit_cmd('vsplit'),
       },
     })
   end, -- function
@@ -165,14 +293,19 @@ fzf_lua.register_extension(
   false -- override existing (optional)
 )
 
--- Testing
-add({
-  gh('nvim-neotest/nvim-nio'),
-  gh('nvim-lua/plenary.nvim'),
-  -- treesitter_package,
-  -- gh("marilari88/neotest-vitest"),
-  gh('nvim-neotest/neotest'),
-})
+-- Testing (lazy: first neotest keymap)
+Config.ensure_neotest = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    add({
+      gh('nvim-neotest/nvim-nio'),
+      gh('nvim-lua/plenary.nvim'),
+      gh('nvim-neotest/neotest'),
+    })
+  end
+end)()
 
 -- Formatting =================================================================
 
@@ -373,10 +506,8 @@ vim.filetype.add({
     cshtml = 'razor',
   },
 })
-add({
-  gh('mason-org/mason.nvim'),
-  gh('neovim/nvim-lspconfig'),
-})
+-- Configs live in lsp/; skip legacy plugin/lspconfig.lua (very slow on Windows).
+add(gh('neovim/nvim-lspconfig'), { load = false })
 local mason_dir = require('mason.settings').current.install_root_dir
 
 setup_lsp('fsautocomplete')
@@ -478,11 +609,10 @@ setup_lsp('taplo')
 setup_lsp('ts_ls')
 setup_lsp('yamlls')
 
--- Debugging
+-- Debugging (lazy: first dap / debug keymap)
 add({
   gh('nvim-lua/plenary.nvim'),
   gh('GustavEikaas/easy-dotnet.nvim'),
-  gh('mfussenegger/nvim-dap'),
 })
 
 local dotnet = require('easy-dotnet')
@@ -493,63 +623,63 @@ local function setup_dotnet()
   if dotnet_setup_done then return end
   dotnet_setup_done = true
   dotnet.setup({
-  test_runner = {
-    icons = {
-      passed = '',
-      skipped = '',
-      failed = '',
-      success = '',
-      reload = '',
-      test = '',
-      sln = '󰘐',
-      project = '󰘐',
-      dir = '',
-      package = '',
+    test_runner = {
+      icons = {
+        passed = '',
+        skipped = '',
+        failed = '',
+        success = '',
+        reload = '',
+        test = '',
+        sln = '󰘐',
+        project = '󰘐',
+        dir = '',
+        package = '',
+      },
+      mappings = {
+        run_test_from_buffer = { lhs = '<leader>ntb', desc = 'run test from buffer' },
+        run_test_all_tests_from_buffer = {
+          lhs = '<leader>nta',
+          desc = 'run all tests from buffer',
+        },
+        get_build_errors = { lhs = '<leader>nbe', desc = 'get build errors' },
+        peek_stack_trace_from_buffer = {
+          lhs = '<leader>np',
+          desc = 'peek stack trace from buffer',
+        },
+        debug_test = { lhs = '<leader>nd', desc = 'debug test' },
+        debug_test_from_buffer = {
+          lhs = '<leader>nb',
+          desc = 'debug test from buffer',
+        },
+        go_to_file = { lhs = '<leader>ng', desc = 'go to file' },
+        run_all = { lhs = '<leader>nR', desc = 'run all tests' },
+        run = { lhs = '<leader>nr', desc = 'run test' },
+        peek_stacktrace = {
+          lhs = '<leader>np',
+          desc = 'peek stacktrace of failed test',
+        },
+        expand = { lhs = 'o', desc = 'expand' },
+        expand_node = { lhs = 'E', desc = 'expand node' },
+        expand_all = { lhs = '-', desc = 'expand all' },
+        collapse_all = { lhs = 'W', desc = 'collapse all' },
+        close = { lhs = 'q', desc = 'close testrunner' },
+        refresh_testrunner = { lhs = '<C-r>', desc = 'refresh testrunner' },
+      },
     },
-    mappings = {
-      run_test_from_buffer = { lhs = '<leader>ntb', desc = 'run test from buffer' },
-      run_test_all_tests_from_buffer = {
-        lhs = '<leader>nta',
-        desc = 'run all tests from buffer',
-      },
-      get_build_errors = { lhs = '<leader>nbe', desc = 'get build errors' },
-      peek_stack_trace_from_buffer = {
-        lhs = '<leader>np',
-        desc = 'peek stack trace from buffer',
-      },
-      debug_test = { lhs = '<leader>nd', desc = 'debug test' },
-      debug_test_from_buffer = {
-        lhs = '<leader>nb',
-        desc = 'debug test from buffer',
-      },
-      go_to_file = { lhs = '<leader>ng', desc = 'go to file' },
-      run_all = { lhs = '<leader>nR', desc = 'run all tests' },
-      run = { lhs = '<leader>nr', desc = 'run test' },
-      peek_stacktrace = {
-        lhs = '<leader>np',
-        desc = 'peek stacktrace of failed test',
-      },
-      expand = { lhs = 'o', desc = 'expand' },
-      expand_node = { lhs = 'E', desc = 'expand node' },
-      expand_all = { lhs = '-', desc = 'expand all' },
-      collapse_all = { lhs = 'W', desc = 'collapse all' },
-      close = { lhs = 'q', desc = 'close testrunner' },
-      refresh_testrunner = { lhs = '<C-r>', desc = 'refresh testrunner' },
+    server = {
+      ---@type nil | "Off" | "Critical" | "Error" | "Warning" | "Information" | "Verbose" | "All"
+      log_level = 'Information',
     },
-  },
-  server = {
-    ---@type nil | "Off" | "Critical" | "Error" | "Warning" | "Information" | "Verbose" | "All"
-    log_level = 'Information',
-  },
-  picker = 'fzf',
-  notifications = {
-    --Set this to false if you have configured lualine to avoid double logging
-    handler = false,
-  },
-  lsp = {
-    -- Start Roslyn when a C# buffer attaches, not during every Neovim launch.
-    preload_roslyn = false,
-  },
+    picker = 'fzf',
+    notifications = {
+      --Set this to false if you have configured lualine to avoid double logging
+      handler = false,
+    },
+    lsp = {
+      -- Start Roslyn when a C# buffer attaches, not during every Neovim launch.
+      preload_roslyn = false,
+    },
   })
 end
 -- lualine reads `.lualine` every refresh; don't run full setup for that.
@@ -569,55 +699,61 @@ on_filetypes(
   'Setup easy-dotnet on first .NET buffer'
 )
 
-add({
-  gh('mfussenegger/nvim-dap'),
-  -- gh('nvim-neotest/nvim-nio'),
-  gh('rcarriga/nvim-dap-ui'),
-})
-local dapui = require('dapui')
-local dap = require('dap')
+Config.ensure_dap = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    add({
+      gh('nvim-neotest/nvim-nio'),
+      gh('mfussenegger/nvim-dap'),
+      gh('rcarriga/nvim-dap-ui'),
+    })
+    local dapui = require('dapui')
+    local dap = require('dap')
 
---- open ui immediately when debugging starts
-dap.listeners.after.event_initialized['dapui_config'] = function() dapui.open() end
-dap.listeners.before.event_terminated['dapui_config'] = function() dapui.close() end
-dap.listeners.before.event_exited['dapui_config'] = function() dapui.close() end
--- https://emojipedia.org/en/stickers/search?q=circle
-vim.fn.sign_define('DapBreakpoint', {
-  text = '⚪',
-  texthl = 'DapBreakpointSymbol',
-  linehl = 'DapBreakpoint',
-  numhl = 'DapBreakpoint',
-})
-vim.fn.sign_define('DapStopped', {
-  text = '➡️',
-  texthl = 'yellow',
-  linehl = 'DapBreakpoint',
-  numhl = 'DapBreakpoint',
-})
-vim.fn.sign_define('DapBreakpointRejected', {
-  text = '⭕',
-  texthl = 'DapStoppedSymbol',
-  linehl = 'DapBreakpoint',
-  numhl = 'DapBreakpoint',
-})
--- default configuration
-dapui.setup({
-  layouts = {
-    {
-      elements = {
-        { id = 'easy-dotnet_cpu', size = 0.5 }, -- CPU usage panel (50% of layout)
-        { id = 'easy-dotnet_mem', size = 0.5 }, -- Memory usage panel (50% of layout)
+    --- open ui immediately when debugging starts
+    dap.listeners.after.event_initialized['dapui_config'] = function() dapui.open() end
+    dap.listeners.before.event_terminated['dapui_config'] = function() dapui.close() end
+    dap.listeners.before.event_exited['dapui_config'] = function() dapui.close() end
+    -- https://emojipedia.org/en/stickers/search?q=circle
+    vim.fn.sign_define('DapBreakpoint', {
+      text = '⚪',
+      texthl = 'DapBreakpointSymbol',
+      linehl = 'DapBreakpoint',
+      numhl = 'DapBreakpoint',
+    })
+    vim.fn.sign_define('DapStopped', {
+      text = '➡️',
+      texthl = 'yellow',
+      linehl = 'DapBreakpoint',
+      numhl = 'DapBreakpoint',
+    })
+    vim.fn.sign_define('DapBreakpointRejected', {
+      text = '⭕',
+      texthl = 'DapStoppedSymbol',
+      linehl = 'DapBreakpoint',
+      numhl = 'DapBreakpoint',
+    })
+    -- default configuration
+    dapui.setup({
+      layouts = {
+        {
+          elements = {
+            { id = 'easy-dotnet_cpu', size = 0.5 }, -- CPU usage panel (50% of layout)
+            { id = 'easy-dotnet_mem', size = 0.5 }, -- Memory usage panel (50% of layout)
+          },
+          size = 35, -- Width of the sidebar
+          position = 'right',
+        },
       },
-      size = 35, -- Width of the sidebar
-      position = 'right',
-    },
-  },
-})
+    })
+  end
+end)()
 
--- REST client. Pack-add only at startup; setup can download kulala-core and
--- the HTTP parser, so wait until an HTTP buffer is actually opened.
-add(gh('mistweaverco/kulala.nvim'))
+-- REST client. Pack-add and setup only when an HTTP buffer is opened.
 on_filetypes({ 'http', 'rest' }, function()
+  add(gh('mistweaverco/kulala.nvim'))
   require('kulala').setup({
     global_keymaps = true,
     global_keymaps_prefix = '<leader>R',
@@ -664,8 +800,8 @@ require('lualine').setup({
     component_separators = { left = '', right = '' },
     section_separators = { left = '', right = '' },
     disabled_filetypes = {
-      statusline = { 'nvim-undotree' },
-      winbar = {},
+      statusline = { 'nvim-undotree', 'rif-input', 'rif-results' },
+      winbar = { 'rif-input', 'rif-results' },
     },
     ignore_focus = {},
     always_divide_middle = true,
@@ -721,7 +857,11 @@ require('lualine').setup({
         'diagnostics',
       },
       {
-        "require'kulala':get_selected_env()",
+        function()
+          local ok, kulala = pcall(require, 'kulala')
+          if not ok then return '' end
+          return kulala.get_selected_env()
+        end,
         color = { fg = '#ffcc00' },
       },
     },
@@ -788,94 +928,142 @@ require('lualine').setup({
   extensions = {},
 })
 
-add({
-  gh('nvim-lua/plenary.nvim'),
-  -- treesitter_package,
-  gh('ThePrimeagen/refactoring.nvim'),
-})
-add({
-  gh('nvim-lua/plenary.nvim'),
-  gh('kdheepak/lazygit.nvim'),
-})
-add(gh('xTacobaco/cursor-agent.nvim'))
-add(gh('folke/zen-mode.nvim'))
-require('zen-mode').setup({
-  window = {
-    backdrop = 0.95, -- shade the backdrop of the Zen window. Set to 1 to keep the same as Normal
-    -- height and width can be:
-    -- * an absolute number of cells when > 1
-    -- * a percentage of the width / height of the editor when <= 1
-    -- * a function that returns the width or the height
-    width = 120, -- width of the Zen window
-    height = 1, -- height of the Zen window
-    -- by default, no options are changed for the Zen window
-    -- uncomment any of the options below, or add other vim.wo options you want to apply
-    options = {
-      -- signcolumn = "no", -- disable signcolumn
-      -- number = false, -- disable number column
-      -- relativenumber = false, -- disable relative numbers
-      -- cursorline = false, -- disable cursorline
-      -- cursorcolumn = false, -- disable cursor column
-      -- foldcolumn = "0", -- disable fold column
-      -- list = false, -- disable whitespace characters
-    },
-  },
-  plugins = {
-    -- disable some global vim options (vim.o...)
-    -- comment the lines to not apply the options
-    options = {
-      enabled = true,
-      ruler = false, -- disables the ruler text in the cmd line area
-      showcmd = false, -- disables the command in the last line of the screen
-      -- you may turn on/off statusline in zen mode by setting 'laststatus'
-      -- statusline will be shown only if 'laststatus' == 3
-      laststatus = 0, -- turn off the statusline in zen mode
-    },
-    twilight = { enabled = false }, -- enable to start Twilight when zen mode opens
-    gitsigns = { enabled = false }, -- disables git signs
-    tmux = { enabled = false }, -- disables the tmux statusline
-    todo = { enabled = false }, -- if set to "true", todo-comments.nvim highlights will be disabled
-    -- this will change the font size on kitty when in zen mode
-    -- to make this work, you need to set the following kitty options:
-    -- - allow_remote_control socket-only
-    -- - listen_on unix:/tmp/kitty
-    kitty = {
-      enabled = false,
-      font = '+4', -- font size increment
-    },
-    -- this will change the font size on alacritty when in zen mode
-    -- requires  Alacritty Version 0.10.0 or higher
-    -- uses `alacritty msg` subcommand to change font size
-    alacritty = {
-      enabled = false,
-      font = '14', -- font size
-    },
-    -- this will change the font size on wezterm when in zen mode
-    -- See alse also the Plugins/Wezterm section in this projects README
-    wezterm = {
-      enabled = false,
-      -- can be either an absolute font size or the number of incremental steps
-      font = '+4', -- (10% increase per step)
-    },
-    -- this will change the scale factor in Neovide when in zen mode
-    -- See alse also the Plugins/Wezterm section in this projects README
-    neovide = {
-      enabled = false,
-      -- Will multiply the current scale factor by this number
-      scale = 1.2,
-      -- disable the Neovide animations while in Zen mode
-      disable_animations = {
-        neovide_animation_length = 0,
-        neovide_cursor_animate_command_line = false,
-        neovide_scroll_animation_length = 0,
-        neovide_position_animation_length = 0,
-        neovide_cursor_animation_length = 0,
-        neovide_cursor_vfx_mode = '',
+Config.ensure_refactoring = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    add({
+      gh('nvim-lua/plenary.nvim'),
+      gh('ThePrimeagen/refactoring.nvim'),
+    })
+  end
+end)()
+
+Config.ensure_lazygit = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    add({
+      gh('nvim-lua/plenary.nvim'),
+      gh('kdheepak/lazygit.nvim'),
+    })
+  end
+end)()
+
+Config.ensure_cursor_agent = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    vim.g.cursor_agent_mapped = true
+    add(gh('xTacobaco/cursor-agent.nvim'))
+  end
+end)()
+
+Config.ensure_zen_mode = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    add(gh('folke/zen-mode.nvim'))
+    require('zen-mode').setup({
+      window = {
+        backdrop = 0.95, -- shade the backdrop of the Zen window. Set to 1 to keep the same as Normal
+        -- height and width can be:
+        -- * an absolute number of cells when > 1
+        -- * a percentage of the width / height of the editor when <= 1
+        -- * a function that returns the width or the height
+        width = 120, -- width of the Zen window
+        height = 1, -- height of the Zen window
+        -- by default, no options are changed for the Zen window
+        -- uncomment any of the options below, or add other vim.wo options you want to apply
+        options = {
+          -- signcolumn = "no", -- disable signcolumn
+          -- number = false, -- disable number column
+          -- relativenumber = false, -- disable relative numbers
+          -- cursorline = false, -- disable cursorline
+          -- cursorcolumn = false, -- disable cursor column
+          -- foldcolumn = "0", -- disable fold column
+          -- list = false, -- disable whitespace characters
+        },
       },
-    },
-  },
-})
-vim.g.cursor_agent_mapped = true
+      plugins = {
+        -- disable some global vim options (vim.o...)
+        -- comment the lines to not apply the options
+        options = {
+          enabled = true,
+          ruler = false, -- disables the ruler text in the cmd line area
+          showcmd = false, -- disables the command in the last line of the screen
+          -- you may turn on/off statusline in zen mode by setting 'laststatus'
+          -- statusline will be shown only if 'laststatus' == 3
+          laststatus = 0, -- turn off the statusline in zen mode
+        },
+        twilight = { enabled = false }, -- enable to start Twilight when zen mode opens
+        gitsigns = { enabled = false }, -- disables git signs
+        tmux = { enabled = false }, -- disables the tmux statusline
+        todo = { enabled = false }, -- if set to "true", todo-comments.nvim highlights will be disabled
+        -- this will change the font size on kitty when in zen mode
+        -- to make this work, you need to set the following kitty options:
+        -- - allow_remote_control socket-only
+        -- - listen_on unix:/tmp/kitty
+        kitty = {
+          enabled = false,
+          font = '+4', -- font size increment
+        },
+        -- this will change the font size on alacritty when in zen mode
+        -- requires  Alacritty Version 0.10.0 or higher
+        -- uses `alacritty msg` subcommand to change font size
+        alacritty = {
+          enabled = false,
+          font = '14', -- font size
+        },
+        -- this will change the font size on wezterm when in zen mode
+        -- See alse also the Plugins/Wezterm section in this projects README
+        wezterm = {
+          enabled = false,
+          -- can be either an absolute font size or the number of incremental steps
+          font = '+4', -- (10% increase per step)
+        },
+        -- this will change the scale factor in Neovide when in zen mode
+        -- See alse also the Plugins/Wezterm section in this projects README
+        neovide = {
+          enabled = false,
+          -- Will multiply the current scale factor by this number
+          scale = 1.2,
+          -- disable the Neovide animations while in Zen mode
+          disable_animations = {
+            neovide_animation_length = 0,
+            neovide_cursor_animate_command_line = false,
+            neovide_scroll_animation_length = 0,
+            neovide_position_animation_length = 0,
+            neovide_cursor_animation_length = 0,
+            neovide_cursor_vfx_mode = '',
+          },
+        },
+      },
+    })
+  end
+end)()
+
+-- Load on first use of matching Ex commands (command is then used as typed).
+Config.new_autocmd(
+  'CmdUndefined',
+  { 'LazyGit*', 'ZenMode', 'CursorAgent*' },
+  function(ev)
+    local name = ev.match
+    if name:match('^LazyGit') then
+      Config.ensure_lazygit()
+    elseif name == 'ZenMode' then
+      Config.ensure_zen_mode()
+    elseif name:match('^CursorAgent') then
+      Config.ensure_cursor_agent()
+    end
+  end,
+  'Lazy-load optional plugins on first command'
+)
+
 -- Run the current file and show its output in a dedicated vsplit buffer.
 -- After `:Run`, saving the same file re-runs it and refreshes the output.
 local run_interpreters = {
@@ -993,65 +1181,84 @@ end, {})
 -- Shortcut to trigger file run
 vim.api.nvim_set_keymap('n', '<Leader>r', ':Run<CR>', { silent = true })
 
-add(gh('nvim-orgmode/orgmode'))
-require('orgmode').setup({
-  org_agenda_files = '~/Repos/Ignacio/orgfiles/**/*',
-  org_default_notes_file = '~/Repos/Ignacio/orgfiles/refile.org',
-  org_startup_indented = true,
-  org_hide_emphasis_markers = true,
-  hyperlinks = {
-    sources = {
-      {
-        get_name = function() return 'org-roam' end,
-        autocomplete = function(_, context)
-          local ok, roam = pcall(require, 'org-roam')
-          if not ok then return {} end
+Config.ensure_org = (function()
+  local loaded = false
+  return function()
+    if loaded then return end
+    loaded = true
+    add(gh('nvim-orgmode/orgmode'))
+    require('orgmode').setup({
+      org_agenda_files = '~/Repos/Ignacio/orgfiles/**/*',
+      org_default_notes_file = '~/Repos/Ignacio/orgfiles/refile.org',
+      org_startup_indented = true,
+      org_hide_emphasis_markers = true,
+      hyperlinks = {
+        sources = {
+          {
+            get_name = function() return 'org-roam' end,
+            autocomplete = function(_, context)
+              local ok, roam = pcall(require, 'org-roam')
+              if not ok then return {} end
 
-          local ids = roam.database:ids()
-          if vim.tbl_isempty(ids) then return {} end
+              local ids = roam.database:ids()
+              if vim.tbl_isempty(ids) then return {} end
 
-          local node_to_items = roam.config.ui.select.node_to_items
-          local items, seen = {}, {}
+              local node_to_items = roam.config.ui.select.node_to_items
+              local items, seen = {}, {}
 
-          for _, id in ipairs(ids) do
-            local node = roam.database:get_sync(id)
-            if not node then goto continue end
+              for _, id in ipairs(ids) do
+                local node = roam.database:get_sync(id)
+                if not node then goto continue end
 
-            for _, entry in ipairs(node_to_items(node)) do
-              local label = type(entry) == 'string' and entry or entry.label
-              local candidate = string.format('id:%s][%s', id, label)
-              if seen[candidate] then goto next_entry end
+                for _, entry in ipairs(node_to_items(node)) do
+                  local label = type(entry) == 'string' and entry or entry.label
+                  local candidate = string.format('id:%s][%s', id, label)
+                  if seen[candidate] then goto next_entry end
 
-              if
-                context.matcher(candidate, context.base)
-                or context.matcher(label, context.base)
-              then
-                seen[candidate] = true
-                items[#items + 1] = candidate
+                  if
+                    context.matcher(candidate, context.base)
+                    or context.matcher(label, context.base)
+                  then
+                    seen[candidate] = true
+                    items[#items + 1] = candidate
+                  end
+                  ::next_entry::
+                end
+                ::continue::
               end
-              ::next_entry::
-            end
-            ::continue::
-          end
 
-          return items
-        end,
+              return items
+            end,
+          },
+        },
       },
-    },
-  },
-  mappings = {
-    capture = {
-      -- Refile and close capture; also bound in insert mode via after/plugin/org-capture.lua
-      org_capture_finalize = '<Leader>ow',
-    },
-    note = {
-      org_note_finalize = '<Leader>ow',
-    },
-  },
-})
-add(gh('chipsenkbeil/org-roam.nvim'))
-require('org-roam').setup({
-  directory = '~/Repos/Ignacio/org_roam_files',
-})
--- Experimental LSP support
-setup_lsp('org')
+      mappings = {
+        capture = {
+          -- Refile and close capture; also bound in insert mode via after/plugin/org-capture.lua
+          org_capture_finalize = '<Leader>ow',
+        },
+        note = {
+          org_note_finalize = '<Leader>ow',
+        },
+      },
+    })
+    add(gh('chipsenkbeil/org-roam.nvim'))
+    require('org-roam').setup({
+      directory = '~/Repos/Ignacio/org_roam_files',
+    })
+    -- Experimental LSP support
+    setup_lsp('org')
+  end
+end)()
+
+on_filetypes(
+  { 'org' },
+  Config.ensure_org,
+  'Load orgmode and org-roam on first org buffer'
+)
+Config.new_autocmd(
+  'CmdUndefined',
+  { 'Org*', 'Roam*' },
+  function() Config.ensure_org() end,
+  'Lazy-load orgmode on first Org/Roam command'
+)
