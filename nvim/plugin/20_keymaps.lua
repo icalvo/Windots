@@ -288,6 +288,7 @@ nmap_leader('fs', lsp_live_workspace_symbols_classes_first, 'Symbols workspace')
 nmap_leader('fS', cmd 'FzfLua lsp_document_symbols'  , 'Symbols document')
 nmap_leader('fv', cmd 'FzfLua visit_paths cwd=""'    , 'Visit paths (all)')
 nmap_leader('fV', cmd 'FzfLua visit_paths'           , 'Visit paths (cwd)')
+nmap_leader('fw', cmd 'FzfLua spell_suggest'         , 'Spelling suggestions')
 
 add_group  { mode = 'n', keys = '<Leader>g', desc = 'Git...' }
 add_group  { mode = 'x', keys = '<Leader>g', desc = 'Git...' }
