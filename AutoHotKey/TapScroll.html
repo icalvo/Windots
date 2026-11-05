@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tap-tempo scroll POC</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3efe6;
+      --ink: #1c1915;
+      --muted: #6b645a;
+      --panel: rgba(28, 25, 21, 0.92);
+      --accent: #c45c26;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font: 18px/1.65 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    body {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #fff8e8 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #e7ddd0 0%, transparent 50%),
+        var(--bg);
+    }
+
+    .hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      width: min(280px, calc(100vw - 32px));
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--panel);
+      color: #f6f1e8;
+      font: 13px/1.4 ui-monospace, "Cascadia Code", Consolas, monospace;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(8px);
+    }
+
+    .hud h1 {
+      margin: 0 0 8px;
+      font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #cbbba8;
+    }
+
+    .hud .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 4px 0;
+    }
+
+    .hud .val { color: #fff; }
+    .hud .hint {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      color: #b7aa98;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .hud kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font: 11px ui-monospace, Consolas, monospace;
+    }
+
+    .meter {
+      margin-top: 10px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .meter > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #7eb8a0, var(--accent));
+      transition: none;
+    }
+
+    main {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 72px 24px 40vh;
+    }
+
+    main h1 {
+      margin: 0 0 0.4em;
+      font-size: 2.4rem;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    main .lede {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 2.5rem;
+    }
+
+    main p {
+      margin: 0 0 1.15em;
+      text-wrap: pretty;
+    }
+
+    main h2 {
+      margin: 2.2em 0 0.6em;
+      font-size: 1.35rem;
+    }
+  </style>
+</head>
+<body>
+  <aside class="hud" aria-live="polite">
+    <h1>Tap scroll</h1>
+    <div class="row"><span>keys</span><span class="val"><kbd>K</kbd> up · <kbd>J</kbd> down</span></div>
+    <div class="row"><span>hz</span><span class="val" id="hz">—</span></div>
+    <div class="row"><span>velocity</span><span class="val" id="vel">0 px/s</span></div>
+    <div class="row"><span>interval</span><span class="val" id="iv">—</span></div>
+    <div class="meter" title="speed vs max"><span id="meter"></span></div>
+    <p class="hint">Tap <kbd>J</kbd>/<kbd>K</kbd> repeatedly. Faster tapping raises scroll speed; slowing down eases velocity in real time.</p>
+  </aside>
+
+  <main id="scroller">
+    <h1>Tap-tempo scroll</h1>
+    <p class="lede">
+      Proof of concept: inter-tap frequency is chased into a continuous pixel velocity
+      applied to DOM scroll. No mouse-wheel notches — fractional pixels every frame.
+    </p>
+  </main>
+
+  <script>
+    // --- same idea as TapScroll.ahk, but in px/s via scrollTop ----------------
+    const GAIN = 420;          // reference px/sec at 1 Hz (sets the MIN_HZ speed)
+    const MIN_HZ = 0.8;        // slowest tempo / initial velocity
+    const COMFORT_HZ = 6.5;    // ~max comfortable tapping rate
+    const TOP_BOOST = 1.2;     // speed at COMFORT_HZ vs old proportional map
+    const MAX_HZ = 8;
+    const INTERVAL_ALPHA = 0.4;
+    const CHASE_ALPHA = 0.18;  // per-frame-ish; scaled by dt below
+    const MIN_INTERVAL_MS = 50;
+    const MAX_INTERVAL_MS = 2500;
+    const STOP_EPS = 2;        // px/s
+    const MIN_INTERVAL_TEMPO = 1000 / MIN_HZ; // seed interval for MIN_HZ
+
+    // Affine map: keep GAIN*MIN_HZ at the bottom; at COMFORT_HZ, ~20% faster
+    // than proportional. Above COMFORT_HZ the same slope continues to MAX_HZ.
+    const V_MIN = GAIN * MIN_HZ;
+    const V_COMFORT = GAIN * COMFORT_HZ * TOP_BOOST;
+    const V_SLOPE = (V_COMFORT - V_MIN) / (COMFORT_HZ - MIN_HZ);
+    const V_MAX = V_MIN + V_SLOPE * (MAX_HZ - MIN_HZ);
+
+    let dir = 0;               // -1 up, +1 down
+    let velocity = 0;          // signed px/s
+    let lastTapTick = 0;
+    let lastTapDir = 0;
+    let emaInterval = 0;
+    let active = false;
+    let lastFrame = performance.now();
+
+    const hzEl = document.getElementById("hz");
+    const velEl = document.getElementById("vel");
+    const ivEl = document.getElementById("iv");
+    const meterEl = document.getElementById("meter");
+
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    // Hz → px/s (unsigned). Below MIN_HZ, lerp down to 0 for stop/decay.
+    function hzToSpeed(hz) {
+      if (hz <= 0) return 0;
+      if (hz < MIN_HZ) return V_MIN * (hz / MIN_HZ);
+      return V_MIN + V_SLOPE * (Math.min(hz, MAX_HZ) - MIN_HZ);
+    }
+
+    function onTap(newDir) {
+      const now = performance.now();
+      const interval = now - lastTapTick;
+      const sameDir = newDir === lastTapDir;
+
+      if (newDir !== dir) {
+        emaInterval = MIN_INTERVAL_TEMPO;
+        velocity = newDir * hzToSpeed(MIN_HZ);
+      }
+
+      if (sameDir && interval >= MIN_INTERVAL_MS && interval <= MAX_INTERVAL_MS) {
+        const measured = clamp(interval, 1000 / MAX_HZ, MIN_INTERVAL_TEMPO);
+        if (emaInterval > 0) {
+          emaInterval = emaInterval * (1 - INTERVAL_ALPHA) + measured * INTERVAL_ALPHA;
+        } else {
+          emaInterval = measured;
+        }
+      } else if (!sameDir || interval > MAX_INTERVAL_MS || emaInterval === 0) {
+        // Fresh phrase: start at the slowest velocity (MIN_HZ).
+        emaInterval = MIN_INTERVAL_TEMPO;
+        velocity = newDir * hzToSpeed(MIN_HZ);
+      }
+
+      dir = newDir;
+      lastTapDir = newDir;
+      lastTapTick = now;
+      active = true;
+    }
+
+    // Ignore key-repeat so hold doesn't fake a high tempo.
+    const held = new Set();
+
+    window.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (key !== "j" && key !== "k") return;
+      e.preventDefault();
+      if (held.has(key)) return;
+      held.add(key);
+      onTap(key === "j" ? 1 : -1);
+    });
+
+    window.addEventListener("keyup", (e) => {
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      held.delete(key);
+    });
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      lastFrame = now;
+
+      if (active) {
+        const elapsed = now - lastTapTick;
+        // While still within the current tempo window, never imply faster than
+        // MAX_HZ or slower than the EMA; once overdue, elapsed lowers Hz.
+        const implied = Math.max(emaInterval || MIN_INTERVAL_TEMPO, elapsed);
+
+        if (implied > MAX_INTERVAL_MS) {
+          velocity = 0;
+          dir = 0;
+          emaInterval = 0;
+          active = false;
+        } else {
+          const hz = clamp(1000 / implied, 0, MAX_HZ);
+          const target = dir * hzToSpeed(hz);
+          // Frame-rate independent chase: 1 - (1-a)^(dt*60) ≈ scaled CHASE_ALPHA
+          const chase = 1 - Math.pow(1 - CHASE_ALPHA, dt * 60);
+          velocity += (target - velocity) * chase;
+
+          if (Math.abs(velocity) < STOP_EPS && elapsed > (emaInterval || 0)) {
+            velocity = 0;
+          } else {
+            window.scrollBy(0, velocity * dt);
+          }
+
+          hzEl.textContent = hz.toFixed(2);
+          ivEl.textContent = implied.toFixed(0) + " ms";
+          meterEl.style.width = clamp(Math.abs(velocity) / V_MAX * 100, 0, 100).toFixed(1) + "%";
+        }
+      }
+
+      if (!active && Math.abs(velocity) < STOP_EPS) {
+        hzEl.textContent = "—";
+        ivEl.textContent = "—";
+        meterEl.style.width = "0%";
+      }
+
+      velEl.textContent = (velocity >= 0 ? "+" : "") + velocity.toFixed(1) + " px/s";
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+
+    // Long filler text so there's plenty to scroll.
+    const chapters = [
+      ["River light", "The water kept the afternoon in its skin. Every eddy was a small argument with gravity, and the reeds answered by leaning just far enough to listen."],
+      ["Workshop", "On the bench: brass screws in a chipped saucer, a plane with a mouth full of shavings, and a ruler that had measured more patience than timber."],
+      ["Night train", "Windows arrived like frames of film. A platform blinked, a suitcase rolled, someone laughed once and the laugh stayed in the glass after the face was gone."],
+      ["Orchard", "Apples held their green like a secret. Under the trees the grass was cool in patches, warm in others, as if the sun had been walking there barefoot."],
+      ["Letter", "Ink dried slower than intention. Between the lines there was a weather system of almost-saids, and the stamp sat slightly crooked, loyal anyway."],
+      ["Harbor", "Ropes smelled of salt and old decisions. Buoys knocked a soft metronome against the hulls, and gulls audited every loaf that dared appear on deck."],
+      ["Library", "Dust rose in a slant of window. The catalog drawer stuck on M, which felt correct: memory always resists being pulled out cleanly."],
+      ["Hill road", "Switchbacks taught the car humility. At each crest the valley rearranged itself, as if rehearsing how to look inevitable."],
+      ["Kitchen hour", "Steam wrote temporary maps on the pane. A knife found the onion's equator; the pan answered with a bright, brief applause."],
+      ["Quiet room", "The clock did not hurry anyone. Curtains filtered the day into something usable, and a chair remembered the shape of thinking."],
+    ];
+
+    const extras = [
+      "There is a kind of attention that is not staring, but staying.",
+      "Velocity, here, is not a leap; it is a promise renewed each frame.",
+      "Tap, and the page learns your pulse. Hesitate, and it softens with you.",
+      "Smoothness is just honesty about fractions: the world rarely moves in notches.",
+      "Between one key and the next lives the whole idea of tempo.",
+      "If the eye can follow, the hand can lead without forcing.",
+      "A long text is only a short one that refused to stop arriving.",
+      "Scroll is a verb that prefers continuous tense.",
+      "The cursor rests; the document travels.",
+      "Measure twice in time, cut once in space.",
+    ];
+
+    const main = document.getElementById("scroller");
+    let block = 0;
+    for (let i = 0; i < 60; i++) {
+      const [title, open] = chapters[i % chapters.length];
+      const h = document.createElement("h2");
+      h.textContent = `${i + 1}. ${title}`;
+      main.appendChild(h);
+
+      const p1 = document.createElement("p");
+      p1.textContent = open + " " + extras[i % extras.length];
+      main.appendChild(p1);
+
+      for (let j = 0; j < 3; j++) {
+        const p = document.createElement("p");
+        p.textContent =
+          extras[(i + j * 3) % extras.length] + " " +
+          chapters[(i + j) % chapters.length][1] + " " +
+          extras[(i + j + 5) % extras.length] +
+          ` (passage ${++block}.)`;
+        main.appendChild(p);
+      }
+    }
+  </script>
+</body>
+</html>
