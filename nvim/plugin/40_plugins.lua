@@ -414,6 +414,7 @@ require('mason').setup({
 
 local mason_packages = {
   -- "bicep-lsp",
+  'clangd',
   'csharpier',
   'docker-compose-language-service',
   'dockerfile-language-server',
@@ -510,6 +511,15 @@ vim.filetype.add({
 add(gh('neovim/nvim-lspconfig'), { load = false })
 local mason_dir = require('mason.settings').current.install_root_dir
 
+setup_lsp('clangd', {
+  cmd = {
+    'clangd',
+    '--background-index',
+    '--clang-tidy',
+    '--header-insertion=iwyu',
+    '--completion-style=detailed',
+  },
+})
 setup_lsp('fsautocomplete')
 -- local orig_show_message = vim.lsp.handlers['window/showMessage']
 -- vim.lsp.handlers['window/showMessage'] = function(err, result, ctx, config)
