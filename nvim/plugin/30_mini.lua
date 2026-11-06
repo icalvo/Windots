@@ -432,8 +432,8 @@ local add_marks = function()
   MiniFiles.set_bookmark('c', vim.fn.stdpath('config'), { desc = 'Config' })
   local data = vim.fn.stdpath('data')
   MiniFiles.set_bookmark('d', data, { desc = 'Data' })
-  local minideps_plugins = vim.fn.stdpath('data') .. '/site/pack/core/opt'
-  MiniFiles.set_bookmark('p', minideps_plugins, { desc = 'Plugins' })
+  local plugins = vim.fn.stdpath('data') .. '/site/pack/core/opt'
+  MiniFiles.set_bookmark('p', plugins, { desc = 'Plugins' })
   MiniFiles.set_bookmark('w', vim.fn.getcwd, { desc = 'Working directory' })
 end
 _G.Config.new_autocmd('User', 'MiniFilesExplorerOpen', add_marks, 'Add bookmarks')
