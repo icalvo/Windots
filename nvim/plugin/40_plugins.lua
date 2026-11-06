@@ -56,13 +56,7 @@ add({
 add({
   gh('nvim-pack/nvim-spectre'),
 })
-add({
-  {
-    src = vim.fn.expand('~/Repos/rif.nvim'),
-    name = 'rif.nvim',
-  },
-})
-require('rif').setup({})
+
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'rip-substitute',
   callback = function() vim.b.minicompletion_disable = true end,
@@ -137,7 +131,10 @@ local function ts_ensure(lang)
   require('nvim-treesitter').install({ lang }):await(function(err)
     ts_ensuring[lang] = nil
     if err then
-      vim.notify('Treesitter install failed (' .. lang .. '): ' .. tostring(err), vim.log.levels.WARN)
+      vim.notify(
+        'Treesitter install failed (' .. lang .. '): ' .. tostring(err),
+        vim.log.levels.WARN
+      )
       return
     end
     vim.schedule(function() ts_enable_bufs(lang) end)
@@ -148,7 +145,9 @@ local function ts_lang_for_buf(buf)
   local ft = vim.bo[buf].filetype
   if ft == '' then
     local name = vim.api.nvim_buf_get_name(buf)
-    if name ~= '' then ft = vim.filetype.match({ filename = name, buf = buf }) or '' end
+    if name ~= '' then
+      ft = vim.filetype.match({ filename = name, buf = buf }) or ''
+    end
   end
   if ft == '' then return nil end
   return vim.treesitter.language.get_lang(ft)
@@ -810,8 +809,8 @@ require('lualine').setup({
     component_separators = { left = '', right = '' },
     section_separators = { left = '', right = '' },
     disabled_filetypes = {
-      statusline = { 'nvim-undotree', 'rif-input', 'rif-results' },
-      winbar = { 'rif-input', 'rif-results' },
+      statusline = { 'nvim-undotree' },
+      winbar = {},
     },
     ignore_focus = {},
     always_divide_middle = true,
