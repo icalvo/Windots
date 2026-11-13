@@ -46,7 +46,9 @@ param(
     [switch]$SyncNewFiles,
     
     [Alias('s')]
-    [switch]$SyncAnyway
+    [switch]$SyncAnyway,
+
+    [switch]$ForceLocal
 )
 
 # Default commit message substituted into autocommit commands
@@ -54,16 +56,34 @@ $script:DEFAULT_AUTOCOMMIT_MSG = "changes from $env:COMPUTERNAME on $(Get-Date -
 
 function Show-Usage {
     Write-Host @"
-usage: git-sync.ps1 [-h] [-n] [-s] [MODE]
+usage: git-sync.ps1 [-h] [-n] [-s] [-ForceLocal] [MODE]
 
 Synchronize the current branch to a remote backup
 MODE may be either "sync" (the default) or "check", to verify that the branch is ready to sync
 
 OPTIONS:
-   -h      Show this message
-   -n      Commit new files even if branch.`$branch_name.syncNewFiles isn't set
-   -s      Sync the branch even if branch.`$branch_name.sync isn't set
+   -h           Show this message
+   -n           Commit new files even if branch.`$branch_name.syncNewFiles isn't set
+   -s           Sync the branch even if branch.`$branch_name.sync isn't set
+   -ForceLocal  On diverge/conflict, push local with --force-with-lease (local wins)
 "@
+}
+
+function Push-ForceLocal {
+    param(
+        [string]$RemoteName,
+        [string]$BranchName
+    )
+
+    Write-LogMessage "ForceLocal: pushing local $BranchName with --force-with-lease (overwrites divergent remote)."
+    git push --force-with-lease $RemoteName "$BranchName`:$BranchName"
+    if ($LASTEXITCODE -eq 0) {
+        Exit-AssumingSync -RemoteName $RemoteName -BranchName $BranchName
+    }
+    else {
+        Write-LogMessage "git push --force-with-lease returned non-zero. Likely a connection failure or lease mismatch."
+        exit 3
+    }
 }
 
 if ($Help) {
@@ -480,12 +500,21 @@ switch ($syncState) {
         if ($LASTEXITCODE -eq 0) {
             Exit-AssumingSync -RemoteName $remoteName -BranchName $branchName
         }
+        elseif ($ForceLocal) {
+            Write-LogMessage "Fast-forward failed; ForceLocal will keep local and force-push."
+            Push-ForceLocal -RemoteName $remoteName -BranchName $branchName
+        }
         else {
             Write-LogMessage "git merge --ff --ff-only returned non-zero ($LASTEXITCODE). Exiting."
             exit 2
         }
     }
     "diverged" {
+        if ($ForceLocal) {
+            Write-LogMessage "We have diverged; ForceLocal keeps local history."
+            Push-ForceLocal -RemoteName $remoteName -BranchName $branchName
+        }
+
         Write-LogMessage "We have diverged. Trying to rebase..."
         git rebase "$remoteName/$branchName"
         
