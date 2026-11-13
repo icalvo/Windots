@@ -1,7 +1,12 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-  Watch configured git repos and sync via git-sync.ps1 -n -s -ForceLocal after a throttle.
+  Watch configured git repos and sync via git-sync.ps1 -n -s -ForceLocal.
+
+Throttle (leading-edge): sync immediately on local change, then at most once per
+throttleSeconds; if more changes arrive during the window, sync again when it opens.
+
+Also polls remotes with git fetch every fetchSeconds; if not in sync, runs git-sync.
 
 Machine-local config: %LOCALAPPDATA%\git-auto-push\repos.json
 Log file:            %LOCALAPPDATA%\git-auto-push\watcher.log
@@ -16,20 +21,24 @@ $ConfigPath = Join-Path $StateDir 'repos.json'
 $LogPath = Join-Path $StateDir 'watcher.log'
 $PidPath = Join-Path $StateDir 'watcher.pid'
 $GitSyncPath = Join-Path $PSScriptRoot 'git-sync.ps1'
-$DefaultThrottleSeconds = 60
+$DefaultThrottleSeconds = 10
+$DefaultFetchSeconds = 20
 $MaxLogBytes = 5MB
 
 # Shared with FileSystemWatcher event runspaces
 $Shared = [hashtable]::Synchronized(@{
-        Pending     = [hashtable]::Synchronized(@{})  # path -> last event [datetime]
-        Throttles   = [hashtable]::Synchronized(@{})  # path -> seconds
-        DirtyAgain  = [hashtable]::Synchronized(@{})  # path -> bool
+        Dirty        = [hashtable]::Synchronized(@{})  # path -> $true when local FS activity
+        Throttles    = [hashtable]::Synchronized(@{})  # path -> seconds
+        FetchSeconds = [hashtable]::Synchronized(@{})  # path -> seconds
         ConfigReload = $false
-        Stop        = $false
+        Stop         = $false
     })
 
 $Watchers = @{}
 $ConfigWatcher = $null
+$LastSync = @{}   # path -> datetime
+$LastFetch = @{}  # path -> datetime
+$Syncing = @{}
 
 function Write-WatcherLog {
     param([string]$Message)
@@ -77,9 +86,17 @@ function Read-RepoConfig {
                 $throttle = [int]$r.throttleSeconds
             }
             if ($throttle -lt 1) { $throttle = 1 }
+
+            $fetch = $DefaultFetchSeconds
+            if ($null -ne $r.fetchSeconds -and "$($r.fetchSeconds)" -ne '') {
+                $fetch = [int]$r.fetchSeconds
+            }
+            if ($fetch -lt 1) { $fetch = 1 }
+
             $list += [pscustomobject]@{
                 Path            = Get-NormalizedPath $r.path
                 ThrottleSeconds = $throttle
+                FetchSeconds    = $fetch
             }
         }
         return $list
@@ -88,25 +105,6 @@ function Read-RepoConfig {
         Write-WatcherLog "Failed to read config: $($_.Exception.Message)"
         return @()
     }
-}
-
-function Test-IsGitNoisePath {
-    param(
-        [string]$FullPath,
-        [string]$RepoRoot
-    )
-    if ([string]::IsNullOrWhiteSpace($FullPath)) { return $true }
-    $norm = $FullPath
-    try { $norm = [System.IO.Path]::GetFullPath($FullPath) } catch { }
-    $gitDir = Join-Path $RepoRoot '.git'
-    if ($norm.StartsWith($gitDir, [System.StringComparison]::OrdinalIgnoreCase)) {
-        return $true
-    }
-    $name = Split-Path $norm -Leaf
-    if ($name -match '(^~\$|\.swp$|\.swo$|\.tmp$|\.TMP$|~$)') {
-        return $true
-    }
-    return $false
 }
 
 function Stop-RepoWatchers {
@@ -128,16 +126,57 @@ function Stop-RepoWatchers {
             Unregister-ObjectEvent -SourceIdentifier $_.SourceIdentifier -ErrorAction SilentlyContinue
         }
 
-    $Shared.Pending.Clear()
+    $Shared.Dirty.Clear()
     $Shared.Throttles.Clear()
-    $Shared.DirtyAgain.Clear()
+    $Shared.FetchSeconds.Clear()
+}
+
+function Get-UpstreamSyncState {
+    param([string]$RepoPath)
+
+    Push-Location $RepoPath
+    try {
+        $branchRef = & git symbolic-ref -q HEAD 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branchRef)) {
+            return 'noBranch'
+        }
+        $branch = $branchRef -replace '^refs/heads/', ''
+
+        $remote = & git config --get "branch.$branch.pushRemote" 2>$null
+        if ([string]::IsNullOrWhiteSpace($remote)) {
+            $remote = & git config --get remote.pushDefault 2>$null
+        }
+        if ([string]::IsNullOrWhiteSpace($remote)) {
+            $remote = & git config --get "branch.$branch.remote" 2>$null
+        }
+        if ([string]::IsNullOrWhiteSpace($remote)) {
+            return 'noRemote'
+        }
+
+        $count = & git rev-list --count --left-right "$remote/$branch...HEAD" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            return 'noUpstream'
+        }
+        switch -Regex ($count.Trim()) {
+            '^0\s+0$' { return 'equal' }
+            '^0\s+\d+$' { return 'ahead' }
+            '^\d+\s+0$' { return 'behind' }
+            default { return 'diverged' }
+        }
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 function Invoke-RepoSync {
-    param([string]$RepoPath)
+    param(
+        [string]$RepoPath,
+        [string]$Reason = 'local'
+    )
 
     $key = Get-NormalizedPath $RepoPath
-    Write-WatcherLog "Sync start: $key"
+    Write-WatcherLog "Sync start ($Reason): $key"
 
     try {
         if (-not (Test-Path $key)) {
@@ -160,12 +199,51 @@ function Invoke-RepoSync {
     catch {
         Write-WatcherLog "Sync error: $key :: $($_.Exception.Message)"
     }
+    finally {
+        $LastSync[$key] = Get-Date
+    }
+}
+
+function Invoke-RepoFetchCheck {
+    param([string]$RepoPath)
+
+    $key = Get-NormalizedPath $RepoPath
+    if (-not (Test-Path $key)) {
+        return
+    }
+
+    Write-WatcherLog "Fetch: $key"
+    Push-Location $key
+    try {
+        $fetchOut = & git fetch --all --prune 2>&1
+        $fetchCode = $LASTEXITCODE
+        foreach ($line in @($fetchOut)) {
+            if ("$line".Trim()) {
+                Write-WatcherLog "  [$key] fetch: $line"
+            }
+        }
+        if ($fetchCode -ne 0) {
+            Write-WatcherLog "Fetch failed: $key (exit $fetchCode)"
+            return
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    $state = Get-UpstreamSyncState -RepoPath $key
+    Write-WatcherLog "Fetch state: $key -> $state"
+    if ($state -ne 'equal' -and $state -ne 'noBranch' -and $state -ne 'noRemote' -and $state -ne 'noUpstream') {
+        # Remote and/or local differ — full sync (respects ForceLocal)
+        $Shared.Dirty[$key] = $true
+    }
 }
 
 function Register-RepoWatcher {
     param(
         [string]$RepoPath,
-        [int]$ThrottleSeconds
+        [int]$ThrottleSeconds,
+        [int]$FetchSeconds
     )
 
     $key = Get-NormalizedPath $RepoPath
@@ -186,8 +264,8 @@ function Register-RepoWatcher {
     $fsw.EnableRaisingEvents = $true
 
     $msg = [pscustomobject]@{
-        Path     = $key
-        Shared   = $Shared
+        Path   = $key
+        Shared = $Shared
     }
 
     $handler = {
@@ -198,7 +276,7 @@ function Register-RepoWatcher {
         if ($full -and $full.StartsWith($gitDir, [System.StringComparison]::OrdinalIgnoreCase)) {
             return
         }
-        $shared.Pending[$repo] = Get-Date
+        $shared.Dirty[$repo] = $true
     }
 
     Register-ObjectEvent -InputObject $fsw -EventName Changed -SourceIdentifier "gap-fsw-changed-$key" -Action $handler -MessageData $msg | Out-Null
@@ -208,7 +286,15 @@ function Register-RepoWatcher {
 
     $Watchers[$key] = $fsw
     $Shared.Throttles[$key] = $ThrottleSeconds
-    Write-WatcherLog "Watching $key (throttle ${ThrottleSeconds}s)"
+    $Shared.FetchSeconds[$key] = $FetchSeconds
+    if (-not $LastSync.ContainsKey($key)) {
+        $LastSync[$key] = [datetime]::MinValue
+    }
+    if (-not $LastFetch.ContainsKey($key)) {
+        # First fetch runs on the next poll cycle
+        $LastFetch[$key] = [datetime]::MinValue
+    }
+    Write-WatcherLog "Watching $key (throttle ${ThrottleSeconds}s, fetch ${FetchSeconds}s)"
 }
 
 function Import-WatchConfig {
@@ -217,7 +303,7 @@ function Import-WatchConfig {
     $repos = Read-RepoConfig
     Write-WatcherLog "Loaded $($repos.Count) repo(s) from $ConfigPath"
     foreach ($r in $repos) {
-        Register-RepoWatcher -RepoPath $r.Path -ThrottleSeconds $r.ThrottleSeconds
+        Register-RepoWatcher -RepoPath $r.Path -ThrottleSeconds $r.ThrottleSeconds -FetchSeconds $r.FetchSeconds
     }
 }
 
@@ -258,6 +344,22 @@ function Register-ConfigWatcher {
     Register-ObjectEvent -InputObject $cw -EventName Renamed -SourceIdentifier 'gap-config-renamed' -Action $cfgHandler -MessageData $msg | Out-Null
 }
 
+function Test-ThrottleOpen {
+    param(
+        [string]$Key,
+        [datetime]$Now
+    )
+    $throttle = $DefaultThrottleSeconds
+    if ($Shared.Throttles.ContainsKey($Key)) {
+        $throttle = [int]$Shared.Throttles[$Key]
+    }
+    $last = [datetime]::MinValue
+    if ($LastSync.ContainsKey($Key)) {
+        $last = [datetime]$LastSync[$Key]
+    }
+    return (($Now - $last).TotalSeconds -ge $throttle)
+}
+
 # --- main ---
 if (-not (Test-Path $GitSyncPath)) {
     Write-Error "git-sync.ps1 not found at $GitSyncPath"
@@ -275,12 +377,11 @@ Write-WatcherLog "git-sync: $GitSyncPath"
 Register-ConfigWatcher
 Import-WatchConfig
 
-$syncing = @{}
 $configReloadAt = $null
 
 try {
     while (-not $Shared.Stop) {
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Milliseconds 250
 
         if ($Shared.ConfigReload) {
             $Shared.ConfigReload = $false
@@ -298,40 +399,45 @@ try {
         }
 
         $now = Get-Date
-        $due = @()
-        foreach ($key in @($Shared.Pending.Keys)) {
-            $last = $Shared.Pending[$key]
-            if (-not $last) { continue }
-            $throttle = $DefaultThrottleSeconds
-            if ($Shared.Throttles.ContainsKey($key)) {
-                $throttle = [int]$Shared.Throttles[$key]
-            }
-            if (($now - [datetime]$last).TotalSeconds -ge $throttle) {
-                $due += $key
-            }
-        }
 
-        foreach ($key in $due) {
-            if ($syncing[$key]) {
-                $Shared.DirtyAgain[$key] = $true
-                continue
-            }
-            $Shared.Pending.Remove($key)
-            $syncing[$key] = $true
-            try {
-                Invoke-RepoSync -RepoPath $key
-            }
-            finally {
-                $syncing[$key] = $false
-                if ($Shared.DirtyAgain[$key]) {
-                    $Shared.DirtyAgain[$key] = $false
-                    $Shared.Pending[$key] = Get-Date
-                    Write-WatcherLog "Changes during sync; re-queued $key"
+        # Periodic remote fetch
+        foreach ($key in @($Shared.FetchSeconds.Keys)) {
+            if ($Syncing[$key]) { continue }
+            $fetchEvery = [int]$Shared.FetchSeconds[$key]
+            if ($fetchEvery -lt 1) { $fetchEvery = $DefaultFetchSeconds }
+            $lastF = [datetime]::MinValue
+            if ($LastFetch.ContainsKey($key)) { $lastF = [datetime]$LastFetch[$key] }
+            if (($now - $lastF).TotalSeconds -ge $fetchEvery) {
+                $LastFetch[$key] = $now
+                try {
+                    Invoke-RepoFetchCheck -RepoPath $key
+                }
+                catch {
+                    Write-WatcherLog "Fetch check error: $key :: $($_.Exception.Message)"
                 }
             }
         }
 
-        # Drain PS event queue
+        # Leading-edge throttle: sync immediately if window open; otherwise keep Dirty until it opens
+        foreach ($key in @($Shared.Dirty.Keys)) {
+            if (-not $Shared.Dirty[$key]) {
+                $Shared.Dirty.Remove($key)
+                continue
+            }
+            if ($Syncing[$key]) { continue }
+            if (-not (Test-ThrottleOpen -Key $key -Now $now)) { continue }
+
+            $Shared.Dirty.Remove($key)
+            $Syncing[$key] = $true
+            try {
+                Invoke-RepoSync -RepoPath $key -Reason 'throttle'
+            }
+            finally {
+                $Syncing[$key] = $false
+                # If more FS events arrived during sync, Dirty was set again — next loop handles it
+            }
+        }
+
         while ($evt = Get-Event -ErrorAction SilentlyContinue) {
             Remove-Event -EventIdentifier $evt.EventIdentifier -ErrorAction SilentlyContinue
         }

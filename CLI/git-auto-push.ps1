@@ -5,7 +5,7 @@
 
 .EXAMPLE
   .\git-auto-push.ps1 install
-  .\git-auto-push.ps1 add C:\Repos\my-repo -ThrottleSeconds 60
+  .\git-auto-push.ps1 add C:\Repos\my-repo -ThrottleSeconds 10 -FetchSeconds 20
   .\git-auto-push.ps1 log -Follow
 #>
 [CmdletBinding()]
@@ -17,7 +17,9 @@ param(
     [Parameter(Position = 1)]
     [string]$Path,
 
-    [int]$ThrottleSeconds = 60,
+    [int]$ThrottleSeconds = 10,
+
+    [int]$FetchSeconds = 20,
 
     [Alias('f')]
     [switch]$Follow,
@@ -34,22 +36,27 @@ $script:PidPath = Join-Path $script:StateDir 'watcher.pid'
 $script:WatchScript = Join-Path $PSScriptRoot 'git-auto-push-watch.ps1'
 $script:TaskName = 'GitAutoPush'
 $script:StartupLink = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\GitAutoPush.cmd'
-$script:DefaultThrottleSeconds = 60
+$script:DefaultThrottleSeconds = 10
+$script:DefaultFetchSeconds = 20
 
 function Show-Usage {
     @"
 usage: git-auto-push.ps1 <command> [args]
 
 Commands:
-  install                         Create LocalAppData config + logon start (task and/or Startup); start watcher
-  uninstall                       Stop watcher and remove logon start
-  start                           Start the watcher now
-  stop                            Stop the running watcher
-  status                          Show task + process + config summary
-  add <path> [-ThrottleSeconds N] Add a repo (default throttle 60s)
-  remove <path>                   Remove a repo from the list
-  list                            List configured repos
-  log [-Lines N] [-Follow]        Show watcher.log (default last 100 lines; -f to tail)
+  install                              Create LocalAppData config + logon start; start watcher
+  uninstall                            Stop watcher and remove logon start
+  start                                Start the watcher now
+  stop                                 Stop the running watcher
+  status                               Show task + process + config summary
+  add <path> [-ThrottleSeconds N] [-FetchSeconds N]
+                                       Add/update a repo (defaults: throttle 10s, fetch 20s)
+  remove <path>                        Remove a repo from the list
+  list                                 List configured repos
+  log [-Lines N] [-Follow]             Show watcher.log (default last 100 lines; -f to tail)
+
+Throttle: sync immediately on local change, at most once per throttleSeconds.
+Fetch:    periodic git fetch; if remote differs, run sync (default every fetchSeconds).
 
 Config (machine-local, not in WinDots):
   $script:ConfigPath
@@ -57,11 +64,29 @@ Config (machine-local, not in WinDots):
 Example repos.json:
   {
     "repos": [
-      { "path": "C:\\Repos\\my-repo", "throttleSeconds": 60 },
+      { "path": "C:\\Repos\\my-repo", "throttleSeconds": 10, "fetchSeconds": 20 },
       { "path": "C:\\Repos\\other" }
     ]
   }
 "@
+}
+
+function ConvertTo-RepoEntry {
+    param($Entry)
+    $p = "$($Entry.path)"
+    $th = $script:DefaultThrottleSeconds
+    if ($null -ne $Entry.throttleSeconds -and "$($Entry.throttleSeconds)" -ne '') {
+        $th = [int]$Entry.throttleSeconds
+    }
+    $fs = $script:DefaultFetchSeconds
+    if ($null -ne $Entry.fetchSeconds -and "$($Entry.fetchSeconds)" -ne '') {
+        $fs = [int]$Entry.fetchSeconds
+    }
+    return [pscustomobject]@{
+        path            = $p
+        throttleSeconds = $th
+        fetchSeconds    = $fs
+    }
 }
 
 function Ensure-StateDir {
@@ -252,8 +277,8 @@ switch ($Command) {
         $cfg = Read-Config
         Write-Host "Repos: $($cfg.repos.Count)"
         foreach ($r in $cfg.repos) {
-            $th = if ($null -ne $r.throttleSeconds) { $r.throttleSeconds } else { $script:DefaultThrottleSeconds }
-            Write-Host "  - $($r.path)  (throttle ${th}s)"
+            $e = ConvertTo-RepoEntry $r
+            Write-Host "  - $($e.path)  (throttle $($e.throttleSeconds)s, fetch $($e.fetchSeconds)s)"
         }
     }
     'add' {
@@ -269,40 +294,38 @@ switch ($Command) {
             throw "Not a git work tree: $full"
         }
         if ($ThrottleSeconds -lt 1) { $ThrottleSeconds = 1 }
+        if ($FetchSeconds -lt 1) { $FetchSeconds = 1 }
 
         $cfg = Read-Config
-        $existing = $cfg.repos | Where-Object {
-            (Get-NormalizedPath $_.path) -eq $full
-        }
-        if ($existing) {
-            foreach ($e in @($cfg.repos)) {
-                if ((Get-NormalizedPath $e.path) -eq $full) {
-                    $e.throttleSeconds = $ThrottleSeconds
-                    $e.path = $full
+        $list = @()
+        $found = $false
+        foreach ($e in $cfg.repos) {
+            if (-not $e.path) { continue }
+            $p = [System.IO.Path]::GetFullPath($e.path).TrimEnd('\', '/')
+            if ($p -eq $full) {
+                $list += [pscustomobject]@{
+                    path            = $full
+                    throttleSeconds = $ThrottleSeconds
+                    fetchSeconds    = $FetchSeconds
                 }
+                $found = $true
             }
-            # rebuild as plain objects for JSON
-            $newRepos = @()
-            foreach ($e in $cfg.repos) {
-                $p = Get-NormalizedPath $e.path
-                $th = if ($null -ne $e.throttleSeconds) { [int]$e.throttleSeconds } else { $script:DefaultThrottleSeconds }
-                $newRepos += [pscustomobject]@{ path = $p; throttleSeconds = $th }
+            else {
+                $list += ConvertTo-RepoEntry $e
             }
-            $cfg = [pscustomobject]@{ repos = $newRepos }
-            Save-Config $cfg
-            Write-Host "Updated $full (throttle ${ThrottleSeconds}s)"
+        }
+        if (-not $found) {
+            $list += [pscustomobject]@{
+                path            = $full
+                throttleSeconds = $ThrottleSeconds
+                fetchSeconds    = $FetchSeconds
+            }
+            Write-Host "Added $full (throttle ${ThrottleSeconds}s, fetch ${FetchSeconds}s)"
         }
         else {
-            $list = @()
-            foreach ($e in $cfg.repos) {
-                $p = if ($e.path) { "$($e.path)" } else { continue }
-                $th = if ($null -ne $e.throttleSeconds) { [int]$e.throttleSeconds } else { $script:DefaultThrottleSeconds }
-                $list += [pscustomobject]@{ path = $p; throttleSeconds = $th }
-            }
-            $list += [pscustomobject]@{ path = $full; throttleSeconds = $ThrottleSeconds }
-            Save-Config ([pscustomobject]@{ repos = $list })
-            Write-Host "Added $full (throttle ${ThrottleSeconds}s)"
+            Write-Host "Updated $full (throttle ${ThrottleSeconds}s, fetch ${FetchSeconds}s)"
         }
+        Save-Config ([pscustomobject]@{ repos = $list })
     }
     'remove' {
         if ([string]::IsNullOrWhiteSpace($Path)) {
@@ -318,8 +341,7 @@ switch ($Command) {
                 $removed = $true
                 continue
             }
-            $th = if ($null -ne $e.throttleSeconds) { [int]$e.throttleSeconds } else { $script:DefaultThrottleSeconds }
-            $kept += [pscustomobject]@{ path = $p; throttleSeconds = $th }
+            $kept += ConvertTo-RepoEntry $e
         }
         if (-not $removed) {
             Write-Host "Not found: $full"
@@ -336,8 +358,8 @@ switch ($Command) {
             return
         }
         foreach ($r in $cfg.repos) {
-            $th = if ($null -ne $r.throttleSeconds) { $r.throttleSeconds } else { $script:DefaultThrottleSeconds }
-            Write-Host "$($r.path)  throttle=${th}s"
+            $e = ConvertTo-RepoEntry $r
+            Write-Host "$($e.path)  throttle=$($e.throttleSeconds)s  fetch=$($e.fetchSeconds)s"
         }
     }
     'log' {
