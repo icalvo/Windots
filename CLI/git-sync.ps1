@@ -65,25 +65,46 @@ OPTIONS:
    -h           Show this message
    -n           Commit new files even if branch.`$branch_name.syncNewFiles isn't set
    -s           Sync the branch even if branch.`$branch_name.sync isn't set
-   -ForceLocal  On diverge/conflict, push local with --force-with-lease (local wins)
+   -ForceLocal  On diverge/conflict, merge preferring local file contents (-X ours), then push
 "@
 }
 
-function Push-ForceLocal {
+function Merge-PreferLocal {
     param(
         [string]$RemoteName,
         [string]$BranchName
     )
 
-    Write-LogMessage "ForceLocal: pushing local $BranchName with --force-with-lease (overwrites divergent remote)."
-    git push --force-with-lease $RemoteName "$BranchName`:$BranchName"
-    if ($LASTEXITCODE -eq 0) {
+    Write-LogMessage "ForceLocal: merging $RemoteName/$BranchName with -X ours (local file contents win on conflict)."
+    git merge --no-edit -X ours "$RemoteName/$BranchName"
+    if ($LASTEXITCODE -ne 0) {
+        Write-LogMessage "ForceLocal merge failed; aborting merge."
+        git merge --abort 2>$null
+        exit 1
+    }
+
+    $repoStateAfter = Get-GitRepoState
+    if (-not [string]::IsNullOrEmpty($repoStateAfter) -and $repoStateAfter -ne "|DIRTY") {
+        Write-LogMessage "ForceLocal merge left repo in unexpected state: $repoStateAfter"
+        exit 1
+    }
+
+    $syncStateAfter = Get-SyncState -RemoteName $RemoteName -BranchName $BranchName
+    if ($syncStateAfter -eq "equal") {
         Exit-AssumingSync -RemoteName $RemoteName -BranchName $BranchName
     }
-    else {
-        Write-LogMessage "git push --force-with-lease returned non-zero. Likely a connection failure or lease mismatch."
+    if ($syncStateAfter -eq "ahead") {
+        Write-LogMessage "ForceLocal: pushing merged branch..."
+        git push $RemoteName "$BranchName`:$BranchName"
+        if ($LASTEXITCODE -eq 0) {
+            Exit-AssumingSync -RemoteName $RemoteName -BranchName $BranchName
+        }
+        Write-LogMessage "git push returned non-zero after ForceLocal merge."
         exit 3
     }
+
+    Write-LogMessage "ForceLocal: unexpected sync state after merge: $syncStateAfter"
+    exit 2
 }
 
 if ($Help) {
@@ -501,8 +522,8 @@ switch ($syncState) {
             Exit-AssumingSync -RemoteName $remoteName -BranchName $branchName
         }
         elseif ($ForceLocal) {
-            Write-LogMessage "Fast-forward failed; ForceLocal will keep local and force-push."
-            Push-ForceLocal -RemoteName $remoteName -BranchName $branchName
+            Write-LogMessage "Fast-forward failed; ForceLocal will merge preferring local files."
+            Merge-PreferLocal -RemoteName $remoteName -BranchName $branchName
         }
         else {
             Write-LogMessage "git merge --ff --ff-only returned non-zero ($LASTEXITCODE). Exiting."
@@ -511,8 +532,8 @@ switch ($syncState) {
     }
     "diverged" {
         if ($ForceLocal) {
-            Write-LogMessage "We have diverged; ForceLocal keeps local history."
-            Push-ForceLocal -RemoteName $remoteName -BranchName $branchName
+            Write-LogMessage "We have diverged; ForceLocal merges preferring local file contents."
+            Merge-PreferLocal -RemoteName $remoteName -BranchName $branchName
         }
 
         Write-LogMessage "We have diverged. Trying to rebase..."
