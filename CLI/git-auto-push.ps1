@@ -192,7 +192,8 @@ function Install-LogonStart {
     $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
     $arg = "-NoProfile -WindowStyle Hidden -File `"$($script:WatchScript)`""
 
-    $taskOk = $false
+    # Prefer a single AtLogOn scheduled task. Only fall back to the Startup folder
+    # when task registration fails — installing both starts the watcher twice at logon.
     try {
         $action = New-ScheduledTaskAction -Execute $pwsh -Argument $arg
         $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
@@ -202,20 +203,24 @@ function Install-LogonStart {
         Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false -ErrorAction SilentlyContinue
         Register-ScheduledTask -TaskName $script:TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Force | Out-Null
         Write-Host "Registered Scheduled Task '$script:TaskName' (At log on)."
-        $taskOk = $true
+
+        if (Test-Path $script:StartupLink) {
+            Remove-Item $script:StartupLink -Force
+            Write-Host "Removed duplicate Startup starter: $script:StartupLink"
+        }
+        return $true
     }
     catch {
         Write-Host "Scheduled Task registration failed ($($_.Exception.Message)); using Startup folder instead."
     }
 
-    # Always also (or only) write a Startup cmd so logon start works without elevation
     $cmd = @"
 @echo off
 start "" "$pwsh" -NoProfile -WindowStyle Hidden -File "$($script:WatchScript)"
 "@
     Set-Content -Path $script:StartupLink -Value $cmd -Encoding ASCII
     Write-Host "Installed logon starter: $script:StartupLink"
-    return $taskOk
+    return $false
 }
 
 function Uninstall-LogonStart {

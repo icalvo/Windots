@@ -7,6 +7,7 @@ Throttle (leading-edge): sync immediately on local change, then at most once per
 throttleSeconds; if more changes arrive during the window, sync again when it opens.
 
 Also polls remotes with git fetch every fetchSeconds; if not in sync, runs git-sync.
+Routine fetch/state messages are quiet unless a difference is found (or -Verbose).
 
 Machine-local config: %LOCALAPPDATA%\git-auto-push\repos.json
 Log file:            %LOCALAPPDATA%\git-auto-push\watcher.log
@@ -41,7 +42,13 @@ $LastFetch = @{}  # path -> datetime
 $Syncing = @{}
 
 function Write-WatcherLog {
-    param([string]$Message)
+    param(
+        [string]$Message,
+        [switch]$VerboseOnly
+    )
+    if ($VerboseOnly -and $VerbosePreference -ne 'Continue') {
+        return
+    }
     $line = "[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message
     try {
         if (-not (Test-Path $StateDir)) {
@@ -212,14 +219,14 @@ function Invoke-RepoFetchCheck {
         return
     }
 
-    Write-WatcherLog "Fetch: $key"
+    Write-WatcherLog "Fetch: $key" -VerboseOnly
     Push-Location $key
     try {
         $fetchOut = & git fetch --all --prune 2>&1
         $fetchCode = $LASTEXITCODE
         foreach ($line in @($fetchOut)) {
             if ("$line".Trim()) {
-                Write-WatcherLog "  [$key] fetch: $line"
+                Write-WatcherLog "  [$key] fetch: $line" -VerboseOnly
             }
         }
         if ($fetchCode -ne 0) {
@@ -232,10 +239,14 @@ function Invoke-RepoFetchCheck {
     }
 
     $state = Get-UpstreamSyncState -RepoPath $key
-    Write-WatcherLog "Fetch state: $key -> $state"
-    if ($state -ne 'equal' -and $state -ne 'noBranch' -and $state -ne 'noRemote' -and $state -ne 'noUpstream') {
+    $outOfSync = $state -ne 'equal' -and $state -ne 'noBranch' -and $state -ne 'noRemote' -and $state -ne 'noUpstream'
+    if ($outOfSync) {
+        Write-WatcherLog "Fetch state: $key -> $state"
         # Remote and/or local differ — full sync (respects ForceLocal)
         $Shared.Dirty[$key] = $true
+    }
+    else {
+        Write-WatcherLog "Fetch state: $key -> $state" -VerboseOnly
     }
 }
 
@@ -370,6 +381,15 @@ if (-not (Test-Path $StateDir)) {
     New-Item -ItemType Directory -Path $StateDir -Force | Out-Null
 }
 
+# Single instance across Scheduled Task + Startup races
+$createdNew = $false
+$instanceMutex = New-Object System.Threading.Mutex($true, 'Local\GitAutoPushWatcher', [ref]$createdNew)
+if (-not $createdNew) {
+    Write-WatcherLog "Another watcher already running; exiting"
+    if ($instanceMutex) { $instanceMutex.Dispose() }
+    exit 0
+}
+
 $PID | Set-Content -Path $PidPath -Encoding ASCII
 Write-WatcherLog "Watcher starting (pid $PID)"
 Write-WatcherLog "git-sync: $GitSyncPath"
@@ -454,5 +474,9 @@ finally {
     if ($ConfigWatcher) { $ConfigWatcher.Dispose() }
     if ((Test-Path $PidPath) -and ((Get-Content $PidPath -ErrorAction SilentlyContinue) -eq "$PID")) {
         Remove-Item $PidPath -Force -ErrorAction SilentlyContinue
+    }
+    if ($instanceMutex) {
+        try { $instanceMutex.ReleaseMutex() } catch { }
+        $instanceMutex.Dispose()
     }
 }
