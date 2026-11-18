@@ -58,6 +58,7 @@ string[] wingetDeps =
     "kitware.cmake",
     "mbuilov.sed",
     "microsoft.dotnet.sdk.10",
+    "microsoft.dotnet.sdk.11",
     "microsoft.dotnet.sdk.preview",
     "microsoft.powershell",
     "openjs.nodejs.lts",
