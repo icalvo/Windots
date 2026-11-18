@@ -365,15 +365,197 @@ function Get-ChildItemPretty
     .SYNOPSIS
         Runs eza with a specific set of arguments. Plus some line breaks before and after the output.
         Alias: ls, ll, la, l
+    .EXAMPLE
+        ls
+        ls *.ps1
+        ls src docs
+        ls -R
+        ls -T -L 2 CLI
+        ls -R *.ps1
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $false, Position = 0)]
-        [string]$Path = $PWD
+        [Parameter(Mandatory = $false, Position = 0, ValueFromRemainingArguments = $true)]
+        [SupportsWildcards()]
+        [string[]]$Path,
+
+        [Alias('R')]
+        [switch]$Recurse,
+
+        [Alias('T')]
+        [switch]$Tree,
+
+        [Alias('L')]
+        [int]$Level
     )
 
+    $hasWildcard = [bool]($Path | Where-Object { $_ -match '[*?]' })
+    # eza cannot build a filtered tree from a pre-expanded glob (no stdin/files-from),
+    # so refuse -T with wildcards instead of silently falling back to a flat list.
+    if ($Tree -and $hasWildcard) {
+        $PSCmdlet.ThrowTerminatingError(
+            [System.Management.Automation.ErrorRecord]::new(
+                [System.ArgumentException]::new(
+                    "Tree view (-T) cannot be combined with wildcards. Use -R for recursive glob listing, or -T on a concrete directory."
+                ),
+                'TreeWildcardNotSupported',
+                [System.Management.Automation.ErrorCategory]::InvalidArgument,
+                $Path
+            )
+        )
+    }
+
+    # Wildcard + recurse => search the tree for matches (PowerShell-style).
+    # Plain paths keep eza's own --recurse/--tree walking.
+    $recursiveGlob = $Recurse -and $hasWildcard
+
+    $ezaArgs = [System.Collections.Generic.List[string]]::new()
+    [void]$ezaArgs.AddRange([string[]]@('-a', '-l', '--header', '--icons', '--hyperlink', '--time-style', 'relative'))
+    if (-not $recursiveGlob) {
+        if ($Recurse) { [void]$ezaArgs.Add('--recurse') }
+        if ($Tree) { [void]$ezaArgs.Add('--tree') }
+        if ($PSBoundParameters.ContainsKey('Level')) {
+            [void]$ezaArgs.Add('--level')
+            [void]$ezaArgs.Add("$Level")
+        }
+    }
+
     Write-Host ""
-    eza -a -l --header --icons --hyperlink --time-style relative $Path
+
+    # Fast path: no paths, or concrete paths only — let eza do all filesystem work.
+    if ($null -eq $Path -or $Path.Count -eq 0) {
+        eza @ezaArgs
+        Write-Host ""
+        return
+    }
+    if (-not $hasWildcard) {
+        eza @ezaArgs @Path
+        Write-Host ""
+        return
+    }
+
+    $cwd = $PWD.ProviderPath.TrimEnd('\', '/')
+    $limitDepth = $PSBoundParameters.ContainsKey('Level')
+    # Non-recursive globs: expand then one eza call (Unix shell style).
+    # Recursive globs: per directory, like eza -R (own header, earlier output).
+    $resolved = [System.Collections.Generic.List[string]]::new()
+
+    function Local:To-Relative([string]$FullName) {
+        if ($FullName.StartsWith($cwd, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $relative = $FullName.Substring($cwd.Length).TrimStart('\', '/')
+            if ($relative) { return $relative }
+            return '.'
+        }
+        return $FullName
+    }
+
+    foreach ($p in $Path) {
+        if ($p -notmatch '[*?]') {
+            [void]$resolved.Add($p)
+            continue
+        }
+
+        $normalized = ($p -replace '/', '\') -replace '\*\*\\', ''
+        $parent = Split-Path -Path $normalized -Parent
+        $leaf = Split-Path -Path $normalized -Leaf
+        if ([string]::IsNullOrEmpty($parent) -or $parent -eq '**') {
+            $parent = $cwd
+        }
+        else {
+            try {
+                $parent = (Resolve-Path -LiteralPath $parent -ErrorAction Stop).ProviderPath
+            }
+            catch {
+                Write-Error "Cannot find path '$p' because it does not exist."
+                continue
+            }
+        }
+
+        if (-not [System.IO.Directory]::Exists($parent)) {
+            Write-Error "Cannot find path '$p' because it does not exist."
+            continue
+        }
+
+        if (-not $recursiveGlob) {
+            $before = $resolved.Count
+            try {
+                foreach ($entry in [System.IO.Directory]::EnumerateFileSystemEntries(
+                        $parent, $leaf, [System.IO.SearchOption]::TopDirectoryOnly)) {
+                    [void]$resolved.Add((To-Relative $entry))
+                }
+            }
+            catch [System.UnauthorizedAccessException] { }
+            catch [System.Security.SecurityException] { }
+            catch [System.IO.IOException] { }
+
+            if ($resolved.Count -eq $before) {
+                Write-Error "Cannot find path '$p' because it does not exist."
+            }
+            continue
+        }
+
+        # Recursive glob: walk dir-by-dir (skip denied paths / reparse points), eza each hit.
+        $found = $false
+        $queue = [System.Collections.Generic.Queue[object]]::new()
+        $queue.Enqueue([pscustomobject]@{ Path = $parent; Depth = 0 })
+
+        while ($queue.Count -gt 0) {
+            $node = $queue.Dequeue()
+            $matches = [System.Collections.Generic.List[string]]::new()
+
+            try {
+                foreach ($entry in [System.IO.Directory]::EnumerateFileSystemEntries(
+                        $node.Path, $leaf, [System.IO.SearchOption]::TopDirectoryOnly)) {
+                    [void]$matches.Add([System.IO.Path]::GetFileName($entry))
+                }
+            }
+            catch [System.UnauthorizedAccessException] { }
+            catch [System.Security.SecurityException] { }
+            catch [System.IO.IOException] { }
+
+            if ($matches.Count -gt 0) {
+                $found = $true
+                Write-Host "$(To-Relative $node.Path):"
+                Push-Location -LiteralPath $node.Path
+                try {
+                    # @() keeps a single match as a one-element array (string splat enumerates chars).
+                    eza @ezaArgs @($matches.ToArray())
+                }
+                finally {
+                    Pop-Location
+                }
+            }
+
+            if ($limitDepth -and $node.Depth -ge $Level) { continue }
+
+            try {
+                foreach ($child in [System.IO.Directory]::EnumerateDirectories($node.Path)) {
+                    try {
+                        $attrs = [System.IO.File]::GetAttributes($child)
+                        if (($attrs -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                            continue
+                        }
+                    }
+                    catch {
+                        continue
+                    }
+
+                    $queue.Enqueue([pscustomobject]@{ Path = $child; Depth = ($node.Depth + 1) })
+                }
+            }
+            catch [System.UnauthorizedAccessException] { }
+            catch [System.Security.SecurityException] { }
+            catch [System.IO.IOException] { }
+        }
+
+        if (-not $found) {
+            Write-Error "Cannot find path '$p' because it does not exist."
+        }
+    }
+
+    if ($resolved.Count -gt 0) {
+        eza @ezaArgs @($resolved.ToArray())
+    }
     Write-Host ""
 }
 
