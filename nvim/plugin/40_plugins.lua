@@ -92,13 +92,23 @@ local function ts_parser_ready(lang)
   return ok and result == true
 end
 
+-- Filetypes where Roslyn/easy-dotnet owns indentation (see `:checkhealth easy-dotnet`).
+local ts_skip_indent = { cs = true, csharp = true, razor = true }
+-- Keep regex syntax under treesitter for these: Roslyn project load can starve the
+-- async treesitter highlighter for seconds, and start() clears syntax by default.
+local ts_keep_syntax = { cs = true, csharp = true, razor = true }
+
 local function ts_enable(buf)
   if not vim.api.nvim_buf_is_valid(buf) then return end
   -- Skip special buffers (DAP REPL/terminal/prompt, help, qf, etc.).
   if vim.bo[buf].buftype ~= '' then return end
+  local ft = vim.bo[buf].filetype
   pcall(vim.treesitter.start, buf)
-  local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
-  if lang then
+  -- `start()` disables regex syntax; restore it so C# is not blank while Roslyn
+  -- floods the main loop and treesitter cannot paint yet.
+  if ts_keep_syntax[ft] then vim.bo[buf].syntax = 'ON' end
+  local lang = vim.treesitter.language.get_lang(ft)
+  if lang and not ts_skip_indent[ft] then
     local ok, query = pcall(vim.treesitter.query.get, lang, 'indents')
     if ok and query and #query.captures > 0 then
       vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
@@ -704,7 +714,10 @@ package.loaded['easy-dotnet'] = setmetatable({}, {
 })
 on_filetypes(
   { 'cs', 'fsharp', 'razor' },
-  setup_dotnet,
+  -- Defer so treesitter can finish its first highlight pass before Roslyn
+  -- starts flooding the main loop (otherwise start() has cleared syntax and
+  -- the buffer stays blank until project load ends).
+  function() vim.defer_fn(setup_dotnet, 100) end,
   'Setup easy-dotnet on first .NET buffer'
 )
 
