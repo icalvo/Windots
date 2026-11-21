@@ -430,6 +430,7 @@ local mason_packages = {
   'html-lsp',
   'jq',
   'json-lsp',
+  'lemminx',
   'lua-language-server',
   'markdownlint-cli2',
   'netcoredbg',
@@ -514,6 +515,7 @@ vim.filetype.add({
   extension = {
     razor = 'razor',
     cshtml = 'razor',
+    nuspec = 'xml',
   },
 })
 -- Configs live in lsp/; skip legacy plugin/lspconfig.lua (very slow on Windows).
@@ -558,6 +560,7 @@ setup_lsp('hls', {
 setup_lsp('html')
 setup_lsp('jsonls')
 setup_lsp('kulala_ls')
+setup_lsp('lemminx')
 setup_lsp('lua_ls', {
   on_init = function(client)
     if client.workspace_folders then
