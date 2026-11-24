@@ -516,6 +516,7 @@ vim.filetype.add({
     razor = 'razor',
     cshtml = 'razor',
     nuspec = 'xml',
+    xaml = 'xml',
   },
 })
 -- Configs live in lsp/; skip legacy plugin/lspconfig.lua (very slow on Windows).
