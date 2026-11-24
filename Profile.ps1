@@ -35,6 +35,21 @@ function y {
 	Remove-Item -Path $tmp
 }
 function em { doom emacs @args }
+function vin { & "C:\tools\neovim-nightly\nvim-win64\bin\nvim.exe" @args }
+function Update-NeovimNightly
+{
+    <#
+    .SYNOPSIS
+        Downloads and installs the latest Neovim nightly alongside stable.
+    #>
+    $dest = "C:\tools\neovim-nightly"
+    $zip = "$env:TEMP\nvim-nightly.zip"
+    Write-Host "Downloading Neovim nightly..."
+    Invoke-WebRequest -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip" -OutFile $zip
+    if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+    Expand-Archive $zip $dest -Force
+    & "$dest\nvim-win64\bin\nvim.exe" --version | Select-Object -First 2
+}
 function Invoke-Agent
 {
     param(
@@ -64,8 +79,13 @@ function Invoke-Agent
 }
 function Invoke-Trust-Agent
 {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Args
+    )
     $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
     & $cmdsrc -p --trust
+    ag @Args
 }
 
 function ask
