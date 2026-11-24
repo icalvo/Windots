@@ -10,13 +10,13 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #:property TargetFramework=net10.0-windows
-#:package TaskScheduler@2.12.2
+#:property BuiltInComInteropSupport=true
 #:package WindowsShortcutFactory@1.2.0
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Principal;
-using Microsoft.Win32.TaskScheduler;
+using System.Text;
 using WindowsShortcutFactory;
 
 bool dryRun = args.Contains("--dry-run", StringComparer.OrdinalIgnoreCase);
@@ -37,7 +37,6 @@ string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.Progra
     (Path.Combine(home, ".gitconfig"),                                                                  @".\.gitconfig"),
     (Path.Combine(home, @"AppData\Local\lazygit"),                                                      @".\lazygit"),
     (Path.Combine(home, @"AppData\Roaming\neovide"),                                                    @".\neovide"),
-    (Path.Combine(home, @"AppData\Roaming\AltSnap\AltSnap.ini"),                                        @".\altsnap\AltSnap.ini"),
     (Path.Combine(programFiles, @"WezTerm\wezterm_modules"),                                            @".\wezterm"),
     (Path.Combine(home, ".ideavimrc"),                                                                  @".\.ideavimrc"),
     (Path.Combine(home, @"AppData\Roaming\yazi\config"),                                                @".\yazi"),
@@ -75,7 +74,6 @@ string[] wingetDeps =
 // Chocolatey dependencies
 string[] chocoDeps =
 [
-    "altsnap",
     "bat",
     "caffeine",
     "fd",
@@ -215,9 +213,6 @@ else
     RunStream("bat", "cache --build");
 }
 
-// Register the AltSnap scheduled task (replaces altsnap/createTask.ps1)
-RegisterAltSnapTask();
-
 // Create the AutoHotkey startup shortcut
 CreateStartupShortcut();
 
@@ -255,26 +250,45 @@ static void RefreshPath()
     Environment.SetEnvironmentVariable("Path", $"{machine};{user}");
 }
 
+// Creates symlinks via pwsh so Controlled Folder Access (common on managed laptops)
+// sees PowerShell rather than the ephemeral Setup.exe under %TEMP%\dotnet\runfile.
 static void CreateSymlink(string destination, string target)
 {
-    DeletePath(destination);
-
     string? parent = Path.GetDirectoryName(destination);
-    if (!string.IsNullOrEmpty(parent))
-        Directory.CreateDirectory(parent);
+    string script =
+        """
+        $ErrorActionPreference = 'Stop'
+        $dest = '{0}'
+        $target = '{1}'
+        $parent = '{2}'
+        if ($parent) {
+            New-Item -ItemType Directory -Force -Path $parent | Out-Null
+        }
+        if (Test-Path -LiteralPath $dest) {
+            $item = Get-Item -LiteralPath $dest -Force
+            $isReparse = ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
+            if ($item.PSIsContainer -and -not $isReparse) {
+                Remove-Item -LiteralPath $dest -Force -Recurse
+            } else {
+                Remove-Item -LiteralPath $dest -Force
+            }
+        }
+        New-Item -ItemType SymbolicLink -Path $dest -Target $target | Out-Null
+        """
+        .Replace("{0}", EscapeForPwshSingleQuoted(destination))
+        .Replace("{1}", EscapeForPwshSingleQuoted(target))
+        .Replace("{2}", EscapeForPwshSingleQuoted(parent ?? ""));
 
-    try
+    string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+    var (exitCode, stderr) = RunCaptureExit("pwsh", $"-NoProfile -EncodedCommand {encoded}");
+    if (exitCode != 0)
     {
-        if (Directory.Exists(target))
-            Directory.CreateSymbolicLink(destination, target);
-        else
-            File.CreateSymbolicLink(destination, target);
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"  ! Failed to link {destination} -> {target}: {ex.Message}");
+        string detail = string.IsNullOrWhiteSpace(stderr) ? $"exit code {exitCode}" : stderr.Trim();
+        Console.Error.WriteLine($"  ! Failed to link {destination} -> {target}: {detail}");
     }
 }
+
+static string EscapeForPwshSingleQuoted(string value) => value.Replace("'", "''");
 
 // Best-effort removal of a file, directory, or reparse point (mirrors Remove-Item -SilentlyContinue).
 static void DeletePath(string path)
@@ -294,36 +308,6 @@ static void DeletePath(string path)
     catch
     {
         // ignore - matches -ErrorAction SilentlyContinue
-    }
-}
-
-void RegisterAltSnapTask()
-{
-    string altSnapExe = Path.Combine(home, @"AppData\Roaming\AltSnap\AltSnap.exe");
-
-    if (dryRun)
-    {
-        Console.WriteLine($"  would register scheduled task 'AltSnap' -> {altSnapExe}");
-        return;
-    }
-
-    try
-    {
-        using var taskService = new TaskService();
-        TaskDefinition definition = taskService.NewTask();
-        definition.RegistrationInfo.Description = "Start AltSnap on logon";
-        definition.Principal.GroupId = @"BUILTIN\Users";
-        definition.Principal.RunLevel = TaskRunLevel.Highest;
-        definition.Triggers.Add(new LogonTrigger { Delay = TimeSpan.FromSeconds(10) });
-        definition.Actions.Add(new ExecAction(altSnapExe));
-        definition.Settings.MultipleInstances = TaskInstancesPolicy.IgnoreNew;
-        definition.Settings.ExecutionTimeLimit = TimeSpan.Zero;
-
-        taskService.RootFolder.RegisterTaskDefinition("AltSnap", definition);
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"  ! Failed to register AltSnap task: {ex.Message}");
     }
 }
 
@@ -396,5 +380,31 @@ static string RunCapture(string fileName, string arguments)
     {
         Console.Error.WriteLine($"  ! Failed to run '{fileName} {arguments}': {ex.Message}");
         return "";
+    }
+}
+
+// Runs a command and returns exit code + stderr (stdout discarded).
+static (int ExitCode, string Stderr) RunCaptureExit(string fileName, string arguments)
+{
+    try
+    {
+        using var process = Process.Start(new ProcessStartInfo(fileName, arguments)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        });
+        if (process is null)
+            return (-1, "failed to start process");
+        Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+        Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+        process.WaitForExit();
+        _ = stdoutTask.GetAwaiter().GetResult();
+        string stderr = stderrTask.GetAwaiter().GetResult();
+        return (process.ExitCode, stderr);
+    }
+    catch (Exception ex)
+    {
+        return (-1, ex.Message);
     }
 }
