@@ -33,6 +33,7 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
     ![image](https://github.com/scottmckendry/Windots/assets/39483124/e84d0294-5662-4d7c-b1ae-88a1f26ca9fd)
 
 - **Centralized Configuration:** Brings together scattered Windows configuration files into one organized location for easy access and management.
+- **Cursor (shared):** User hooks, skills, rules, and IDE keybindings live under `cursor/` and are symlinked into `~/.cursor` / `%APPDATA%\Cursor\User`. `settings.json` and `mcp.json` stay machine-local (they hold secrets).
 - **Tailored Colour Scheme:** Powered by my very own [CYBERDREAM](https://github.com/scottmckendry/cyberdream.nvim) colourscheme - high-contrast and vibrant for optimal _Eye Stimulation™_.
 
 ## ✅ Pre-requisites

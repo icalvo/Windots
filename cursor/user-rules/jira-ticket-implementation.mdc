@@ -1,0 +1,43 @@
+---
+description: End-to-end workflow for implementing a JIRA ticket (branch, implement, PR, link)
+alwaysApply: true
+---
+
+# JIRA Ticket Implementation Workflow
+
+When the user asks to **implement a JIRA ticket** (e.g. "Implement PERFECT-194", "Implement ticket PERFECT-195", "Do PERFECT-200"), run this workflow in order.
+
+## 1. Get ticket and put in progress
+- `jira_get_issue` with the issue key (e.g. PERFECT-194).
+- `jira_get_transitions` for that issue.
+- Transition to **In Progress** using `jira_transition_issue` with the transition id for "In Progress".
+
+## 2. Create branch from latest main
+- `git fetch origin main` and note latest commit.
+- Create branch: `features/[KEY]-short-slug` (e.g. `features/PERFECT-194-explainability-service`) from `origin/main`.
+- Use a short slug derived from the ticket summary (kebab-case).
+
+## 3. Implement the ticket
+- Use the ticket **summary** and **description** as the source of truth.
+- Implement in the codebase; add/update tests as needed.
+- Run build and tests before committing.
+
+## 4. Commit and push
+- Stage only the files changed for the ticket.
+- Commit message: **`[KEY] Short summary`** with an optional short body (e.g. bullet points of changes).
+- Push branch: `git push -u origin <branch-name>`.
+
+## 5. Create the PR
+- Resolve **repositoryId**: use `listRepositories` with the correct **projectId** (match your Azure DevOps project, e.g. "PerfectEmail"), then use the repo id (GUID) for the target repo.
+- `createPullRequest`: sourceRefName `refs/heads/<branch-name>`, targetRefName `refs/heads/main`, title = ticket summary or "[KEY] Summary", description = brief summary and technical details.
+
+## 6. Link JIRA and PR
+- **Jira comment**: `jira_add_comment` with a markdown link to the PR (PR URL from createPullRequest response or repo webUrl + `/pullrequest/<id>`).
+- **Jira → PR link**: `jira_create_remote_issue_link` so the ticket shows the PR in its Links section (url = PR URL, title e.g. "PR #N - Summary").
+
+## User prompt (what to say)
+- "Implement PERFECT-194"
+- "Implement ticket PERFECT-195"
+- "Do PERFECT-200"
+
+Always confirm the issue key when the user says "the ticket" or "this ticket" and the key is not in the message (e.g. from context or open Jira tab).

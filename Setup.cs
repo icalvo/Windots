@@ -41,6 +41,11 @@ string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.Progra
     (Path.Combine(programFiles, @"WezTerm\wezterm_modules"),                                            @".\wezterm"),
     (Path.Combine(home, ".ideavimrc"),                                                                  @".\.ideavimrc"),
     (Path.Combine(home, @"AppData\Roaming\yazi\config"),                                                @".\yazi"),
+    (Path.Combine(home, @".cursor\hooks.json"),                                                         @".\cursor\hooks.json"),
+    (Path.Combine(home, @".cursor\hooks"),                                                              @".\cursor\hooks"),
+    (Path.Combine(home, @".cursor\skills"),                                                             @".\cursor\skills"),
+    (Path.Combine(home, @".cursor\user-rules"),                                                         @".\cursor\user-rules"),
+    (Path.Combine(home, @"AppData\Roaming\Cursor\User\keybindings.json"),                               @".\cursor\keybindings.json"),
 ];
 
 // Winget dependencies
