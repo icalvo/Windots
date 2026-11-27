@@ -92,6 +92,15 @@ local function ts_parser_ready(lang)
   return ok and result == true
 end
 
+-- nvim-treesitter `main` keeps queries under pack/.../runtime/queries and only
+-- exposes them via a junction in stdpath('data')/site/queries/<lang> created at
+-- install time. A leftover .so without that link means start() runs, clears
+-- regex syntax, and paints nothing.
+local function ts_highlights_ready(lang)
+  local ok, query = pcall(vim.treesitter.query.get, lang, 'highlights')
+  return ok and query ~= nil
+end
+
 -- Filetypes where Roslyn/easy-dotnet owns indentation (see `:checkhealth easy-dotnet`).
 local ts_skip_indent = { cs = true, csharp = true, razor = true }
 -- Keep regex syntax under treesitter for these: Roslyn project load can starve the
@@ -103,11 +112,17 @@ local function ts_enable(buf)
   -- Skip special buffers (DAP REPL/terminal/prompt, help, qf, etc.).
   if vim.bo[buf].buftype ~= '' then return end
   local ft = vim.bo[buf].filetype
+  local lang = vim.treesitter.language.get_lang(ft)
+  -- Avoid start() with no highlights query: it disables regex syntax and leaves
+  -- the buffer uncolored until queries are linked.
+  if lang and not ts_highlights_ready(lang) then
+    if vim.bo[buf].syntax == '' then vim.bo[buf].syntax = 'ON' end
+    return
+  end
   pcall(vim.treesitter.start, buf)
   -- `start()` disables regex syntax; restore it so C# is not blank while Roslyn
   -- floods the main loop and treesitter cannot paint yet.
   if ts_keep_syntax[ft] then vim.bo[buf].syntax = 'ON' end
-  local lang = vim.treesitter.language.get_lang(ft)
   if lang and not ts_skip_indent[ft] then
     local ok, query = pcall(vim.treesitter.query.get, lang, 'indents')
     if ok and query and #query.captures > 0 then
@@ -129,16 +144,23 @@ end
 
 local function ts_ensure(lang)
   if not lang or ts_ensuring[lang] then return end
-  if ts_parser_ready(lang) then
+  local parser_ok = ts_parser_ready(lang)
+  if parser_ok and ts_highlights_ready(lang) then
     ts_enable_bufs(lang)
     return
   end
   -- Only install languages nvim-treesitter knows about.
   if require('nvim-treesitter.parsers')[lang] == nil then return end
 
+  -- Parser present but queries missing: force reinstall to recreate the
+  -- site/queries/<lang> junction (common after partial installs on Windows).
+  local force = parser_ok and not ts_highlights_ready(lang)
   ts_ensuring[lang] = true
-  vim.notify('Installing treesitter parser: ' .. lang, vim.log.levels.INFO)
-  require('nvim-treesitter').install({ lang }):await(function(err)
+  vim.notify(
+    (force and 'Repairing' or 'Installing') .. ' treesitter parser: ' .. lang,
+    vim.log.levels.INFO
+  )
+  require('nvim-treesitter').install({ lang }, { force = force }):await(function(err)
     ts_ensuring[lang] = nil
     if err then
       vim.notify(
