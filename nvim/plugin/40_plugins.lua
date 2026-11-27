@@ -631,6 +631,18 @@ setup_lsp('tailwindcss')
 setup_lsp('taplo')
 setup_lsp('ts_ls')
 setup_lsp('yamlls')
+-- Prefer Roslyn's in-process watcher: on Windows, Neovim's
+-- workspace/didChangeWatchedFiles often misses edits to unopened files
+-- (easy-dotnet#1079). Merged into easy-dotnet's client when it starts.
+setup_lsp('easy_dotnet', {
+  capabilities = {
+    workspace = {
+      didChangeWatchedFiles = {
+        dynamicRegistration = false,
+      },
+    },
+  },
+})
 
 -- Debugging (lazy: first dap / debug keymap)
 add({
