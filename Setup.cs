@@ -93,6 +93,7 @@ string[] chocoDeps =
     "zig",
     "zoxide",
     "yt-dlp",
+    "imagemagick",
 ];
 
 // PowerShell Gallery modules (installed via pwsh - no BCL/NuGet equivalent exists)
