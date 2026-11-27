@@ -83,8 +83,11 @@ function Invoke-Trust-Agent
         [Parameter(ValueFromRemainingArguments = $true)]
         [string[]]$Args
     )
+    Write-Host "Trusting workspace, please wait..."
     $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
-    & $cmdsrc -p --trust
+    & $cmdsrc -p --trust 2>&1 | Where-Object {
+        "$_" -notmatch 'Error: No prompt provided for print mode'
+    }
     ag @Args
 }
 
