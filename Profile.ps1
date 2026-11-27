@@ -21,7 +21,6 @@ Set-Alias -Name which -Value Show-Command
 Set-Alias -Name wtadd -Value New-Worktree
 Set-Alias -Name wt -Value Set-Location-WorkTree
 Set-Alias -Name ag -Value Invoke-Agent
-Set-Alias -Name agp -Value Invoke-Trust-Agent
 
 # Putting the FUN in Functions 🎉
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,20 +74,7 @@ function Invoke-Agent
         New-Item -ItemType File -Path $updateStamp -Force | Out-Null
     }
     $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
-    & $cmdsrc --approve-mcps --yolo @Args
-}
-function Invoke-Trust-Agent
-{
-    param(
-        [Parameter(ValueFromRemainingArguments = $true)]
-        [string[]]$Args
-    )
-    Write-Host "Trusting workspace, please wait..."
-    $cmdsrc = (Get-Command agent -CommandType ExternalScript, Application -ErrorAction Stop) | Where-Object { $_.CommandType -eq "Application" }
-    & $cmdsrc -p --trust 2>&1 | Where-Object {
-        "$_" -notmatch 'Error: No prompt provided for print mode'
-    }
-    ag @Args
+    & $cmdsrc --approve-mcps --yolo --trust @Args
 }
 
 function ask
